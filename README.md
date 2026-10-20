@@ -1,70 +1,69 @@
-# Chatterino 2 Kick Chat Overlay para OBS Studio 💬🟢
+# Joseo Chat Overlay para Kick & OBS Studio 💬🟢
 
-Un overlay de chat para **OBS Studio** con el diseño, tipografía, formato de líneas y estética exacta de la aplicación de escritorio **Chatterino 2** ([github.com/Chatterino/chatterino2](https://github.com/Chatterino/chatterino2)), conectado en tiempo real al canal de Kick de **`rageylo`**.
+Un overlay de chat para **OBS Studio** y streamers de Kick, con soporte en tiempo real de insignias nativas, emotes y cosméticos de **7TV**, temas personalizables (Oscuro, Transparente, Claro), sombras de texto y menú interactivo de configuración.
 
-![Chatterino 2 Kick Chat Preview](kick_chat_preview.png)
+Hecho con el emote de 7TV `Rlove` por **Yuuzito**.
 
----
-
-## ✨ Características estilo Chatterino 2
-
-- 🖥️ **Estética idéntica a Chatterino 2 (Tema Oscuro #18181b)**:
-  - Formato compacto línea por línea de IRC/Chatterino.
-  - Pestaña de split en la cabecera con `#rageylo` e indicador online verde.
-  - Marcas de tiempo `[HH:MM]` en gris atenuado (`#8c8c8c`).
-  - Fondo alternado sutil entre líneas consecutivas.
-  - Resaltado en rojo para menciones (mensajes que contienen `@rageylo` o mencionan al streamer).
-  - Tipografía estándar de sistema limpia y nítida (`Segoe UI`, `Roboto`, `Helvetica`).
-- 🚫 **Sin logos de Kick**: Los nombres de usuario se muestran limpios en su color original.
-- ⚡ **7TV completo**: insignias, colores/paints de nombre (degradados, imágenes y sombras) y emotes de 7TV (globales + del canal de rageylo).
-- 🎖️ **Insignias nativas de Kick**: mismas imágenes y orden que en kick.com (founder, sub gifter por tier, suscriptor por meses con la imagen del canal, mod, VIP, OG, verified, broadcaster, staff) - archivos en `badges/`.
+🌐 **Enlace en vivo en GitHub Pages**: **[https://yuuzito.github.io/kick-chat-overlay/](https://yuuzito.github.io/kick-chat-overlay/)**
 
 ---
 
 ## 🚀 Cómo usar en OBS Studio
 
-### Opción 1: Servidor Local (Recomendado)
-1. Haz doble clic en **`start.bat`** (o ejecuta `python server.py`).
-2. Se abrirá tu navegador en:
-   ```text
-   http://localhost:8000/index.html?channel=rageylo
-   ```
-3. En **OBS Studio**:
+### Método 1: GitHub Pages (Directo, sin instalar nada) ⭐ Recomendado
+
+1. Entra a **[https://yuuzito.github.io/kick-chat-overlay/](https://yuuzito.github.io/kick-chat-overlay/)** desde tu navegador.
+2. Configura tu canal (ej. `rageylo`), tema, tamaño de letra, emotes y sombra de texto a tu gusto.
+3. Haz clic en **"📋 Copiar URL de Overlay para OBS"**.
+4. En **OBS Studio**:
    - En el panel **Fuentes**, presiona **`+`** y selecciona **Navegador** (*Browser Source*).
-   - En **URL**, pega: `http://localhost:8000/index.html?channel=rageylo`
-   - Configura el **Ancho:** `450` y el **Alto:** `750`.
-   - ¡Listo!
+   - En **URL**, pega el enlace copiado (ej: `https://yuuzito.github.io/kick-chat-overlay/?channel=rageylo&overlay=true`).
+   - Configura el **Ancho:** `450` y el **Alto:** `750` (o el tamaño que prefieras).
+   - Marca la casilla **"Actualizar el navegador cuando la escena se active"** si deseas reiniciar la conexión en cada cambio de escena.
+   - ¡Listo! Tu chat aparecerá automáticamente en pantalla en tiempo real con fondo transparente.
 
 ---
 
-### Opción 2: Archivo Local Directo (`file:///`)
-Si prefieres no iniciar el script de Python:
-1. Abre [index.html](file:///c:/Users/alfon/OneDrive/Escritorio/VISUAL/Python/Chat%20overlay%20kick/index.html) en tu navegador.
-2. Copia la URL con el canal:
-   ```text
-   file:///c:/Users/alfon/OneDrive/Escritorio/VISUAL/Python/Chat%20overlay%20kick/index.html?channel=rageylo
-   ```
-3. Pégalo en la fuente de Navegador en OBS Studio.
+### Método 2: Servidor Local
+
+Si prefieres ejecutarlo localmente en tu PC:
+1. Haz doble clic en **`start.bat`** (o ejecuta `python server.py`).
+2. Se abrirá automáticamente en `http://localhost:8000/`.
+3. Pega `http://localhost:8000/?channel=rageylo&overlay=true` en tu fuente de Navegador en OBS Studio.
 
 ---
 
-## ⚙️ Opciones de URL personalizables
+## ✨ Características
 
-Puedes ajustar las opciones agregándolas a la URL:
-
-| Parámetro | Valor por defecto | Descripción |
-| :--- | :--- | :--- |
-| `channel` | `rageylo` | Canal de Kick al que conectar |
-| `size` | `14` | Tamaño de letra (en px, Chatterino usa 14) |
-| `timestamps` | `true` | Mostrar/ocultar hora `[HH:MM]` (`true`/`false`) |
-| `alt` | `true` | Fondo alternado entre mensajes (`true`/`false`) |
-| `header` | `true` | Mostrar cabecera de pestaña `#canal` (`true`/`false`) |
-| `badges` | `true` | Mostrar insignias de 7TV y suscriptores (`true`/`false`) |
-| `fade` | `0` | Segundos para desvanecer mensaje (`0` = permanente) |
+- ⚡ **7TV completo**: Soporte en tiempo real para emotes globales y del canal, cosméticos, insignias y colores de usuario.
+- 🎖️ **Insignias nativas de Kick**: Moderador, VIP, Fundador, Suscriptores, Sub Gifters (por niveles), Verificado, Broadcaster y Staff.
+- 🎨 **Temas y Estilos**:
+  - **Dark**: Ideal para ventanas de vista previa y chats flotantes.
+  - **Transparent**: Perfecto para OBS Studio sobre la transmisión del juego.
+  - **Light**: Tema claro de alto contraste.
+- ⚙️ **Menú de configuración interactivo**:
+  - Canal personalizable.
+  - Activar / desactivar cosméticos y emotes de 7TV.
+  - Selector de tamaño de letra (Small, Medium, Large, Extra Large).
+  - Sombras de texto (Ninguna, Small, Medium, Large) y fondos de texto.
+  - Animaciones de entrada de mensajes (Ninguna, Slide, Fade).
+  - Mensaje de prueba instantáneo para previsualizar estilos antes de transmitir.
+  - Botón de engranaje flotante para reabrir y modificar la configuración en cualquier momento.
 
 ---
 
-## ⌨️ Atajos de teclado
-- Presiona **`C`** sobre el overlay para abrir el menú de ajustes de Chatterino.
-- Haz clic en **"🧪 Enviar Prueba"** para simular mensajes de prueba con menciones e insignias.
+## ⚙️ Opciones por URL
 
+Puedes configurar el overlay directamente mediante parámetros en la URL:
+
+| Parámetro | Valores | Por defecto | Descripción |
+| :--- | :--- | :--- | :--- |
+| `channel` | texto | `rageylo` | Canal de Kick |
+| `overlay` | `true` / `false` | `false` | Modo OBS directo (sin menú inicial) |
+| `theme` | `dark`, `transparent`, `light` | `dark` | Estilo visual de fondo |
+| `sevenTVCosmeticsEnabled` | `true` / `false` | `true` | Insignias y colores de 7TV |
+| `sevenTVEmotesEnabled` | `true` / `false` | `true` | Emotes globales y del canal |
+| `textSize` | `small`, `medium`, `large`, `xlarge` | `medium` | Tamaño del texto |
+| `textShadow` | `none`, `small`, `medium`, `large` | `small` | Sombra para legibilidad |
+| `animation` | `none`, `slide`, `fade` | `none` | Animación de nuevos mensajes |
+| `showPinEnabled` | `true` / `false` | `false` | Mostrar banner de mensaje fijado |
