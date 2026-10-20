@@ -212,7 +212,6 @@
         const has7tvEmotes = cfg7tvEmotes ? cfg7tvEmotes.checked : true;
         const currentChannel = (cfgChannel ? cfgChannel.value.trim().toLowerCase() : config.channel) || 'rageylo';
         const channelEmotes = (client && client.channelSlug === currentChannel) ? client.emotes : (window.KickChatClient ? KickChatClient.getChannelEmotes(currentChannel) : null);
-        const channelLower = (client && client.channelSlug === currentChannel) ? client.lowerEmoteMap : (window.KickChatClient ? KickChatClient.getChannelLowerMap(currentChannel) : null);
         const rawMessage = (cfgPreviewInput ? cfgPreviewInput.value : 'Hola, este es un mensaje de prueba jeje Rlove') || 'Hola, este es un mensaje de prueba jeje Rlove';
 
         if (previewMsgText) {
@@ -220,7 +219,6 @@
                 previewMsgText.innerHTML = KickChatClient.parseContentToHtml(rawMessage, {
                     sevenTVEmotes: has7tvEmotes,
                     emotes: channelEmotes,
-                    lowerMap: channelLower,
                     channel: currentChannel
                 });
             } else {

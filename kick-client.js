@@ -770,7 +770,6 @@ class KickChatClient extends EventTarget {
         const sevenTVEnabled = options.sevenTVEmotes !== false;
         const targetChannel = (options.channel || 'rageylo').toLowerCase().trim();
         const emotesMap = options.emotes || KickChatClient.getChannelEmotes(targetChannel);
-        const lowerMap = options.lowerMap || KickChatClient.getChannelLowerMap(targetChannel);
 
         const escapeHtml = (str) => str
             .replace(/&/g, '&amp;')
@@ -814,20 +813,14 @@ class KickChatClient extends EventTarget {
                     return;
                 }
                 let em = null;
-                let emoteName = part;
-                if (sevenTVEnabled && emotesMap) {
-                    if (emotesMap.has(part)) {
-                        em = emotesMap.get(part);
-                    } else if (lowerMap && lowerMap.has(part.toLowerCase())) {
-                        emoteName = lowerMap.get(part.toLowerCase());
-                        em = emotesMap.get(emoteName);
-                    }
+                if (sevenTVEnabled && emotesMap && emotesMap.has(part)) {
+                    em = emotesMap.get(part);
                 }
                 if (em) {
                     if (em.zeroWidth && out.length >= 2 && out[out.length - 1].space && out[out.length - 2].isEmote) {
                         out.pop();
                     }
-                    pushEmote(`<img class="chat-emote" src="${em.url}" alt="${escapeHtml(emoteName)}" title="${escapeHtml(emoteName)}">`, em.zeroWidth);
+                    pushEmote(`<img class="chat-emote" src="${em.url}" alt="${escapeHtml(part)}" title="${escapeHtml(part)}">`, em.zeroWidth);
                 } else {
                     out.push({ html: escapeHtml(part), isEmote: false });
                 }
@@ -841,7 +834,6 @@ class KickChatClient extends EventTarget {
         return KickChatClient.parseContentToHtml(content, {
             sevenTVEmotes: this.sevenTVEmotes,
             emotes: this.emotes,
-            lowerMap: this.lowerEmoteMap,
             channel: this.channelSlug
         });
     }
