@@ -440,31 +440,43 @@ class KickChatClient extends EventTarget {
     /* ------------------------------------------------------------------ */
 
     static intToRgba(n) {
+        if (n == null) return null;
         const u = n >>> 0;
         const r = (u >>> 24) & 255;
         const g = (u >>> 16) & 255;
         const b = (u >>> 8) & 255;
         const a = (u & 255) / 255;
+        if (a < 0.05 || (r === 0 && g === 0 && b === 0)) return null;
         return `rgba(${r}, ${g}, ${b}, ${a.toFixed(3)})`;
     }
 
     static paintToCss(paint) {
         if (!paint) return null;
         const rgba = KickChatClient.intToRgba;
-        const out = { background: null, color: null, filter: null };
+        const fn = (paint.function || '').toUpperCase();
+        const out = {
+            function: fn,
+            image_url: paint.image_url || null,
+            background: null,
+            color: null,
+            filter: null
+        };
 
         const stops = (paint.stops || [])
-            .map(s => `${rgba(s.color)} ${(s.at * 100).toFixed(2)}%`)
+            .map(s => {
+                const c = rgba(s.color);
+                return c ? `${c} ${(s.at * 100).toFixed(2)}%` : null;
+            })
+            .filter(Boolean)
             .join(', ');
         const repeat = paint.repeat ? 'repeating-' : '';
-        const fn = (paint.function || '').toUpperCase();
 
         if (fn === 'LINEAR_GRADIENT' && stops) {
             out.background = `${repeat}linear-gradient(${paint.angle || 0}deg, ${stops})`;
         } else if (fn === 'RADIAL_GRADIENT' && stops) {
             out.background = `${repeat}radial-gradient(${paint.shape || 'circle'}, ${stops})`;
         } else if (fn === 'URL' && paint.image_url) {
-            out.background = `url("${paint.image_url}") center / cover no-repeat`;
+            out.background = `url("${paint.image_url}")`;
         } else if (paint.color != null) {
             out.color = rgba(paint.color);
         } else {
@@ -473,7 +485,11 @@ class KickChatClient extends EventTarget {
 
         if (Array.isArray(paint.shadows) && paint.shadows.length) {
             out.filter = paint.shadows
-                .map(s => `drop-shadow(${s.x_offset}px ${s.y_offset}px ${s.radius}px ${rgba(s.color)})`)
+                .map(s => {
+                    const c = rgba(s.color);
+                    return c ? `drop-shadow(${s.x_offset || 0}px ${s.y_offset || 0}px ${s.radius || 1}px ${c})` : null;
+                })
+                .filter(Boolean)
                 .join(' ');
         }
         return out;
@@ -481,17 +497,18 @@ class KickChatClient extends EventTarget {
 
     /**
      * Returns (cached) Promise resolving to:
-     *   { color: 'rgba()', paint: {background, color, filter}|null, badge: {type:'7tv', text, imageUrl}|null } | null
+     *   { color: 'rgba()', paint: {background, color, filter, function, image_url}|null, badge: {type:'7tv', text, imageUrl}|null } | null
      */
     get7TVStyle(kickUserId) {
         if (!kickUserId) return Promise.resolve(null);
         const key = String(kickUserId);
+        const cacheKey = `7tv_v2_${key}`;
 
         // 1) In-memory active promise/value
         if (this.sevenTvStyles.has(key)) return this.sevenTvStyles.get(key);
 
         // 2) Check persistent localStorage cache
-        const cached = KickCache.get(`7tv_${key}`);
+        const cached = KickCache.get(cacheKey);
         if (cached !== null) {
             const resolvedValue = (cached && !cached.none) ? cached : null;
             const p = Promise.resolve(resolvedValue);
@@ -510,14 +527,14 @@ class KickChatClient extends EventTarget {
                     body: JSON.stringify({ query })
                 });
                 if (!res.ok) {
-                    KickCache.set(`7tv_${key}`, { none: true }, 15 * 60 * 1000);
+                    KickCache.set(cacheKey, { none: true }, 15 * 60 * 1000);
                     return null;
                 }
                 const json = await res.json();
                 const user = json && json.data && json.data.userByConnection;
                 if (!user || /^0+$/.test(user.id || '') || user.username === '*DeletedUser') {
                     // Cache absence of 7TV account for 1 hour to avoid repeated requests
-                    KickCache.set(`7tv_${key}`, { none: true }, 60 * 60 * 1000);
+                    KickCache.set(cacheKey, { none: true }, 60 * 60 * 1000);
                     return null;
                 }
 
@@ -542,7 +559,7 @@ class KickChatClient extends EventTarget {
                 };
 
                 // Cache active 7TV style for 6 hours
-                KickCache.set(`7tv_${key}`, outStyle, 6 * 60 * 60 * 1000);
+                KickCache.set(cacheKey, outStyle, 6 * 60 * 60 * 1000);
                 return outStyle;
             } catch (e) {
                 return null;
@@ -833,8 +850,8 @@ class KickChatClient extends EventTarget {
         const sender = data.sender || {};
         const identity = sender.identity || {};
 
-        let color = identity.color;
-        if (!color || color === '#000000') {
+        let color = identity.color || sender.color;
+        if (!color || color === '#000000' || color === '#000' || color.toLowerCase() === 'black' || color === 'transparent') {
             color = this.generateUserColor(sender.username || 'user');
         }
 
