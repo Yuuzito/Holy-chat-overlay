@@ -5,7 +5,6 @@ Serves overlay files locally with CORS headers enabled.
 """
 
 import http.server
-import socketserver
 import webbrowser
 import os
 import sys
@@ -26,10 +25,12 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 def main():
     os.chdir(DIRECTORY)
     handler = CORSHTTPRequestHandler
-    with socketserver.TCPServer(("", PORT), handler) as httpd:
+    # Threaded so a slow request (e.g. a stalled image) doesn't block the overlay's other files
+    http.server.ThreadingHTTPServer.allow_reuse_address = True
+    with http.server.ThreadingHTTPServer(("", PORT), handler) as httpd:
         url = f"http://localhost:{PORT}/index.html"
         print("=" * 60)
-        print(f" Kick Chat Overlay Server en ejecución:")
+        print(f" Holy Chat (overlay de Kick) en ejecución:")
         print(f" URL: {url}")
         print(" Para OBS Studio: Agrega una fuente de 'Navegador' con esa URL.")
         print(" Presiona Ctrl+C para detener el servidor.")

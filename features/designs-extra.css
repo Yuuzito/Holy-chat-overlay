@@ -1,0 +1,291 @@
+/* ==========================================================================
+   Holy Chat - message designs (Estilo), part 2: the other 12 designs.
+   ========================================================================== */
+
+/* ---------- Hacker: terminal box with scanlines and a "~/$" prompt ---------- */
+.design-hacker {
+    --design-text: #b6f5c4;
+}
+
+.design-hacker .chatterino-line {
+    border-radius: 2px;
+    border: 1px solid rgba(60, 255, 120, 0.45);
+    background:
+        repeating-linear-gradient(0deg, rgba(60, 255, 120, 0.05) 0 1px, transparent 1px 3px),
+        rgba(4, 20, 8, 0.92);
+}
+
+.design-hacker .chat-author {
+    color: #39ff6a !important;
+}
+
+.design-hacker .chat-author::after {
+    content: ' ~/$';
+    color: #6dff9a;
+    font-weight: 500;
+}
+
+.design-hacker .colon {
+    display: none;
+}
+
+.design-hacker .chat-text {
+    margin-left: 6px;
+}
+
+/* ---------- Neón: the author's color on the border, glow and text ---------- */
+.design-neon {
+    --design-text: #f4f4f5;
+}
+
+.design-neon .chatterino-line {
+    background: rgba(0, 0, 0, 0.86);
+    border: 1px solid var(--uc, #53fc18);
+    --card-shadow: 0 0 8px var(--uc, #53fc18);
+    box-shadow: var(--card-shadow);
+}
+
+.design-neon .chat-text {
+    color: var(--uc, #53fc18) !important;
+    color: color-mix(in srgb, var(--uc, #53fc18) 55%, #ffffff) !important;
+}
+
+/* ---------- Tarjetas neón: stripe in the author's color and a spark on the right ---------- */
+.design-neoncards {
+    --design-text: #ececf1;
+}
+
+.design-neoncards .chatterino-line {
+    background: rgba(14, 14, 20, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 4px solid var(--uc, #53fc18);
+}
+
+.design-neoncards .chat-head {
+    font-size: 0.86em;
+}
+
+.design-neoncards .chat-head::after {
+    content: '✦';
+    margin-left: auto;
+    color: var(--uc, #53fc18);
+    text-shadow: 0 0 6px var(--uc, #53fc18);
+}
+
+/* ---------- Pastel pop: blue, pink and lilac speech bubbles ---------- */
+.design-pastelpop {
+    --design-text: #2a2440;
+}
+
+.design-pastelpop .chatterino-line {
+    width: fit-content;
+    max-width: calc(100% - 30px);
+    border-radius: 16px 16px 16px 4px;
+    background: #cfe6ff;
+    border: 2px solid #7fb4ff;
+}
+
+.design-pastelpop .chatterino-line:nth-child(3n + 2) {
+    background: #ffd6e8;
+    border-color: #ff8fbf;
+    margin-left: 22px;
+}
+
+.design-pastelpop .chatterino-line:nth-child(3n) {
+    background: #e4d7ff;
+    border-color: #a98bff;
+    margin-left: 12px;
+}
+
+.design-pastelpop .chat-author {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.85);
+    font-size: 0.8em;
+    text-transform: uppercase;
+}
+
+.design-pastelpop .chat-text {
+    font-weight: 800;
+}
+
+/* ---------- Pixel Quest: square purple boxes with a double pixel frame ---------- */
+.design-pixelquest {
+    --design-text: #efe7ff;
+}
+
+.design-pixelquest .chatterino-line {
+    margin: 6px 9px;
+    border-radius: 0;
+    background: #2a1648;
+    border: 3px solid #8a5cf6;
+    --card-shadow: 0 0 0 3px #12091f, inset 0 0 0 2px #4b2a85;
+    box-shadow: var(--card-shadow);
+    line-height: 1.6;
+}
+
+.design-pixelquest .chat-author::before {
+    content: '▶ ';
+    color: #ffd23f;
+}
+
+/* ---------- Redondeado: the name in a tab over the top-right edge ---------- */
+.design-rounded {
+    --design-text: #f1f1f3;
+}
+
+.design-rounded .chatterino-line {
+    position: relative;
+    margin-top: 18px;
+    border-radius: 18px;
+    background: rgba(24, 24, 30, 0.92);
+}
+
+.design-rounded .chat-head {
+    position: absolute;
+    top: -14px;
+    right: 16px;
+    padding: 2px 10px;
+    border-radius: 10px 10px 0 0;
+    background: rgba(24, 24, 30, 0.96);
+    font-size: 0.86em;
+}
+
+.design-rounded .chat-text {
+    margin-top: 0;
+}
+
+/* ---------- Cielo: light blue box, the name centered on its top edge ---------- */
+.design-sky {
+    --design-text: #10314d;
+}
+
+.design-sky .chatterino-line {
+    position: relative;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-radius: 14px;
+    background: #dff1ff;
+    border: 2px solid #59b4ff;
+    text-align: center;
+}
+
+.design-sky .chat-head {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #bfe4ff;
+    border: 2px solid #59b4ff;
+    white-space: nowrap;
+    font-size: 0.86em;
+}
+
+/* ---------- Atardecer: warm burgundy-to-brown cards ---------- */
+.design-sunset {
+    --design-text: #ffe9d6;
+}
+
+.design-sunset .chatterino-line {
+    background: linear-gradient(135deg, rgba(74, 20, 40, 0.9), rgba(72, 40, 20, 0.88));
+    border: 1px solid rgba(255, 170, 120, 0.25);
+}
+
+/* ---------- Ventana: a little window with a title bar and three dots ---------- */
+.design-windowglass {
+    --design-text: #eef2f8;
+}
+
+.design-windowglass .chatterino-line {
+    padding: 0;
+    background: rgba(52, 62, 82, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.design-windowglass .chat-head {
+    padding: 4px 10px;
+    /* Rounded like the window's top corners (overflow: hidden on the row would let the
+       column squash it) */
+    border-radius: 10px 10px 0 0;
+    background: rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.design-windowglass .chat-head::before {
+    content: '';
+    flex: none;
+    width: 30px;
+    height: 8px;
+    margin-right: 4px;
+    background:
+        radial-gradient(circle 4px at 4px 4px, #ff5f57 98%, transparent),
+        radial-gradient(circle 4px at 15px 4px, #febc2e 98%, transparent),
+        radial-gradient(circle 4px at 26px 4px, #28c840 98%, transparent);
+}
+
+.design-windowglass .chat-head .chat-badges {
+    order: 3;
+    margin-left: auto;
+}
+
+.design-windowglass .chat-text {
+    margin: 0;
+    padding: 6px 12px 8px;
+}
+
+/* ---------- Mensajería: white chat bubbles with a tail and two check marks ---------- */
+.design-whatschat {
+    --design-text: #111111;
+}
+
+.design-whatschat .chatterino-line {
+    position: relative;
+    width: fit-content;
+    max-width: calc(100% - 28px);
+    margin-left: 16px;
+    padding-right: 38px;
+    border-radius: 0 12px 12px 12px;
+    background: #ffffff;
+    --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--card-shadow);
+}
+
+.design-whatschat .chatterino-line::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -8px;
+    border-top: 10px solid #ffffff;
+    border-left: 8px solid transparent;
+}
+
+.design-whatschat .chatterino-line::after {
+    content: '✓✓';
+    position: absolute;
+    right: 8px;
+    bottom: 4px;
+    font-size: 0.7em;
+    letter-spacing: -3px;
+    color: #9aa0a6;
+}
+
+.design-whatschat .chat-head {
+    font-size: 0.82em;
+}
+
+/* ---------- Retro: hard purple boxes, a color bar and capital names ---------- */
+.design-retro {
+    --design-text: #d9c8ff;
+}
+
+.design-retro .chatterino-line {
+    border-radius: 0;
+    background: rgba(26, 15, 46, 0.94);
+    border-left: 5px solid var(--uc, #53fc18);
+}
+
+.design-retro .chat-author {
+    text-transform: uppercase;
+}

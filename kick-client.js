@@ -2,14 +2,18 @@
  * Kick Realtime Chat Client
  * - Kick Pusher WebSocket (chat, deletes, bans)
  * - Native Kick badges (local SVGs + channel subscriber badge images)
- * - 7TV integration: channel + global emotes, user badges, user name colors / paints
+ * - 7TV integration: per-channel emote pack (the streamer's active set), user badges, name colors / paints
  */
 
 /**
- * Lightweight localStorage Cache with TTL and LRU eviction
+ * Lightweight localStorage Cache with TTL and eviction
  */
 class KickCache {
     static PREFIX = 'kick_cache_';
+    // Keys written by older versions (one entry per 7TV user). Old emote packs ('emotes_') are
+    // migrated by KickChatClient.migrateLegacyPacks() before the first prune.
+    static LEGACY_PREFIXES = ['7tv_'];
+    static pruneTimer = null;
 
     static get(key) {
         try {
@@ -27,18 +31,17 @@ class KickCache {
     }
 
     static set(key, val, ttlMs = 3600000) {
-        try {
-            const item = {
-                val,
-                exp: ttlMs ? Date.now() + ttlMs : 0
-            };
+        const write = () => {
+            const item = { val, exp: ttlMs ? Date.now() + ttlMs : 0 };
             localStorage.setItem(this.PREFIX + key, JSON.stringify(item));
+        };
+        try {
+            write();
         } catch (e) {
-            // Prune expired or old entries if quota reached
+            // Quota reached: drop expired entries and the oldest half of the rest, then retry once
             KickCache.prune(true);
             try {
-                const item = { val, exp: ttlMs ? Date.now() + ttlMs : 0 };
-                localStorage.setItem(this.PREFIX + key, JSON.stringify(item));
+                write();
             } catch (e2) {
                 console.warn('[KickCache] set failed:', e2);
             }
@@ -55,389 +58,283 @@ class KickCache {
         try {
             const now = Date.now();
             const keysToRemove = [];
-            const userStyles = [];
+            const live = [];
 
             for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
-                if (k && k.startsWith(this.PREFIX)) {
-                    try {
-                        const item = JSON.parse(localStorage.getItem(k));
-                        if (item && item.exp && now > item.exp) {
-                            keysToRemove.push(k);
-                        } else if (k.startsWith(this.PREFIX + '7tv_')) {
-                            userStyles.push({ key: k, exp: item?.exp || 0 });
-                        }
-                    } catch (err) {
+                if (!k || !k.startsWith(this.PREFIX)) continue;
+                const name = k.slice(this.PREFIX.length);
+                if (this.LEGACY_PREFIXES.some(p => name.startsWith(p))) {
+                    keysToRemove.push(k);
+                    continue;
+                }
+                try {
+                    const item = JSON.parse(localStorage.getItem(k));
+                    if (item && item.exp && now > item.exp) {
                         keysToRemove.push(k);
+                    } else if (name !== 'overlay_settings') {
+                        live.push({ key: k, exp: (item && item.exp) || Infinity });
                     }
+                } catch (err) {
+                    keysToRemove.push(k);
                 }
             }
 
             keysToRemove.forEach(k => localStorage.removeItem(k));
 
-            if (forceEvictOldest && userStyles.length > 50) {
-                userStyles.sort((a, b) => a.exp - b.exp);
-                userStyles.slice(0, Math.floor(userStyles.length / 2)).forEach(u => {
-                    localStorage.removeItem(u.key);
-                });
+            if (forceEvictOldest && live.length) {
+                live.sort((a, b) => a.exp - b.exp);
+                live.slice(0, Math.ceil(live.length / 2)).forEach(e => localStorage.removeItem(e.key));
             }
         } catch (e) {}
     }
+
+    // OBS browser sources stay open for hours, so expired entries must be dropped while running too
+    static startAutoPrune(intervalMs = 15 * 60 * 1000) {
+        if (this.pruneTimer) return;
+        this.pruneTimer = setInterval(() => this.prune(), intervalMs);
+    }
 }
 
-class KickChatClient extends EventTarget {
-    static CHANNEL_DEFAULTS = {
-        rageylo: { channelId: 19024162, chatroomId: 18761973, kickUserId: 19996585 }
-    };
+/**
+ * Kick API access. Kick does not send CORS headers to browsers, so requests usually need a proxy;
+ * the strategy that last worked is remembered and tried first.
+ */
+class KickApi {
+    static STRATEGY_KEY = 'fetch_strategy';
+    static STRATEGIES = [
+        url => url,
+        url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    ];
+    static preferred = null;
 
-    static CHANNEL_PACKS = new Map();
-    static CHANNEL_PACKS_LOWER = new Map();
-
-    static getChannelEmotes(channel) {
-        const slug = (channel || 'rageylo').toLowerCase().trim();
-        if (KickChatClient.CHANNEL_PACKS.has(slug)) {
-            return KickChatClient.CHANNEL_PACKS.get(slug);
+    static async fetchJson(url) {
+        if (this.preferred === null) {
+            const saved = KickCache.get(this.STRATEGY_KEY);
+            this.preferred = Number.isInteger(saved) && saved >= 0 && saved < this.STRATEGIES.length ? saved : 0;
         }
-        const map = new Map();
-        const lower = new Map();
-        const cached = KickCache.get(`emotes_${slug}`);
-        if (Array.isArray(cached) && cached.length > 0) {
-            cached.forEach(([name, em]) => {
-                if (name && em) {
-                    map.set(name, em);
-                    lower.set(name.toLowerCase(), name);
-                }
-            });
-        }
-        KickChatClient.CHANNEL_PACKS.set(slug, map);
-        KickChatClient.CHANNEL_PACKS_LOWER.set(slug, lower);
-        return map;
-    }
+        const order = [this.preferred, ...this.STRATEGIES.keys()].filter((v, i, a) => a.indexOf(v) === i);
 
-    static getChannelLowerMap(channel) {
-        const slug = (channel || 'rageylo').toLowerCase().trim();
-        if (!KickChatClient.CHANNEL_PACKS_LOWER.has(slug)) {
-            KickChatClient.getChannelEmotes(slug);
-        }
-        return KickChatClient.CHANNEL_PACKS_LOWER.get(slug) || new Map();
-    }
-
-    static async loadChannelPack(channel, kickUserId = null) {
-        const slug = (channel || 'rageylo').toLowerCase().trim();
-        const userId = kickUserId || (slug === 'rageylo' ? 19996585 : null);
-        if (!userId) return null;
-
-        try {
-            const res = await fetch(`https://7tv.io/v3/users/kick/${userId}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data && data.emote_set && Array.isArray(data.emote_set.emotes)) {
-                    const map = new Map();
-                    const lower = new Map();
-                    data.emote_set.emotes.forEach(em => {
-                        if (!em || !em.name || !em.id) return;
-                        const flags = em.flags || 0;
-                        const dataFlags = (em.data && em.data.flags) || 0;
-                        const zeroWidth = Boolean((flags & 1) || (dataFlags & 256));
-                        map.set(em.name, {
-                            url: `https://cdn.7tv.app/emote/${em.id}/2x.webp`,
-                            zeroWidth
-                        });
-                        lower.set(em.name.toLowerCase(), em.name);
-                    });
-                    KickChatClient.CHANNEL_PACKS.set(slug, map);
-                    KickChatClient.CHANNEL_PACKS_LOWER.set(slug, lower);
-                    KickCache.set(`emotes_${slug}`, Array.from(map.entries()), 6 * 60 * 60 * 1000);
-                    if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('channel_emotes_loaded', { detail: { channel: slug } }));
-                    }
-                    return map;
-                }
-            }
-        } catch (e) {
-            console.warn(`[7TV] Error cargando pack de emotes del canal "${slug}":`, e);
-        }
-        return null;
-    }
-
-    static initEmoteStore() {
-        // Pre-cargar pack de emotes del canal por defecto (rageylo) para vista previa
-        KickChatClient.getChannelEmotes('rageylo');
-        KickChatClient.loadChannelPack('rageylo', 19996585);
-    }
-
-    constructor(options = {}) {
-        super();
-        this.channelSlug = (options.channel || 'rageylo').toLowerCase().trim();
-        this.channelId = options.channelId || null;
-        this.chatroomId = options.chatroomId || null;
-        this.kickUserId = options.kickUserId || null;
-
-        // Pusher configuration
-        this.pusherKey = options.pusherKey || '34bf7a0ff419a2a775b9';
-        this.pusherCluster = options.pusherCluster || 'us2';
-        this.ws = null;
-        this.socketId = null;
-        this.isConnected = false;
-        this.shouldReconnect = true;
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 20;
-        this.reconnectTimeout = null;
-        this.pingInterval = null;
-
-        this.sevenTVEmotes = options.sevenTVEmotes !== false;
-
-        // Channel assets - EXCLUSIVAMENTE limitados al pack de emotes del canal seleccionado
-        this.subscriberBadges = [];
-        this.emotes = new Map();
-        this.lowerEmoteMap = new Map();
-        this.sevenTvStyles = new Map(); // kick user id -> Promise<style|null>
-
-        // Restaurar caché inmediata de este canal si ya existe
-        this.restoreCachedEmotes();
-    }
-
-    /* ------------------------------------------------------------------ */
-    /*  Channel resolution                                                 */
-    /* ------------------------------------------------------------------ */
-
-    async fetchJsonWithFallback(targetUrl) {
-        const attempts = [
-            async () => {
-                const res = await fetch(targetUrl);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                return await res.json();
-            },
-            async () => {
-                const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
-                if (!res.ok) throw new Error(`Proxy 1 HTTP ${res.status}`);
-                return await res.json();
-            },
-            async () => {
-                const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`);
-                if (!res.ok) throw new Error(`Proxy 2 HTTP ${res.status}`);
-                return await res.json();
-            }
-        ];
-        for (const attempt of attempts) {
+        for (const i of order) {
             try {
-                return await attempt();
+                const res = await fetch(this.STRATEGIES[i](url));
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
+                if (i !== this.preferred) {
+                    this.preferred = i;
+                    KickCache.set(this.STRATEGY_KEY, i, 24 * 60 * 60 * 1000);
+                }
+                return json;
             } catch (err) {
-                console.warn('[Kick] fetch attempt failed:', targetUrl, err.message);
+                console.warn(`[Kick] fetch attempt ${i} failed:`, url, err.message);
             }
         }
         return null;
     }
+}
 
-    async refreshChannelData(slug) {
+/**
+ * 7TV user cosmetics (badge, name color, paint). Cosmetics belong to the user, not the channel,
+ * so this store is shared by every channel.
+ * - Lookups are batched into one GraphQL query per BATCH_SIZE users (7TV rejects queries above ~400 complexity)
+ * - Results live in a bounded LRU persisted under a single localStorage key
+ * - Only a confirmed "no 7TV account / no cosmetics" is cached as negative; rate limits and
+ *   network errors are retried with backoff instead of hiding a user's cosmetics
+ */
+class SevenTVCosmetics {
+    static CACHE_KEY = 'seventv_styles';
+    static MAX_ENTRIES = 2000;
+    static BATCH_SIZE = 15;
+    static BATCH_DELAY_MS = 100;
+    static MAX_CONCURRENT = 2;
+    static MAX_RETRIES = 3;
+    static STYLE_TTL = 6 * 60 * 60 * 1000;
+    static NONE_TTL = 60 * 60 * 1000;
+    // After its TTL an entry is still shown while it refreshes, so a 7TV outage doesn't strip cosmetics
+    static STALE_MAX = 7 * 24 * 60 * 60 * 1000;
+    static FIELDS = 'id style { color badge { tooltip host { url files { name } } } paint { function color angle shape image_url repeat stops { at color } shadows { x_offset y_offset radius color } } }';
+
+    static entries = null;       // kick user id -> { v: style|null, exp }, in LRU order
+    static pending = new Map();  // kick user id -> { promise, resolve, retries }
+    static queue = [];
+    static flushTimer = null;
+    static persistTimer = null;
+    static active = 0;
+    static backoffMs = 0;
+    static backoffUntil = 0;
+
+    static load() {
+        if (this.entries) return;
+        this.entries = new Map();
+        const stored = KickCache.get(this.CACHE_KEY);
+        const oldest = Date.now() - this.STALE_MAX;
+        if (Array.isArray(stored)) {
+            stored.forEach(([id, e]) => {
+                if (id && e && e.exp > oldest) this.entries.set(id, e);
+            });
+        }
+    }
+
+    static persist() {
+        if (this.persistTimer) {
+            clearTimeout(this.persistTimer);
+            this.persistTimer = null;
+        }
+        if (this.entries) {
+            KickCache.set(this.CACHE_KEY, Array.from(this.entries.entries()), this.STALE_MAX);
+        }
+    }
+
+    static schedulePersist() {
+        if (!this.persistTimer) this.persistTimer = setTimeout(() => this.persist(), 5000);
+    }
+
+    static remember(id, value, ttl) {
+        this.entries.delete(id);
+        this.entries.set(id, { v: value, exp: Date.now() + ttl });
+        while (this.entries.size > this.MAX_ENTRIES) {
+            this.entries.delete(this.entries.keys().next().value);
+        }
+        this.schedulePersist();
+    }
+
+    /**
+     * "Actualizar caché": every stored style counts as expired. Each user is fetched again the next
+     * time they chat, and meanwhile keeps the last known style (so a 7TV outage strips nothing).
+     */
+    static expireAll() {
+        this.load();
+        this.entries.forEach(e => { e.exp = 0; });
+        this.persist();
+    }
+
+    /** Resolves to { color, paint: {background, color, filter}|null, badge: {type:'7tv', text, imageUrl}|null } | null */
+    static get(kickUserId) {
+        const id = String(kickUserId || '').replace(/\D/g, '');
+        if (!id) return Promise.resolve(null);
+        this.load();
+
+        const hit = this.entries.get(id);
+        if (hit) {
+            this.entries.delete(id);
+            this.entries.set(id, hit);
+            // Expired: show the last known style now and refresh it in the background
+            if (hit.exp <= Date.now()) this.request(id);
+            return Promise.resolve(hit.v);
+        }
+        return this.request(id);
+    }
+
+    static request(id) {
+        const inFlight = this.pending.get(id);
+        if (inFlight) return inFlight.promise;
+
+        let resolve;
+        const promise = new Promise(r => { resolve = r; });
+        this.pending.set(id, { promise, resolve, retries: 0 });
+        this.queue.push(id);
+        this.scheduleFlush(this.BATCH_DELAY_MS);
+        return promise;
+    }
+
+    static scheduleFlush(delayMs) {
+        if (this.flushTimer) return;
+        const wait = Math.max(delayMs, this.backoffUntil - Date.now());
+        this.flushTimer = setTimeout(() => {
+            this.flushTimer = null;
+            this.flush();
+        }, wait);
+    }
+
+    static flush() {
+        while (this.queue.length && this.active < this.MAX_CONCURRENT && Date.now() >= this.backoffUntil) {
+            const batch = this.queue.splice(0, this.BATCH_SIZE);
+            this.active++;
+            this.fetchBatch(batch).finally(() => {
+                this.active--;
+                if (this.queue.length) this.scheduleFlush(0);
+            });
+        }
+        if (this.queue.length && Date.now() < this.backoffUntil) this.scheduleFlush(0);
+    }
+
+    static async fetchBatch(ids) {
+        const query = `{ ${ids.map((id, i) => `u${i}: userByConnection(platform: KICK, id: "${id}") { ${this.FIELDS} }`).join(' ')} }`;
+        let json = null;
         try {
-            const data = await this.fetchJsonWithFallback(`https://kick.com/api/v2/channels/${slug}`);
-            if (data && (data.id || data.chatroom)) {
-                this.channelId = data.id || (data.chatroom ? data.chatroom.channel_id : null);
-                this.chatroomId = data.chatroom ? data.chatroom.id : (data.id || null);
-                this.kickUserId = data.user_id || (data.user && data.user.id) || null;
+            const res = await fetch('https://7tv.io/v3/gql', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+            if (res.ok) json = await res.json();
+        } catch (e) {}
 
-                if (Array.isArray(data.subscriber_badges)) {
-                    this.subscriberBadges = data.subscriber_badges
-                        .slice()
-                        .sort((a, b) => a.months - b.months);
-                }
+        const data = json && json.data;
+        if (!data) {
+            this.retry(ids);
+            return;
+        }
 
-                KickCache.set(`channel_${slug}`, {
-                    channelId: this.channelId,
-                    chatroomId: this.chatroomId,
-                    kickUserId: this.kickUserId,
-                    subscriberBadges: this.subscriberBadges
-                }, 24 * 60 * 60 * 1000); // 24 hours
-
-                console.log(`[Kick] Synced channel "${slug}": channel=${this.channelId} chatroom=${this.chatroomId} user=${this.kickUserId}`);
-                return true;
+        const failed = [];
+        ids.forEach((id, i) => {
+            const user = data[`u${i}`];
+            if (!user && json.errors) {
+                failed.push(id);
+                return;
             }
-        } catch (e) {
-            console.warn('[Kick] Channel refresh error:', e);
-        }
-        return false;
-    }
-
-    async resolveChannel() {
-        const slug = this.channelSlug;
-
-        // 1) Fast path: restore instantly from cache
-        const cached = KickCache.get(`channel_${slug}`);
-        if (cached && cached.channelId && cached.chatroomId) {
-            this.channelId = cached.channelId;
-            this.chatroomId = cached.chatroomId;
-            this.kickUserId = cached.kickUserId;
-            this.subscriberBadges = Array.isArray(cached.subscriberBadges) ? cached.subscriberBadges : [];
-            console.log(`[Kick] [Cache] Loaded "${slug}" instantly: channel=${this.channelId} chatroom=${this.chatroomId} user=${this.kickUserId}`);
-
-            // Stale-while-revalidate in background without blocking
-            this.refreshChannelData(slug);
-            return true;
-        }
-
-        // 2) Network path
-        const success = await this.refreshChannelData(slug);
-        if (success) return true;
-
-        // 3) Hardcoded fallback for known channels (e.g. rageylo) so OBS never breaks
-        const fallback = KickChatClient.CHANNEL_DEFAULTS[slug];
-        if (fallback) {
-            this.channelId = fallback.channelId;
-            this.chatroomId = fallback.chatroomId;
-            this.kickUserId = fallback.kickUserId;
-            this.subscriberBadges = [];
-            KickCache.set(`channel_${slug}`, {
-                channelId: this.channelId,
-                chatroomId: this.chatroomId,
-                kickUserId: this.kickUserId,
-                subscriberBadges: []
-            }, 12 * 60 * 60 * 1000);
-            console.warn(`[Kick] Using fallback data for "${slug}": channel=${this.channelId}`);
-            return true;
-        }
-
-        console.error(`[Kick] Could not resolve channel "${slug}".`);
-        return false;
-    }
-
-    /* ------------------------------------------------------------------ */
-    /*  Emotes (Pack exclusivo del canal: Kick sub emotes + 7TV canal)    */
-    /* ------------------------------------------------------------------ */
-
-    restoreCachedEmotes() {
-        const cached = KickCache.get(`emotes_${this.channelSlug}`);
-        if (Array.isArray(cached) && cached.length > 0) {
-            this.emotes.clear();
-            this.lowerEmoteMap.clear();
-            cached.forEach(([name, em]) => {
-                if (name && em) {
-                    this.emotes.set(name, em);
-                    this.lowerEmoteMap.set(name.toLowerCase(), name);
-                }
-            });
-            console.log(`[Kick] [Cache] Restored ${cached.length} emotes exclusively for #${this.channelSlug}`);
-        }
-    }
-
-    add7TVEmoteSet(emotes) {
-        if (!Array.isArray(emotes)) return 0;
-        let count = 0;
-        emotes.forEach(em => {
-            if (!em || !em.name || !em.id) return;
-            const flags = em.flags || 0;
-            const dataFlags = (em.data && em.data.flags) || 0;
-            const zeroWidth = Boolean((flags & 1) || (dataFlags & 256));
-            this.emotes.set(em.name, {
-                url: `https://cdn.7tv.app/emote/${em.id}/2x.webp`,
-                zeroWidth
-            });
-            this.lowerEmoteMap.set(em.name.toLowerCase(), em.name);
-            count++;
+            const style = SevenTVCosmetics.parseUser(user);
+            this.remember(id, style, style ? this.STYLE_TTL : this.NONE_TTL);
+            this.settle(id, style);
         });
-        return count;
+
+        if (failed.length) this.retry(failed);
+        else this.backoffMs = 0;
     }
 
-    async loadEmotes() {
-        // 1) Restaurar inmediatamente desde la caché local de este canal
-        this.restoreCachedEmotes();
-
-        // 2) Cargar EXCLUSIVAMENTE el pack de emotes de 7TV del canal seleccionado
-        if (this.sevenTVEmotes) {
-            const targetUserId = this.kickUserId || (this.channelSlug === 'rageylo' ? 19996585 : null);
-            if (targetUserId) {
-                try {
-                    const res = await fetch(`https://7tv.io/v3/users/kick/${targetUserId}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data && data.emote_set && Array.isArray(data.emote_set.emotes)) {
-                            // Limpiar para asegurar que SOLO existan los emotes actuales de su pack
-                            this.emotes.clear();
-                            this.lowerEmoteMap.clear();
-                            const n = this.add7TVEmoteSet(data.emote_set.emotes);
-                            console.log(`[7TV] Pack de emotes del canal #${this.channelSlug} cargado: ${n} emotes (globales 7TV excluidos)`);
-                        }
-                    } else {
-                        console.warn(`[7TV] No se encontró pack de 7TV para kick user ${targetUserId}:`, res.status);
-                    }
-                } catch (e) {
-                    console.warn(`[7TV] Error cargando pack de emotes del canal #${this.channelSlug}:`, e);
-                }
-            }
-        }
-
-        // 3) Emotes de suscriptor nativos de Kick del propio canal (si tiene)
-        try {
-            const kickData = await this.fetchJsonWithFallback(`https://kick.com/emotes/${this.channelSlug}`);
-            if (Array.isArray(kickData)) {
-                kickData.forEach(set => {
-                    if (set && Array.isArray(set.emotes)) {
-                        set.emotes.forEach(em => {
-                            if (em.name && em.id && !this.emotes.has(em.name)) {
-                                this.emotes.set(em.name, {
-                                    url: `https://files.kick.com/emotes/${em.id}/fullsize`,
-                                    zeroWidth: false
-                                });
-                                this.lowerEmoteMap.set(em.name.toLowerCase(), em.name);
-                            }
-                        });
-                    }
-                });
-            }
-        } catch (e) {
-            // Kick sub emotes opcionales
-        }
-
-        // Guardar snapshot actualizado en la caché de este canal
-        if (this.emotes.size > 0) {
-            KickCache.set(`emotes_${this.channelSlug}`, Array.from(this.emotes.entries()), 6 * 60 * 60 * 1000);
-            KickChatClient.CHANNEL_PACKS.set(this.channelSlug, this.emotes);
-            KickChatClient.CHANNEL_PACKS_LOWER.set(this.channelSlug, this.lowerEmoteMap);
-        }
+    static retry(ids) {
+        this.backoffMs = Math.min(this.backoffMs ? this.backoffMs * 2 : 2000, 60000);
+        this.backoffUntil = Date.now() + this.backoffMs;
+        ids.forEach(id => {
+            const p = this.pending.get(id);
+            if (!p) return;
+            if (++p.retries > this.MAX_RETRIES) this.settle(id, null);
+            else this.queue.push(id);
+        });
+        if (this.queue.length) this.scheduleFlush(0);
     }
 
-    startEmoteRefresher() {
-        this.stopEmoteRefresher();
-        // Sincronización periódica automática del pack del canal cada 5 minutos
-        this.emoteRefreshInterval = setInterval(() => {
-            this.refresh7TVEmotes();
-        }, 5 * 60 * 1000);
+    static settle(id, value) {
+        const p = this.pending.get(id);
+        if (!p) return;
+        this.pending.delete(id);
+        p.resolve(value);
     }
 
-    stopEmoteRefresher() {
-        if (this.emoteRefreshInterval) {
-            clearInterval(this.emoteRefreshInterval);
-            this.emoteRefreshInterval = null;
+    static parseUser(user) {
+        // Kick users without a 7TV account come back as "*DeletedUser" with an all-zero id
+        if (!user || !user.id || /^0+$/.test(user.id)) return null;
+
+        const style = user.style || {};
+        let badge = null;
+        if (style.badge && style.badge.host) {
+            let hostUrl = style.badge.host.url || '';
+            if (hostUrl.startsWith('//')) hostUrl = 'https:' + hostUrl;
+            const files = (style.badge.host.files || []).map(f => f.name);
+            const file = files.includes('2x.webp') ? '2x.webp' : (files[0] || '1x.webp');
+            badge = {
+                type: '7tv',
+                text: style.badge.tooltip || '7TV',
+                imageUrl: `${hostUrl}/${file}`
+            };
         }
+
+        const color = style.color ? SevenTVCosmetics.intToRgba(style.color) : null;
+        const paint = SevenTVCosmetics.paintToCss(style.paint);
+        if (!badge && !color && !paint) return null;
+        return { color, paint, badge };
     }
-
-    async refresh7TVEmotes() {
-        if (!this.sevenTVEmotes) return;
-        const targetUserId = this.kickUserId || (this.channelSlug === 'rageylo' ? 19996585 : null);
-        if (!targetUserId) return;
-
-        try {
-            const res = await fetch(`https://7tv.io/v3/users/kick/${targetUserId}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data && data.emote_set && Array.isArray(data.emote_set.emotes)) {
-                    this.emotes.clear();
-                    this.lowerEmoteMap.clear();
-                    const n = this.add7TVEmoteSet(data.emote_set.emotes);
-                    KickCache.set(`emotes_${this.channelSlug}`, Array.from(this.emotes.entries()), 6 * 60 * 60 * 1000);
-                    KickChatClient.CHANNEL_PACKS.set(this.channelSlug, this.emotes);
-                    KickChatClient.CHANNEL_PACKS_LOWER.set(this.channelSlug, this.lowerEmoteMap);
-                    console.log(`[7TV] Sincronización periódica del pack de #${this.channelSlug}: ${n} emotes`);
-                }
-            }
-        } catch (e) {
-            console.warn('[7TV] Error en sincronización periódica del pack:', e);
-        }
-    }
-
-    /* ------------------------------------------------------------------ */
-    /*  7TV user cosmetics (badge, name color, paint)                      */
-    /* ------------------------------------------------------------------ */
 
     static intToRgba(n) {
         const u = n >>> 0;
@@ -450,7 +347,7 @@ class KickChatClient extends EventTarget {
 
     static paintToCss(paint) {
         if (!paint) return null;
-        const rgba = KickChatClient.intToRgba;
+        const rgba = SevenTVCosmetics.intToRgba;
         const out = { background: null, color: null, filter: null };
 
         const stops = (paint.stops || [])
@@ -478,79 +375,617 @@ class KickChatClient extends EventTarget {
         }
         return out;
     }
+}
+
+/**
+ * 7TV EventAPI: one WebSocket shared by every watched channel. It subscribes to each channel's active
+ * emote set ("emote_set.*") and to the streamer's 7TV user ("user.*", to notice a set switch), so a pack
+ * is downloaded once and then kept current by pushed changes instead of polling.
+ */
+class SevenTVEvents {
+    static URL = 'wss://events.7tv.io/v3';
+    static OP = { DISPATCH: 0, HELLO: 1, HEARTBEAT: 2, RECONNECT: 4, ACK: 5, ERROR: 6, END_OF_STREAM: 7, SUBSCRIBE: 35, UNSUBSCRIBE: 36 };
+
+    static ws = null;
+    static ready = false;
+    static channels = new Set();     // watched channel slugs
+    static subscribed = new Map();   // "type|object_id" -> { type, objectId }
+    static heartbeatMs = 60000;
+    static watchdog = null;
+    static reconnectTimer = null;
+    static reconnectAttempts = 0;
+    static hadSession = false;
+
+    static watch(slug) {
+        this.channels.add(slug);
+        this.sync();
+    }
+
+    static unwatch(slug) {
+        this.channels.delete(slug);
+        this.sync();
+    }
+
+    // Subscriptions the watched channels need, from their current packs
+    static desired() {
+        const out = new Map();
+        this.channels.forEach(slug => {
+            const pack = KickChatClient.getPack(slug);
+            if (pack.setId) out.set(`emote_set.*|${pack.setId}`, { type: 'emote_set.*', objectId: pack.setId });
+            if (pack.sevenTvUserId) out.set(`user.*|${pack.sevenTvUserId}`, { type: 'user.*', objectId: pack.sevenTvUserId });
+        });
+        return out;
+    }
+
+    static sync() {
+        const want = this.desired();
+        if (!want.size) {
+            this.stop();
+            return;
+        }
+        if (!this.ws) {
+            if (!this.reconnectTimer) this.open();
+            return; // subscriptions are sent once the server says HELLO
+        }
+        if (!this.ready) return;
+
+        for (const [key, sub] of this.subscribed) {
+            if (!want.has(key)) {
+                this.send(this.OP.UNSUBSCRIBE, sub);
+                this.subscribed.delete(key);
+            }
+        }
+        for (const [key, sub] of want) {
+            if (!this.subscribed.has(key)) {
+                this.send(this.OP.SUBSCRIBE, sub);
+                this.subscribed.set(key, sub);
+            }
+        }
+    }
+
+    static send(op, sub) {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        this.ws.send(JSON.stringify({ op, d: { type: sub.type, condition: { object_id: sub.objectId } } }));
+    }
+
+    static open() {
+        let ws;
+        try {
+            ws = new WebSocket(this.URL);
+        } catch (e) {
+            this.scheduleReconnect();
+            return;
+        }
+        this.ws = ws;
+        this.ready = false;
+        ws.onmessage = (ev) => this.onMessage(ev);
+        ws.onclose = () => {
+            if (this.ws === ws) this.drop(true);
+        };
+        ws.onerror = () => {}; // onclose follows
+        this.armWatchdog();
+    }
+
+    static onMessage(ev) {
+        let msg;
+        try {
+            msg = JSON.parse(ev.data);
+        } catch (e) {
+            return;
+        }
+        this.armWatchdog();
+
+        switch (msg.op) {
+            case this.OP.HELLO: {
+                this.heartbeatMs = (msg.d && msg.d.heartbeat_interval) || 60000;
+                this.ready = true;
+                this.reconnectAttempts = 0;
+                this.armWatchdog();
+                const resumed = this.hadSession;
+                this.hadSession = true;
+                this.sync();
+                // Changes made while disconnected were not pushed: check each pack once
+                if (resumed) this.channels.forEach(slug => KickChatClient.loadPack(slug, { force: true }));
+                break;
+            }
+            case this.OP.DISPATCH: {
+                const type = msg.d && msg.d.type;
+                const body = msg.d && msg.d.body;
+                if (type === 'emote_set.update') {
+                    this.channels.forEach(slug => KickChatClient.applySetChanges(slug, body));
+                } else if (type === 'user.update') {
+                    this.channels.forEach(slug => KickChatClient.applyUserChanges(slug, body));
+                }
+                break;
+            }
+            case this.OP.RECONNECT:
+            case this.OP.END_OF_STREAM:
+                this.drop(true);
+                break;
+            case this.OP.ERROR:
+                console.warn('[7TV] EventAPI error:', msg.d);
+                break;
+        }
+    }
+
+    // The server sends a heartbeat every heartbeat_interval; silence for longer means a dead connection
+    static armWatchdog() {
+        clearTimeout(this.watchdog);
+        this.watchdog = setTimeout(() => this.drop(true), this.heartbeatMs * 1.5 + 5000);
+    }
+
+    static drop(reconnect) {
+        const ws = this.ws;
+        this.ws = null;
+        this.ready = false;
+        this.subscribed.clear();
+        clearTimeout(this.watchdog);
+        this.watchdog = null;
+        if (ws) {
+            ws.onmessage = ws.onclose = ws.onerror = null;
+            try {
+                ws.close();
+            } catch (e) {}
+        }
+        if (reconnect && this.channels.size) this.scheduleReconnect();
+    }
+
+    static scheduleReconnect() {
+        if (this.reconnectTimer) return;
+        this.reconnectAttempts++;
+        const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), 60000);
+        this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = null;
+            if (this.desired().size) this.open();
+        }, delay);
+    }
+
+    // No channel needs live updates any more
+    static stop() {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+        this.reconnectAttempts = 0;
+        this.hadSession = false;
+        this.drop(false);
+    }
+}
+
+class KickChatClient extends EventTarget {
+    static CHANNEL_DEFAULTS = {
+        rageylo: { channelId: 19024162, chatroomId: 18761973, kickUserId: 19996585 }
+    };
+
+    static USER_COLORS = [
+        '#53fc18', '#00e5ff', '#ff3366', '#ffb703',
+        '#a78bfa', '#f43f5e', '#38bdf8', '#4ade80',
+        '#fb923c', '#e879f9', '#2dd4bf', '#facc15'
+    ];
+
+    static HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+
+    static normalizeSlug(channel) {
+        return String(channel || '').toLowerCase().trim();
+    }
+
+    static escapeHtml(str) {
+        return str.replace(/[&<>"']/g, c => KickChatClient.HTML_ESCAPES[c]);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Channel resolution (shared by the menu preview and live clients)   */
+    /* ------------------------------------------------------------------ */
+
+    static CHANNEL_INFO = new Map();   // slug -> { channelId, chatroomId, kickUserId, subscriberBadges }
+    static CHANNEL_LOADS = new Map();  // slug -> in-flight Promise
+
+    static cachedChannelInfo(slug) {
+        if (this.CHANNEL_INFO.has(slug)) return this.CHANNEL_INFO.get(slug);
+        const cached = KickCache.get(`channel_${slug}`);
+        if (cached && cached.channelId && cached.chatroomId) {
+            this.CHANNEL_INFO.set(slug, cached);
+            return cached;
+        }
+        return null;
+    }
+
+    static fetchChannelInfo(slug) {
+        if (this.CHANNEL_LOADS.has(slug)) return this.CHANNEL_LOADS.get(slug);
+        const promise = (async () => {
+            const data = await KickApi.fetchJson(`https://kick.com/api/v2/channels/${encodeURIComponent(slug)}`);
+            if (!data || !(data.id || data.chatroom)) return null;
+            const info = {
+                channelId: data.id || (data.chatroom ? data.chatroom.channel_id : null),
+                chatroomId: data.chatroom ? data.chatroom.id : (data.id || null),
+                kickUserId: data.user_id || (data.user && data.user.id) || null,
+                subscriberBadges: Array.isArray(data.subscriber_badges)
+                    ? data.subscriber_badges.slice().sort((a, b) => a.months - b.months)
+                    : []
+            };
+            this.CHANNEL_INFO.set(slug, info);
+            KickCache.set(`channel_${slug}`, info, 24 * 60 * 60 * 1000);
+            console.log(`[Kick] Synced channel "${slug}": channel=${info.channelId} chatroom=${info.chatroomId} user=${info.kickUserId}`);
+            return info;
+        })().catch(e => {
+            console.warn('[Kick] Channel refresh error:', e);
+            return null;
+        }).finally(() => this.CHANNEL_LOADS.delete(slug));
+        this.CHANNEL_LOADS.set(slug, promise);
+        return promise;
+    }
+
+    static async resolveChannelInfo(channel) {
+        const slug = this.normalizeSlug(channel);
+        if (!slug) return null;
+        const cached = this.cachedChannelInfo(slug);
+        if (cached) return cached;
+        const info = await this.fetchChannelInfo(slug);
+        if (info) return info;
+
+        // Hardcoded fallback for known channels (e.g. rageylo) so OBS never breaks
+        const fallback = this.CHANNEL_DEFAULTS[slug];
+        if (fallback) {
+            console.warn(`[Kick] Using fallback data for "${slug}": channel=${fallback.channelId}`);
+            const info = { ...fallback, subscriberBadges: [] };
+            this.CHANNEL_INFO.set(slug, info);
+            return info;
+        }
+        return null;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Emote packs: one per channel, the streamer's active 7TV set.       */
+    /*  Names match exactly (case-sensitive); the same emote may exist in  */
+    /*  several packs, but packs never mix.                                */
+    /*  The set is downloaded once and cached; afterwards SevenTVEvents    */
+    /*  pushes each change, so there is no polling.                        */
+    /* ------------------------------------------------------------------ */
+
+    // slug -> { setId, sevenTvUserId, kickConnectionIndex, signature, emotes: Map<name, {url, zeroWidth}> }
+    static PACKS = new Map();
+    static PACK_LOADS = new Map();  // slug -> in-flight Promise
+    static EMPTY_PACK = Object.freeze({ setId: null, sevenTvUserId: null, kickConnectionIndex: null, signature: '', emotes: new Map() });
+    // A pack checked this recently is used as is (e.g. OBS reloading the scene) unless forced
+    static PACK_FRESH_MS = 10 * 60 * 1000;
+    // Kept for a week so the overlay still has emotes if 7TV's API is down when OBS reloads
+    static PACK_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+
+    static getPack(channel) {
+        const slug = this.normalizeSlug(channel);
+        if (!slug) return this.EMPTY_PACK;
+        let pack = this.PACKS.get(slug);
+        if (!pack) {
+            const cached = KickCache.get(`pack_${slug}`);
+            if (!cached || !Array.isArray(cached.emotes)) return this.EMPTY_PACK;
+            pack = {
+                setId: cached.setId || null,
+                sevenTvUserId: cached.sevenTvUserId || null,
+                kickConnectionIndex: Number.isInteger(cached.kickConnectionIndex) ? cached.kickConnectionIndex : null,
+                signature: cached.signature || '',
+                emotes: new Map(cached.emotes)
+            };
+            this.PACKS.set(slug, pack);
+        }
+        return pack;
+    }
+
+    static isPackFresh(slug) {
+        const checkedAt = KickCache.get(`pack_checked_${slug}`);
+        return typeof checkedAt === 'number' && Date.now() - checkedAt < this.PACK_FRESH_MS && this.PACKS.has(slug);
+    }
 
     /**
-     * Returns (cached) Promise resolving to:
-     *   { color: 'rgba()', paint: {background, color, filter}|null, badge: {type:'7tv', text, imageUrl}|null } | null
+     * Downloads the channel's whole active set in one request. Skipped when the cached pack was checked
+     * less than PACK_FRESH_MS ago, unless options.force (set switched, or live updates may have been missed).
      */
-    get7TVStyle(kickUserId) {
-        if (!kickUserId) return Promise.resolve(null);
-        const key = String(kickUserId);
-
-        // 1) In-memory active promise/value
-        if (this.sevenTvStyles.has(key)) return this.sevenTvStyles.get(key);
-
-        // 2) Check persistent localStorage cache
-        const cached = KickCache.get(`7tv_${key}`);
-        if (cached !== null) {
-            const resolvedValue = (cached && !cached.none) ? cached : null;
-            const p = Promise.resolve(resolvedValue);
-            this.sevenTvStyles.set(key, p);
-            return p;
-        }
-
-        // 3) Network query via 7TV GraphQL
-        const query = `{ userByConnection(platform: KICK, id: "${key}") { id username style { color badge { id name tooltip host { url files { name } } } paint { id name function color angle shape image_url repeat stops { at color } shadows { x_offset y_offset radius color } } } } }`;
+    static loadPack(channel, { kickUserId = null, force = false } = {}) {
+        const slug = this.normalizeSlug(channel);
+        if (!slug) return Promise.resolve(this.EMPTY_PACK);
+        if (this.PACK_LOADS.has(slug)) return this.PACK_LOADS.get(slug);
+        this.getPack(slug); // hydrate from localStorage before deciding
+        if (!force && this.isPackFresh(slug)) return Promise.resolve(this.getPack(slug));
 
         const promise = (async () => {
-            try {
-                const res = await fetch('https://7tv.io/v3/gql', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query })
-                });
-                if (!res.ok) {
-                    KickCache.set(`7tv_${key}`, { none: true }, 15 * 60 * 1000);
-                    return null;
-                }
-                const json = await res.json();
-                const user = json && json.data && json.data.userByConnection;
-                if (!user || /^0+$/.test(user.id || '') || user.username === '*DeletedUser') {
-                    // Cache absence of 7TV account for 1 hour to avoid repeated requests
-                    KickCache.set(`7tv_${key}`, { none: true }, 60 * 60 * 1000);
-                    return null;
-                }
+            const userId = kickUserId || ((await this.resolveChannelInfo(slug)) || {}).kickUserId;
+            if (!userId) return this.getPack(slug);
 
-                const style = user.style || {};
-                let badge = null;
-                if (style.badge && style.badge.host) {
-                    let hostUrl = style.badge.host.url || '';
-                    if (hostUrl.startsWith('//')) hostUrl = 'https:' + hostUrl;
-                    const files = (style.badge.host.files || []).map(f => f.name);
-                    const file = files.includes('2x.webp') ? '2x.webp' : (files[0] || '1x.webp');
-                    badge = {
-                        type: '7tv',
-                        text: style.badge.tooltip || style.badge.name || '7TV',
-                        imageUrl: `${hostUrl}/${file}`
-                    };
-                }
-
-                const outStyle = {
-                    color: style.color ? KickChatClient.intToRgba(style.color) : null,
-                    paint: KickChatClient.paintToCss(style.paint),
-                    badge
-                };
-
-                // Cache active 7TV style for 6 hours
-                KickCache.set(`7tv_${key}`, outStyle, 6 * 60 * 60 * 1000);
-                return outStyle;
-            } catch (e) {
-                return null;
+            const res = await fetch(`https://7tv.io/v3/users/kick/${encodeURIComponent(userId)}`);
+            if (res.status === 404) {
+                // The streamer has no 7TV account, so the channel has no 7TV emotes
+                return this.storePack(slug, { setId: null, sevenTvUserId: null, kickConnectionIndex: null }, []);
             }
-        })();
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const set = data && data.emote_set;
+            const connections = (data && data.user && Array.isArray(data.user.connections)) ? data.user.connections : [];
+            // A 7TV user can link Twitch and Kick with different active sets; only the Kick one matters here
+            const kickConnectionIndex = connections.findIndex(c => c.platform === 'KICK' && String(c.id) === String(data.id));
+            return this.storePack(slug, {
+                setId: set ? set.id : null,
+                sevenTvUserId: (data && data.user && data.user.id) || null,
+                kickConnectionIndex: kickConnectionIndex >= 0 ? kickConnectionIndex : null
+            }, set && Array.isArray(set.emotes) ? set.emotes : []);
+        })().catch(e => {
+            console.warn(`[7TV] Error cargando pack de emotes del canal "${slug}":`, e);
+            return this.getPack(slug);
+        }).finally(() => this.PACK_LOADS.delete(slug));
 
-        this.sevenTvStyles.set(key, promise);
+        this.PACK_LOADS.set(slug, promise);
         return promise;
+    }
+
+    /**
+     * "Actualizar caché" on the settings page: downloads the channel's Kick data (ids, subscriber
+     * badges) and its 7TV emote pack again, and marks the 7TV cosmetics as expired. If a download
+     * fails the cached copy stays in use. Resolves to { channel: bool, emotes: number }.
+     */
+    static async refreshCache(channel) {
+        const slug = this.normalizeSlug(channel);
+        if (!slug) return { channel: false, emotes: 0 };
+        SevenTVCosmetics.expireAll();
+        const info = await this.fetchChannelInfo(slug);
+        const pack = await this.loadPack(slug, { kickUserId: info && info.kickUserId, force: true });
+        return { channel: Boolean(info), emotes: pack.emotes.size };
+    }
+
+    // One pack entry from a 7TV active emote. em.name is the name inside the set (it can be an alias)
+    static packEntry(em) {
+        const flags = em.flags || 0;
+        const dataFlags = (em.data && em.data.flags) || 0;
+        return [em.name, {
+            url: `https://cdn.7tv.app/emote/${em.id}/2x.webp`,
+            zeroWidth: Boolean((flags & 1) || (dataFlags & 256))
+        }];
+    }
+
+    static storePack(slug, meta, rawEmotes) {
+        const entries = rawEmotes
+            .filter(em => em && em.name && em.id)
+            .map(em => KickChatClient.packEntry(em));
+        return this.savePack(slug, meta, entries);
+    }
+
+    static savePack(slug, meta, entries) {
+        KickCache.set(`pack_checked_${slug}`, Date.now(), this.PACK_CACHE_TTL);
+
+        const signature = KickChatClient.hashString(
+            `${meta.setId}|${entries.map(([name, e]) => `${name}=${e.url}${e.zeroWidth ? '~' : ''}`).join('\n')}`
+        );
+        const current = this.PACKS.get(slug);
+        if (current && current.signature === signature &&
+            current.sevenTvUserId === meta.sevenTvUserId && current.kickConnectionIndex === meta.kickConnectionIndex) {
+            return current;
+        }
+
+        const pack = {
+            setId: meta.setId,
+            sevenTvUserId: meta.sevenTvUserId,
+            kickConnectionIndex: meta.kickConnectionIndex,
+            signature,
+            emotes: new Map(entries)
+        };
+        this.PACKS.set(slug, pack);
+        KickCache.set(`pack_${slug}`, {
+            setId: pack.setId,
+            sevenTvUserId: pack.sevenTvUserId,
+            kickConnectionIndex: pack.kickConnectionIndex,
+            signature,
+            emotes: entries
+        }, entries.length ? this.PACK_CACHE_TTL : 30 * 60 * 1000);
+
+        if (!current || current.signature !== signature) {
+            console.log(`[7TV] Pack de emotes de #${slug} actualizado: ${entries.length} emotes (set ${pack.setId || 'ninguno'})`);
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('channel_emotes_loaded', {
+                    detail: { channel: slug, setId: pack.setId, count: entries.length }
+                }));
+            }
+        }
+        // The set or 7TV user may have changed: keep live-update subscriptions in step
+        if (typeof SevenTVEvents !== 'undefined') SevenTVEvents.sync();
+        return pack;
+    }
+
+    /**
+     * Applies an EventAPI "emote_set.update" change map (emotes added, removed, renamed) to every
+     * channel whose active set it is, without downloading the set again.
+     */
+    static applySetChanges(slug, body) {
+        const pack = this.getPack(slug);
+        if (!pack.setId || !body || body.id !== pack.setId) return;
+
+        const emotes = new Map(pack.emotes); // copy: messages being rendered keep the old map
+        let changed = false;
+        const remove = (old) => {
+            if (!old || !old.id) return;
+            const byName = emotes.get(old.name);
+            if (byName && byName.url.includes(`/emote/${old.id}/`)) {
+                emotes.delete(old.name);
+                changed = true;
+                return;
+            }
+            for (const [name, e] of emotes) {
+                if (e.url.includes(`/emote/${old.id}/`)) {
+                    emotes.delete(name);
+                    changed = true;
+                }
+            }
+        };
+        const add = (em) => {
+            if (!em || !em.name || !em.id) return;
+            const [name, entry] = KickChatClient.packEntry(em);
+            emotes.set(name, entry);
+            changed = true;
+        };
+
+        (body.pulled || []).forEach(c => { if (c.key === 'emotes') remove(c.old_value); });
+        (body.updated || []).forEach(c => {
+            if (c.key !== 'emotes') return;
+            remove(c.old_value);
+            add(c.value);
+        });
+        (body.pushed || []).forEach(c => { if (c.key === 'emotes') add(c.value); });
+
+        if (!changed) return;
+        console.log(`[7TV] Cambio en vivo en el set de #${slug}` +
+            `: +${(body.pushed || []).length} -${(body.pulled || []).length} ~${(body.updated || []).length}`);
+        this.savePack(slug, pack, Array.from(emotes.entries()));
+    }
+
+    /**
+     * Applies an EventAPI "user.update": when the streamer switches the active set of their Kick
+     * connection, the new set is downloaded (once).
+     */
+    static applyUserChanges(slug, body) {
+        const pack = this.getPack(slug);
+        if (!pack.sevenTvUserId || !body || body.id !== pack.sevenTvUserId) return;
+
+        for (const change of body.updated || []) {
+            if (change.key !== 'connections') continue;
+            if (pack.kickConnectionIndex !== null && Number.isInteger(change.index) && change.index !== pack.kickConnectionIndex) continue;
+            for (const field of Array.isArray(change.value) ? change.value : []) {
+                if (field.key !== 'emote_set' && field.key !== 'emote_set_id') continue;
+                const newSetId = field.key === 'emote_set_id' ? field.value : (field.value && field.value.id);
+                if ((newSetId || null) !== pack.setId) {
+                    console.log(`[7TV] #${slug} cambió de set activo: ${pack.setId} -> ${newSetId}`);
+                    this.loadPack(slug, { force: true });
+                    return;
+                }
+            }
+        }
+    }
+
+    /**
+     * Older versions cached packs as 'emotes_<slug>' (exact names, plus Kick sub emotes). Keep their 7TV
+     * part as this channel's pack so an existing OBS source still has emotes if 7TV can't be reached.
+     * The empty signature makes the next successful load replace it.
+     */
+    static migrateLegacyPacks() {
+        try {
+            const legacyPrefix = KickCache.PREFIX + 'emotes_';
+            const legacyKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith(legacyPrefix)) legacyKeys.push(k);
+            }
+            legacyKeys.forEach(k => {
+                const slug = k.slice(legacyPrefix.length);
+                try {
+                    const item = JSON.parse(localStorage.getItem(k));
+                    const entries = (item && Array.isArray(item.val) ? item.val : []).filter(([name, em]) =>
+                        name && em && typeof em.url === 'string' && em.url.startsWith('https://cdn.7tv.app/'));
+                    if (slug && entries.length && !KickCache.get(`pack_${slug}`)) {
+                        KickCache.set(`pack_${slug}`, { setId: null, signature: '', emotes: entries }, KickChatClient.PACK_CACHE_TTL);
+                    }
+                } catch (e) {}
+                localStorage.removeItem(k);
+            });
+        } catch (e) {}
+    }
+
+    // FNV-1a, enough to tell whether a pack changed without storing the whole list twice
+    static hashString(str) {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < str.length; i++) {
+            h ^= str.charCodeAt(i);
+            h = Math.imul(h, 0x01000193);
+        }
+        return (h >>> 0).toString(36) + ':' + str.length;
+    }
+
+    constructor(options = {}) {
+        super();
+        this.channelSlug = KickChatClient.normalizeSlug(options.channel) || 'rageylo';
+        this.channelId = null;
+        this.chatroomId = null;
+        this.kickUserId = null;
+
+        // Pusher configuration
+        this.pusherKey = options.pusherKey || '34bf7a0ff419a2a775b9';
+        this.pusherCluster = options.pusherCluster || 'us2';
+        this.ws = null;
+        this.socketId = null;
+        this.isConnected = false;
+        this.shouldReconnect = true;
+        this.initialized = false;
+        this.reconnectAttempts = 0;
+        this.reconnectTimeout = null;
+        this.pingInterval = null;
+        this.emoteRefreshInterval = null;
+
+        this.sevenTVEmotes = options.sevenTVEmotes !== false;
+
+        // Chat history: ids already shown (so a reconnect only adds what was missed) and
+        // live messages held back while the history request is in flight, to keep the order
+        this.seenMessageIds = new Set();
+        this.historyLoading = false;
+        this.pendingLive = [];
+
+        this.subscriberBadges = [];
+        this.subscriberBadgeUrls = new Map(); // months -> url
+
+        // Restore this channel's cached pack right away so the first messages already have emotes
+        if (this.sevenTVEmotes) KickChatClient.getPack(this.channelSlug);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Channel data (resolved once per client, not on every reconnect)    */
+    /* ------------------------------------------------------------------ */
+
+    applyChannelInfo(info) {
+        const moved = this.chatroomId !== null &&
+            (info.chatroomId !== this.chatroomId || info.channelId !== this.channelId);
+        this.channelId = info.channelId;
+        this.chatroomId = info.chatroomId;
+        this.kickUserId = info.kickUserId || null;
+        this.subscriberBadges = Array.isArray(info.subscriberBadges) ? info.subscriberBadges : [];
+        this.subscriberBadgeUrls.clear();
+        return moved;
+    }
+
+    async init() {
+        const slug = this.channelSlug;
+        let info = KickChatClient.cachedChannelInfo(slug);
+
+        if (info) {
+            // Stale-while-revalidate: if Kick moved the chatroom, reconnect to the new one
+            KickChatClient.fetchChannelInfo(slug).then(fresh => {
+                if (fresh && this.shouldReconnect && this.applyChannelInfo(fresh) && this.ws) this.ws.close();
+            });
+        } else {
+            info = await KickChatClient.resolveChannelInfo(slug);
+        }
+        if (!info) return false;
+
+        this.applyChannelInfo(info);
+        console.log(`[Kick] Channel "${slug}": channel=${this.channelId} chatroom=${this.chatroomId} user=${this.kickUserId}`);
+
+        if (this.sevenTVEmotes) {
+            KickChatClient.loadPack(slug, { kickUserId: this.kickUserId });
+            SevenTVEvents.watch(slug);
+            this.startEmoteRefresher();
+        }
+        this.initialized = true;
+        return true;
+    }
+
+    startEmoteRefresher() {
+        this.stopEmoteRefresher();
+        // Changes arrive live through SevenTVEvents; this hourly check is only a safety net
+        // in case an event was lost without the socket noticing
+        this.emoteRefreshInterval = setInterval(() => {
+            KickChatClient.loadPack(this.channelSlug, { kickUserId: this.kickUserId, force: true });
+        }, 60 * 60 * 1000);
+    }
+
+    stopEmoteRefresher() {
+        if (this.emoteRefreshInterval) {
+            clearInterval(this.emoteRefreshInterval);
+            this.emoteRefreshInterval = null;
+        }
+    }
+
+    get7TVStyle(kickUserId) {
+        return SevenTVCosmetics.get(kickUserId);
     }
 
     /* ------------------------------------------------------------------ */
@@ -560,10 +995,18 @@ class KickChatClient extends EventTarget {
     getSubscriberBadgeUrl(months = 1) {
         const list = this.subscriberBadges;
         if (!list || list.length === 0) return 'badges/subscriber.svg';
-        const exact = list.find(b => b.months === months);
-        const lower = list.slice().reverse().find(b => b.months < months);
-        const picked = exact || lower || list[0];
-        return (picked && picked.badge_image && (picked.badge_image.src || picked.badge_image.srcset)) || 'badges/subscriber.svg';
+        let url = this.subscriberBadgeUrls.get(months);
+        if (url) return url;
+
+        // list is sorted by months: take the highest tier reached, or the first tier
+        let picked = list[0];
+        for (const b of list) {
+            if (b.months <= months) picked = b;
+            else break;
+        }
+        url = (picked && picked.badge_image && (picked.badge_image.src || picked.badge_image.srcset)) || 'badges/subscriber.svg';
+        this.subscriberBadgeUrls.set(months, url);
+        return url;
     }
 
     mapKickBadges(rawBadges) {
@@ -573,6 +1016,18 @@ class KickChatClient extends EventTarget {
             .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
             .map(b => KickChatClient.mapKickBadge(b, this))
             .filter(Boolean);
+    }
+
+    // Kick's sub gifter badge tiers (gifted subs needed for each icon in badges/gift/)
+    static SUB_GIFTER_TIERS = [1, 5, 10, 25, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 2000, 3000, 4000, 5000];
+
+    static subGifterBadgeUrl(count) {
+        let tier = KickChatClient.SUB_GIFTER_TIERS[0];
+        for (const t of KickChatClient.SUB_GIFTER_TIERS) {
+            if (t <= count) tier = t;
+            else break;
+        }
+        return `badges/gift/gift-${tier}.svg`;
     }
 
     static mapKickBadge(b, ctx) {
@@ -599,14 +1054,8 @@ class KickChatClient extends EventTarget {
                     text: count ? `Subscriber (${count} meses)` : 'Subscriber',
                     imageUrl: ctx ? ctx.getSubscriberBadgeUrl(count || 1) : 'badges/subscriber.svg'
                 };
-            case 'sub_gifter': {
-                let url = 'badges/gift_blue.svg';
-                if (count >= 200) url = 'badges/gift_green.svg';
-                else if (count >= 100) url = 'badges/gift_yellow.svg';
-                else if (count >= 50) url = 'badges/gift_red.svg';
-                else if (count >= 25) url = 'badges/gift_mauve.svg';
-                return { type, text: `Sub Gifter (${count})`, imageUrl: url };
-            }
+            case 'sub_gifter':
+                return { type, text: `Sub Gifter (${count})`, imageUrl: KickChatClient.subGifterBadgeUrl(count) };
             default:
                 return null;
         }
@@ -622,34 +1071,41 @@ class KickChatClient extends EventTarget {
             detail: { channel: this.channelSlug, attempt: this.reconnectAttempts }
         }));
 
-        const resolved = await this.resolveChannel();
-        if (!resolved) {
-            this.dispatchEvent(new CustomEvent('error', {
-                detail: { message: `No se pudo encontrar el canal "${this.channelSlug}" en Kick.` }
-            }));
-            this.scheduleReconnect();
-            return;
+        if (!this.initialized) {
+            const ok = await this.init();
+            if (!this.shouldReconnect) return; // disconnected while resolving
+            if (!ok) {
+                console.error(`[Kick] Could not resolve channel "${this.channelSlug}".`);
+                this.dispatchEvent(new CustomEvent('error', {
+                    detail: { message: `No se pudo encontrar el canal "${this.channelSlug}" en Kick.` }
+                }));
+                this.scheduleReconnect();
+                return;
+            }
         }
 
-        this.loadEmotes();
-        this.startEmoteRefresher();
+        this.openSocket();
+    }
 
+    openSocket() {
+        this.closeSocket();
         const wsUrl = `wss://ws-${this.pusherCluster}.pusher.com/app/${this.pusherKey}?protocol=7&client=js&version=8.4.0-rc2&flash=false`;
 
         try {
-            if (this.ws) this.ws.close();
-            this.ws = new WebSocket(wsUrl);
+            const ws = new WebSocket(wsUrl);
+            this.ws = ws;
 
-            this.ws.onopen = () => {
+            ws.onopen = () => {
                 this.reconnectAttempts = 0;
                 this.startHeartbeat();
             };
-            this.ws.onmessage = (event) => this.handleMessage(event);
-            this.ws.onerror = (err) => {
+            ws.onmessage = (event) => this.handleMessage(event);
+            ws.onerror = (err) => {
                 console.error('[Kick] WebSocket error:', err);
                 this.dispatchEvent(new CustomEvent('error', { detail: { error: err } }));
             };
-            this.ws.onclose = (event) => {
+            ws.onclose = (event) => {
+                if (this.ws === ws) this.ws = null;
                 this.isConnected = false;
                 this.stopHeartbeat();
                 this.dispatchEvent(new CustomEvent('disconnected', { detail: event }));
@@ -659,6 +1115,16 @@ class KickChatClient extends EventTarget {
             console.error('[Kick] Error initiating WebSocket:', err);
             this.scheduleReconnect();
         }
+    }
+
+    closeSocket() {
+        if (!this.ws) return;
+        const ws = this.ws;
+        this.ws = null;
+        ws.onopen = ws.onmessage = ws.onerror = ws.onclose = null;
+        try {
+            ws.close();
+        } catch (e) {}
     }
 
     startHeartbeat() {
@@ -677,12 +1143,16 @@ class KickChatClient extends EventTarget {
         }
     }
 
+    // Never gives up: an OBS source has nobody watching to reload it, so it keeps retrying every minute at most
     scheduleReconnect() {
+        if (!this.shouldReconnect) return;
         if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
-        if (this.reconnectAttempts >= this.maxReconnectAttempts) return;
         this.reconnectAttempts++;
-        const delay = Math.min(2000 * Math.pow(1.5, this.reconnectAttempts - 1), 30000);
-        this.reconnectTimeout = setTimeout(() => this.connect(), delay);
+        const delay = Math.min(2000 * Math.pow(1.5, this.reconnectAttempts - 1), 60000);
+        this.reconnectTimeout = setTimeout(() => {
+            this.reconnectTimeout = null;
+            this.connect();
+        }, delay);
     }
 
     handleMessage(event) {
@@ -698,12 +1168,14 @@ class KickChatClient extends EventTarget {
                 this.dispatchEvent(new CustomEvent('connected', {
                     detail: { channel: this.channelSlug, channelId: this.channelId, chatroomId: this.chatroomId }
                 }));
+                this.loadHistory();
                 return;
             }
 
             if (evt === 'App\\Events\\ChatMessageEvent') {
                 const normalized = this.normalizeMessage(parse(packet.data));
-                this.dispatchEvent(new CustomEvent('message', { detail: normalized }));
+                if (this.historyLoading) this.pendingLive.push(normalized);
+                else this.emitMessage(normalized);
                 return;
             }
 
@@ -711,6 +1183,33 @@ class KickChatClient extends EventTarget {
                 const data = parse(packet.data);
                 const messageId = data?.message?.id || data?.id;
                 if (messageId) this.dispatchEvent(new CustomEvent('message_deleted', { detail: { messageId } }));
+                return;
+            }
+
+            // Kicks sent to the streamer and channel point rewards. Not checked against a live
+            // stream yet: the field names come from Kick's web client.
+            if (evt === 'KicksGifted' || evt === 'App\\Events\\KicksGifted') {
+                const data = parse(packet.data);
+                this.emitChannelEvent({
+                    kind: 'donation',
+                    username: data?.sender?.username,
+                    color: data?.sender?.username_color,
+                    title: data?.gift?.name || 'Kicks',
+                    amount: Number(data?.gift?.amount) || 0,
+                    text: data?.message || ''
+                });
+                return;
+            }
+
+            if (evt === 'RewardRedeemedEvent' || evt === 'App\\Events\\RewardRedeemedEvent') {
+                const data = parse(packet.data);
+                this.emitChannelEvent({
+                    kind: 'reward',
+                    username: data?.username,
+                    title: data?.reward_title || '',
+                    accent: data?.reward_background_color,
+                    text: data?.user_input || ''
+                });
                 return;
             }
 
@@ -747,20 +1246,17 @@ class KickChatClient extends EventTarget {
     /*  Message normalization                                              */
     /* ------------------------------------------------------------------ */
 
+    /**
+     * options.emotes: the channel's emote Map; when omitted, the pack of options.channel is used.
+     * 7TV emotes match the exact name, case included ("LUL" is not "lul").
+     */
     static parseContentToHtml(content, options = {}) {
         if (!content) return '';
 
-        const sevenTVEnabled = options.sevenTVEmotes !== false;
-        const targetChannel = (options.channel || 'rageylo').toLowerCase().trim();
-        const emotesMap = options.emotes || KickChatClient.getChannelEmotes(targetChannel);
-        const lowerMap = options.lowerMap || KickChatClient.getChannelLowerMap(targetChannel);
-
-        const escapeHtml = (str) => str
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+        const escapeHtml = KickChatClient.escapeHtml;
+        const emotesMap = options.sevenTVEmotes === false
+            ? null
+            : (options.emotes || KickChatClient.getPack(options.channel).emotes);
 
         // Tokenize: Kick native emotes become standalone tokens, rest split by whitespace
         const tokens = [];
@@ -774,7 +1270,7 @@ class KickChatClient extends EventTarget {
         }
         if (last < content.length) tokens.push({ text: content.slice(last) });
 
-        const out = [];      // { html, isEmote }
+        const out = [];      // { html, isEmote, space }
         const pushEmote = (html, zeroWidth) => {
             if (zeroWidth && out.length && out[out.length - 1].isEmote) {
                 const prev = out[out.length - 1];
@@ -786,35 +1282,30 @@ class KickChatClient extends EventTarget {
 
         tokens.forEach(tok => {
             if (tok.kick) {
-                pushEmote(`<img class="chat-emote" src="https://files.kick.com/emotes/${tok.kick.id}/fullsize" alt="${escapeHtml(tok.kick.name)}" title="${escapeHtml(tok.kick.name)}">`, false);
+                const name = escapeHtml(tok.kick.name);
+                pushEmote(`<img class="chat-emote" decoding="async" src="https://files.kick.com/emotes/${tok.kick.id}/fullsize" alt="${name}" title="${name}">`, false);
                 return;
             }
+            // split() with a capture group alternates words (even indexes) and whitespace runs (odd indexes)
             const parts = tok.text.split(/(\s+)/);
-            parts.forEach(part => {
-                if (part === '') return;
-                if (/^\s+$/.test(part)) {
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                if (part === '') continue;
+                if (i % 2 === 1) {
                     out.push({ html: part, isEmote: false, space: true });
-                    return;
+                    continue;
                 }
-                let em = null;
-                let emoteName = part;
-                if (sevenTVEnabled && emotesMap) {
-                    if (emotesMap.has(part)) {
-                        em = emotesMap.get(part);
-                    } else if (lowerMap && lowerMap.has(part.toLowerCase())) {
-                        emoteName = lowerMap.get(part.toLowerCase());
-                        em = emotesMap.get(emoteName);
-                    }
-                }
+                const em = emotesMap ? emotesMap.get(part) : undefined;
                 if (em) {
                     if (em.zeroWidth && out.length >= 2 && out[out.length - 1].space && out[out.length - 2].isEmote) {
                         out.pop();
                     }
-                    pushEmote(`<img class="chat-emote" src="${em.url}" alt="${escapeHtml(emoteName)}" title="${escapeHtml(emoteName)}">`, em.zeroWidth);
+                    const name = escapeHtml(part);
+                    pushEmote(`<img class="chat-emote" decoding="async" src="${em.url}" alt="${name}" title="${name}">`, em.zeroWidth);
                 } else {
                     out.push({ html: escapeHtml(part), isEmote: false });
                 }
-            });
+            }
         });
 
         return out.map(o => o.html).join('');
@@ -823,10 +1314,69 @@ class KickChatClient extends EventTarget {
     parseContentToHtml(content) {
         return KickChatClient.parseContentToHtml(content, {
             sevenTVEmotes: this.sevenTVEmotes,
-            emotes: this.emotes,
-            lowerMap: this.lowerEmoteMap,
             channel: this.channelSlug
         });
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Chat history                                                       */
+    /* ------------------------------------------------------------------ */
+
+    // Kick's API returns the channel's latest messages (25, newest first). Loading them on every
+    // connect fills the overlay at start-up and recovers what was missed while reconnecting.
+    static HISTORY_TIMEOUT_MS = 5000;
+
+    async loadHistory() {
+        if (!this.channelId || this.historyLoading) return;
+        this.historyLoading = true;
+
+        let data = null;
+        try {
+            const timeout = new Promise(resolve => setTimeout(resolve, KickChatClient.HISTORY_TIMEOUT_MS, null));
+            data = await Promise.race([
+                KickApi.fetchJson(`https://kick.com/api/v2/channels/${this.channelId}/messages`),
+                timeout
+            ]);
+        } catch (e) {
+            console.warn('[Kick] History request failed:', e);
+        }
+        if (!this.shouldReconnect) return; // client was closed meanwhile
+
+        const list = data && data.data && Array.isArray(data.data.messages) ? data.data.messages : [];
+        list.slice().reverse().forEach(raw => {
+            if (raw && raw.sender) this.emitMessage(this.normalizeMessage(raw), true);
+        });
+
+        // Live messages that arrived meanwhile go after the history, minus any it already had
+        this.historyLoading = false;
+        const queued = this.pendingLive;
+        this.pendingLive = [];
+        queued.forEach(msg => this.emitMessage(msg));
+    }
+
+    // Donations and rewards can arrive on more than one subscribed channel: the same one within
+    // two seconds is sent once
+    emitChannelEvent(detail) {
+        if (!detail.username) return;
+        const key = `${detail.kind}:${detail.username}:${detail.title}:${detail.amount || 0}:${detail.text}`;
+        const now = Date.now();
+        this.recentChannelEvents = (this.recentChannelEvents || []).filter(e => now - e.t < 2000);
+        if (this.recentChannelEvents.some(e => e.key === key)) return;
+        this.recentChannelEvents.push({ key, t: now });
+        this.dispatchEvent(new CustomEvent('channel_event', {
+            detail: { ...detail, id: `${detail.kind}-${now}-${Math.random().toString(36).slice(2, 6)}`, createdAt: new Date().toISOString() }
+        }));
+    }
+
+    // Sends a message to the overlay once: history and the live socket can both deliver it
+    emitMessage(msg, isHistory = false) {
+        if (this.seenMessageIds.has(msg.id)) return;
+        this.seenMessageIds.add(msg.id);
+        if (this.seenMessageIds.size > 1000) {
+            this.seenMessageIds.delete(this.seenMessageIds.values().next().value);
+        }
+        if (isHistory) msg.isHistory = true;
+        this.dispatchEvent(new CustomEvent('message', { detail: msg }));
     }
 
     normalizeMessage(data) {
@@ -855,11 +1405,7 @@ class KickChatClient extends EventTarget {
     }
 
     generateUserColor(username) {
-        const colors = [
-            '#53fc18', '#00e5ff', '#ff3366', '#ffb703',
-            '#a78bfa', '#f43f5e', '#38bdf8', '#4ade80',
-            '#fb923c', '#e879f9', '#2dd4bf', '#facc15'
-        ];
+        const colors = KickChatClient.USER_COLORS;
         let hash = 0;
         for (let i = 0; i < username.length; i++) {
             hash = username.charCodeAt(i) + ((hash << 5) - hash);
@@ -871,21 +1417,23 @@ class KickChatClient extends EventTarget {
         this.shouldReconnect = false;
         this.stopHeartbeat();
         this.stopEmoteRefresher();
-        if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
+        SevenTVEvents.unwatch(this.channelSlug);
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
         }
+        this.closeSocket();
         this.isConnected = false;
     }
 }
 
 if (typeof window !== 'undefined') {
     window.KickCache = KickCache;
+    window.KickApi = KickApi;
+    window.SevenTVCosmetics = SevenTVCosmetics;
+    window.SevenTVEvents = SevenTVEvents;
     window.KickChatClient = KickChatClient;
-    try {
-        KickChatClient.initEmoteStore();
-    } catch (e) {
-        console.warn('initEmoteStore error:', e);
-    }
+    KickChatClient.migrateLegacyPacks();
+    // Flush the debounced cosmetics cache when OBS or the browser closes the page
+    window.addEventListener('pagehide', () => SevenTVCosmetics.persist());
 }

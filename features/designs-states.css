@@ -1,0 +1,106 @@
+/* ==========================================================================
+   Holy Chat - how each style shows a mention (Resaltar menciones) and a donation /
+   reward row. The card keeps its own background, border and text color: an inset
+   shadow paints a tint between the background and the text, plus a ring. The parts
+   that sit outside the card (tags, tabs, tails) get the same color by hand.
+   ========================================================================== */
+
+.has-design {
+    --mention-tint: rgba(239, 68, 68, 0.3);
+}
+
+/* Light cards: a softer tint, so the dark text keeps its contrast */
+.design-white,
+.design-whatschat,
+.design-sky,
+.design-pastelpop,
+.design-frutigeraero {
+    --mention-tint: rgba(239, 68, 68, 0.22);
+}
+
+.has-design .chatterino-line.highlight {
+    box-shadow: inset 0 0 0 100vmax var(--mention-tint), inset 0 0 0 2px var(--chatterino-highlight-border),
+        var(--card-shadow, 0 0 transparent);
+}
+
+.has-design .chatterino-line.chat-event {
+    box-shadow: inset 0 0 0 100vmax rgba(83, 252, 24, 0.16), inset 4px 0 0 var(--event-accent, #53fc18),
+        var(--card-shadow, 0 0 transparent);
+    box-shadow: inset 0 0 0 100vmax color-mix(in srgb, var(--event-accent, #53fc18) 18%, transparent),
+        inset 4px 0 0 var(--event-accent, #53fc18), var(--card-shadow, 0 0 transparent);
+}
+
+/* ---------- Burbujas: the black name tag ---------- */
+.design-bubbles .highlight .chat-head {
+    background: #4a1414;
+    box-shadow: 0 0 0 2px var(--chatterino-highlight-border);
+}
+
+.design-bubbles .chat-event .chat-head {
+    box-shadow: 0 0 0 2px var(--event-accent, #53fc18);
+}
+
+/* ---------- Redondeado: the tab over the top-right edge ---------- */
+.design-rounded .highlight .chat-head {
+    background: linear-gradient(var(--mention-tint), var(--mention-tint)), rgba(24, 24, 30, 0.96);
+    box-shadow: inset 2px 2px 0 var(--chatterino-highlight-border), inset -2px 0 0 var(--chatterino-highlight-border);
+}
+
+.design-rounded .chat-event .chat-head {
+    box-shadow: inset 2px 2px 0 var(--event-accent, #53fc18), inset -2px 0 0 var(--event-accent, #53fc18);
+}
+
+/* ---------- Cielo: the box's border and the centered name tag ---------- */
+.design-sky .chatterino-line.highlight,
+.design-sky .highlight .chat-head {
+    border-color: var(--chatterino-highlight-border);
+}
+
+.design-sky .highlight .chat-head {
+    background: #ffd6d6;
+}
+
+.design-sky .chatterino-line.chat-event,
+.design-sky .chat-event .chat-head {
+    border-color: var(--event-accent, #53fc18);
+}
+
+/* ---------- Pastel pop: each bubble's colored border ---------- */
+.design-pastelpop .chatterino-line.highlight {
+    border-color: var(--chatterino-highlight-border);
+}
+
+.design-pastelpop .chatterino-line.chat-event {
+    border-color: var(--event-accent, #53fc18);
+}
+
+/* ---------- Mensajería: the tail takes the tinted bubble's color ---------- */
+.design-whatschat .chatterino-line.highlight::before {
+    border-top-color: #fbd6d6;
+}
+
+.design-whatschat .chatterino-line.chat-event::before {
+    border-top-color: #e0fed5;
+    border-top-color: color-mix(in srgb, var(--event-accent, #53fc18) 18%, #ffffff);
+}
+
+/* ---------- Mínimo: the thin rule turns red ---------- */
+.design-minimal .chatterino-line.highlight {
+    border-left-color: var(--chatterino-highlight-border);
+}
+
+.design-minimal .chatterino-line.chat-event {
+    border-left-color: var(--event-accent, #53fc18);
+}
+
+/* ---------- Text-only styles on the light theme: dark text, no white on white ---------- */
+.theme-light.design-side,
+.theme-light.design-streamline,
+.theme-light.design-transparent,
+.theme-light.design-minimal {
+    --design-text: #18181b;
+}
+
+.theme-light.design-minimal .chat-text {
+    text-shadow: none;
+}

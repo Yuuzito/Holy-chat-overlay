@@ -1,0 +1,179 @@
+/* ==========================================================================
+   Holy Chat - entry animations, message direction, chat background, time,
+   Kick icon and donation / reward rows
+   ========================================================================== */
+
+/* ---------- Entry animations (Slide and Fade live in overlay.css) ---------- */
+@keyframes msgPopInBig {
+    0% { opacity: 0; transform: scale(0.6); }
+    70% { opacity: 1; transform: scale(1.04); }
+    100% { transform: scale(1); }
+}
+
+@keyframes msgBounceIn {
+    0% { opacity: 0; transform: translateY(40px); }
+    50% { opacity: 1; transform: translateY(-8px); }
+    70% { transform: translateY(4px); }
+    85% { transform: translateY(-2px); }
+    100% { transform: translateY(0); }
+}
+
+@keyframes msgZoomIn {
+    from { opacity: 0; transform: scale(0.2); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes msgFlipIn {
+    from { opacity: 0; transform: perspective(500px) rotateX(-90deg); }
+    to { opacity: 1; transform: perspective(500px) rotateX(0); }
+}
+
+@keyframes msgRotateIn {
+    from { opacity: 0; transform: rotate(-120deg) scale(0.6); }
+    to { opacity: 1; transform: rotate(0) scale(1); }
+}
+
+@keyframes msgSwingIn {
+    0% { opacity: 0; transform: rotate(-12deg); }
+    40% { opacity: 1; transform: rotate(8deg); }
+    65% { transform: rotate(-4deg); }
+    85% { transform: rotate(2deg); }
+    100% { transform: rotate(0); }
+}
+
+@keyframes msgRollIn {
+    from { opacity: 0; transform: translateX(-100%) rotate(-120deg); }
+    to { opacity: 1; transform: translateX(0) rotate(0); }
+}
+
+.chatterino-line.anim-pop {
+    animation: msgPopInBig 0.35s ease-out;
+}
+
+.chatterino-line.anim-bounce {
+    animation: msgBounceIn 0.7s ease-out;
+}
+
+.chatterino-line.anim-zoom {
+    animation: msgZoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chatterino-line.anim-flip {
+    animation: msgFlipIn 0.45s ease-out;
+    transform-origin: top center;
+}
+
+.chatterino-line.anim-rotate {
+    animation: msgRotateIn 0.45s ease-out;
+    transform-origin: center;
+}
+
+.chatterino-line.anim-swing {
+    animation: msgSwingIn 0.7s ease-out;
+    transform-origin: top left;
+}
+
+.chatterino-line.anim-roll {
+    animation: msgRollIn 0.55s ease-out;
+}
+
+/* New messages on top: "Deslizar" comes from above */
+@keyframes msgSlideInTop {
+    from { opacity: 0; transform: translateY(-14px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dir-top .chatterino-line.anim-slide {
+    animation-name: msgSlideInTop;
+}
+
+/* Scattered messages always pop in, whatever the animation */
+.layout-scatter .chatterino-line[class*="anim-"]:not(.leaving) {
+    animation: msgPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Leaving after "Desaparecen después de": the newer animations shrink and fade out */
+@keyframes msgShrinkOut {
+    to { opacity: 0; transform: scale(0.85); }
+}
+
+.chatterino-line.leave-pop,
+.chatterino-line.leave-bounce,
+.chatterino-line.leave-zoom,
+.chatterino-line.leave-flip,
+.chatterino-line.leave-rotate,
+.chatterino-line.leave-swing,
+.chatterino-line.leave-roll {
+    animation: msgShrinkOut 0.3s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chatterino-line[class*="anim-"]:not(.leaving) {
+        animation: msgFadeIn 0.2s ease-out !important;
+    }
+}
+
+/* ---------- Dirección: new messages on top, older ones pushed down ---------- */
+.layout-vertical.dir-top {
+    justify-content: flex-start;
+}
+
+.layout-vertical.dir-top .chatterino-messages {
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+}
+
+/* ---------- Color de fondo: replaces the theme's background, alpha included ---------- */
+.chatterino-window.has-widget-bg,
+.chatterino-window.has-widget-bg .chatterino-chat-area {
+    background-color: var(--widget-bg) !important;
+}
+
+html.mode-overlay body:has(.has-widget-bg) {
+    background-color: transparent !important;
+}
+
+/* ---------- Kick icon before the name ---------- */
+.chat-platform-icon {
+    width: var(--badge-size, 18px);
+    height: var(--badge-size, 18px);
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+/* ---------- Donations (Kicks) and channel point rewards ----------
+   The Chatterino look gets a stripe and a tint; the other styles tint their own card
+   (features/designs-states.css) */
+.chatterino-window:not(.has-design) .chatterino-line.chat-event {
+    border-left: 3px solid var(--event-accent, #53fc18);
+    background: rgba(83, 252, 24, 0.12);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--event-accent, #53fc18) 22%, transparent), transparent);
+}
+
+.chatterino-line.event-donation {
+    --event-accent: #53fc18;
+}
+
+.chat-event-icon {
+    margin-right: 5px;
+}
+
+.chat-event-action {
+    font-weight: 600;
+    opacity: 0.85;
+}
+
+.chatterino-line.chat-event .chat-text {
+    display: block;
+    margin-top: 2px;
+}
+
+.layout-horizontal .chatterino-line.chat-event .chat-text {
+    display: inline;
+    margin-left: 6px;
+}
+
+/* Hidden by Donaciones / Recompensas (only the test chat keeps these rows) */
+.chatterino-line.chat-event.filtered {
+    display: none;
+}

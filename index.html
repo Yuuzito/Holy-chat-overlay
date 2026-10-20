@@ -1,206 +1,440 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="mode-menu">
 
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Joseo chat overlay</title>
-    <link rel="stylesheet" href="overlay.css">
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2353fc18'><path d='M4 3h5v6.5L14.5 3H20l-6.8 7.5L20 21h-5.5L9 12.5V21H4V3z'/></svg>">
+    <script>
+        // Pick the mode before the first paint so OBS never flashes the settings panels
+        (function () {
+            var q = new URLSearchParams(location.search);
+            if (q.get('overlay') === 'true' && q.get('menu') !== 'true') {
+                document.documentElement.className = 'mode-overlay';
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Loaded without blocking the first paint; the system font shows until the web fonts arrive -->
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Manrope:wght@400;500;600;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <title>Holy Chat</title>
+    <link rel="stylesheet" href="overlay.css?v=37">
+    <link rel="stylesheet" href="features/designs-base.css?v=5">
+    <link rel="stylesheet" href="features/designs-extra.css?v=3">
+    <link rel="stylesheet" href="features/chat-options.css?v=2">
+    <link rel="stylesheet" href="features/designs-os.css?v=5">
+    <link rel="stylesheet" href="features/designs-aero.css?v=3">
+    <link rel="stylesheet" href="features/designs-states.css?v=2">
+    <link rel="icon" type="image/png" href="holychat-logo.png">
 </head>
 
 <body>
+    <div class="hc-app">
 
-    <!-- Initial Menu (Exact options from Matin Aniss Joseo chat Overlay) -->
-    <div id="initialMenu" class="menu-wrapper">
-        <button class="menu-close-btn hidden" id="menuCloseBtn" title="Cerrar y volver al overlay">&times;</button>
+        <!-- Left panel: settings -->
+        <aside class="hc-config" id="initialMenu" aria-label="Configuración">
+            <div class="hc-config-scroll">
+                <header class="hc-brand">
+                    <img class="hc-brand-logo" src="holychat-logo.png" alt="" width="150" height="150">
+                    <div>
+                        <h1>Holy Chat</h1>
+                        <p>Overlay de chat de Kick para OBS · Hecho con
+                            <img src="badges/rlove.webp" alt="Rlove" title="Rlove" class="hc-brand-emote"> por Yuuzito ·
+                            No afiliado con Kick</p>
+                    </div>
+                </header>
 
-        <h1 class="menu-title">Joseo chat overlay</h1>
-        <div class="menu-subtitle">
-            Hecho con <img src="badges/rlove.webp"
-                onerror="this.src='https://cdn.7tv.app/emote/01HK6RMJ380009PKX0NCN3SHG1/2x.webp'" alt="Rlove"
-                title="Rlove" style="width: 24px; height: 24px; object-fit: contain; vertical-align: middle;"> por
-            Yuuzito
-        </div>
-        <div class="menu-disclaimer">No afiliado con kick</div>
+                <details class="hc-group hc-disclosure hc-collapsible" open>
+                    <summary class="hc-group-title">
+                        <span>Presets</span>
+                        <span class="hc-rule" aria-hidden="true"></span>
+                        <span class="hc-val"></span>
+                        <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </summary>
+                    <div class="hc-disclosure-body">
+                        <!-- Name of the preset that matches the settings, for the category title -->
+                        <output id="presetCurrent" data-summary hidden></output>
+                        <div class="hc-preset-grid" id="presetGrid"><!-- Buttons come from PRESETS in app.js --></div>
+                    </div>
+                </details>
 
-        <form class="menu-form" id="configForm" onsubmit="return false;">
-            <!-- Row 1: 7 options -->
-            <div class="menu-row">
-                <div class="menu-field">
-                    <label class="menu-label" for="cfgChannel">Nombre canal:</label>
-                    <input type="text" id="cfgChannel" class="menu-pill-input" value="rageylo" spellcheck="false"
-                        autocomplete="off">
-                </div>
+                <section class="hc-channel-hero">
+                    <label class="hc-channel-label" for="cfgChannel">Tu canal de Kick</label>
+                    <label class="hc-channel hc-channel-lg" for="cfgChannel">
+                        <input id="cfgChannel" type="text" value="rageylo" spellcheck="false" autocomplete="off"
+                            placeholder="tu canal" aria-label="Nombre del canal">
+                    </label>
+                </section>
 
-                <div class="menu-field">
-                    <label class="menu-label" for="cfg7tvCosmetics">7TV Cosmetics:</label>
-                    <input type="checkbox" id="cfg7tvCosmetics" class="menu-checkbox" checked>
-                </div>
+                <details class="hc-group hc-disclosure hc-collapsible" data-summary-empty="Desactivado">
+                    <summary class="hc-group-title">
+                        <span>Menciones</span>
+                        <span class="hc-rule" aria-hidden="true"></span>
+                        <span class="hc-val"></span>
+                        <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </summary>
+                    <div class="hc-disclosure-body">
+                        <label class="hc-switch" for="cfgMentionHighlight">
+                            <span>Resaltar menciones<small>Pone en rojo los mensajes que nombran al streamer</small></span>
+                            <input id="cfgMentionHighlight" data-summary="Resaltadas" type="checkbox" role="switch" checked>
+                        </label>
+                    </div>
+                </details>
 
-                <div class="menu-field">
-                    <label class="menu-label" for="cfg7tvEmotes">7TV Emotes:</label>
-                    <input type="checkbox" id="cfg7tvEmotes" class="menu-checkbox" checked>
-                </div>
+                <details class="hc-group hc-disclosure hc-collapsible" data-summary-empty="Desactivado">
+                    <summary class="hc-group-title">
+                        <span>7TV</span>
+                        <span class="hc-rule" aria-hidden="true"></span>
+                        <span class="hc-val"></span>
+                        <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </summary>
+                    <div class="hc-disclosure-body">
+                        <label class="hc-switch" for="cfg7tvEmotes">
+                            <span>Emotes 7TV<small>Solo los del paquete del canal</small></span>
+                            <input id="cfg7tvEmotes" data-summary="Emotes" type="checkbox" role="switch" checked>
+                        </label>
+                        <label class="hc-switch" for="cfg7tvCosmetics">
+                            <span>Cosméticos 7TV<small>Pinturas de nombre y badge</small></span>
+                            <input id="cfg7tvCosmetics" data-summary="Cosméticos" type="checkbox" role="switch" checked>
+                        </label>
+                    </div>
+                </details>
 
-                <div class="menu-field">
-                    <label class="menu-label" for="cfgTheme">Tema:</label>
-                    <select id="cfgTheme" class="menu-pill-select">
-                        <option value="dark" selected>Dark</option>
-                        <option value="transparent">Transparent</option>
-                        <option value="light">Light</option>
-                    </select>
-                </div>
+                <details class="hc-group hc-disclosure hc-collapsible">
+                    <summary class="hc-group-title">
+                        <span>Diseño</span>
+                        <span class="hc-rule" aria-hidden="true"></span>
+                        <span class="hc-val"></span>
+                        <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </summary>
+                    <div class="hc-disclosure-body">
+                        <div class="hc-field">
+                            <div class="hc-field-head"><label for="cfgDesign">Estilo</label></div>
+                            <div class="hc-select">
+                                <select id="cfgDesign" data-summary aria-describedby="designNote"><!-- Options come from DESIGNS in features/catalog.js --></select>
+                            </div>
+                            <small class="hc-hint hidden" id="designNote"></small>
+                        </div>
 
-                <div class="menu-field">
-                    <label class="menu-label" for="cfgTextShadow">Sombra de texto:</label>
-                    <select id="cfgTextShadow" class="menu-pill-select">
-                        <option value="none">None</option>
-                        <option value="small" selected>Small</option>
-                        <option value="medium">Medium</option>
-                        <option value="large">Large</option>
-                    </select>
-                </div>
+                        <details class="hc-disclosure">
+                            <summary>
+                                <span>Tamaños</span>
+                                <span class="hc-val" id="sizesSummary"></span>
+                                <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                            </summary>
+                            <div class="hc-disclosure-body">
+                                <div class="hc-field">
+                                    <div class="hc-field-head"><label for="cfgTextSize">Texto</label><output class="hc-val" for="cfgTextSize" data-summary></output></div>
+                                    <input class="hc-slider" id="cfgTextSize" type="range" min="10" max="60" step="1" value="14">
+                                    <div class="hc-ticks" data-for="cfgTextSize"></div>
+                                </div>
 
-                <div class="menu-field">
-                    <label class="menu-label" for="cfgTextSize">Tamaño texto:</label>
-                    <select id="cfgTextSize" class="menu-pill-select">
-                        <option value="small">Small</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="large">Large</option>
-                    </select>
-                </div>
+                                <div class="hc-field">
+                                    <div class="hc-field-head"><label for="cfgEmoteSize">Emotes</label><output class="hc-val" for="cfgEmoteSize" data-summary></output></div>
+                                    <input class="hc-slider" id="cfgEmoteSize" type="range" min="16" max="64" step="2" value="28" data-ticks="16,28,40,52,64">
+                                    <div class="hc-ticks" data-for="cfgEmoteSize"></div>
+                                </div>
 
-                <div class="menu-field">
-                    <label class="menu-label" for="cfgAnimation">Animación:</label>
-                    <select id="cfgAnimation" class="menu-pill-select">
-                        <option value="none" selected>None</option>
-                        <option value="slide">Slide</option>
-                        <option value="fade">Fade</option>
-                    </select>
-                </div>
+                                <div class="hc-field">
+                                    <div class="hc-field-head"><label for="cfgBadgeSize">Badges</label><output class="hc-val" for="cfgBadgeSize" data-summary></output></div>
+                                    <input class="hc-slider" id="cfgBadgeSize" type="range" min="12" max="40" step="2" value="18" data-ticks="12,18,24,32,40">
+                                    <div class="hc-ticks" data-for="cfgBadgeSize"></div>
+                                </div>
+                            </div>
+                        </details>
+
+                        <div class="hc-field">
+                            <div class="hc-field-head"><label for="cfgTheme">Tema</label><output class="hc-val" for="cfgTheme" data-summary></output></div>
+                            <input class="hc-slider" id="cfgTheme" type="range" min="0" max="2" step="1" value="0" data-steps="theme">
+                            <div class="hc-ticks" data-for="cfgTheme"></div>
+                        </div>
+
+                        <div class="hc-field">
+                            <div class="hc-field-head"><label for="cfgAnimation">Animación</label></div>
+                            <div class="hc-select">
+                                <select id="cfgAnimation" data-summary><!-- Options come from ANIMATIONS in features/catalog.js --></select>
+                            </div>
+                        </div>
+
+                        <div class="hc-field">
+                            <div class="hc-field-head"><label for="cfgFadeTime">Desaparecen después de</label><output class="hc-val" for="cfgFadeTime" data-summary></output></div>
+                            <input class="hc-slider" id="cfgFadeTime" type="range" min="0" max="9" step="1" value="9" data-steps="fadeTime" data-ticks="0,3,6,9">
+                            <div class="hc-ticks" data-for="cfgFadeTime"></div>
+                        </div>
+
+                        <div class="hc-field">
+                            <div class="hc-field-head"><label for="cfgLayout">Disposición</label><output class="hc-val" for="cfgLayout" data-summary></output></div>
+                            <input class="hc-slider" id="cfgLayout" type="range" min="0" max="2" step="1" value="0" data-steps="layout">
+                            <div class="hc-ticks" data-for="cfgLayout"></div>
+                        </div>
+
+                        <div class="hc-field" id="fieldDirection">
+                            <div class="hc-field-head"><label for="cfgDirection">Mensajes nuevos</label><output class="hc-val" for="cfgDirection"></output></div>
+                            <input class="hc-slider" id="cfgDirection" type="range" min="0" max="1" step="1" value="0" data-steps="direction">
+                            <div class="hc-ticks" data-for="cfgDirection"></div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="hc-group hc-disclosure hc-collapsible">
+                    <summary class="hc-group-title">
+                        <span>Diseño de texto</span>
+                        <span class="hc-rule" aria-hidden="true"></span>
+                        <span class="hc-val"></span>
+                        <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </summary>
+                    <div class="hc-disclosure-body">
+                        <div class="hc-field">
+                            <div class="hc-field-head"><label for="cfgFont">Fuente</label></div>
+                            <div class="hc-select">
+                                <select id="cfgFont" data-summary><!-- Options come from FONTS in app.js --></select>
+                            </div>
+                        </div>
+
+                        <div class="hc-field">
+                            <div class="hc-field-head"><label for="cfgFontWeight">Grosor</label><output class="hc-val" for="cfgFontWeight" data-summary></output></div>
+                            <input class="hc-slider" id="cfgFontWeight" type="range" min="0" max="4" step="1" value="3" data-steps="fontWeight">
+                            <div class="hc-ticks" data-for="cfgFontWeight"></div>
+                        </div>
+
+                        <div class="hc-field">
+                            <div class="hc-field-head"><label for="cfgTextShadow">Sombra</label><output class="hc-val" for="cfgTextShadow" data-summary></output></div>
+                            <input class="hc-slider" id="cfgTextShadow" type="range" min="0" max="6" step="1" value="1" data-steps="shadow">
+                            <div class="hc-ticks" data-for="cfgTextShadow"></div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="hc-group hc-disclosure hc-collapsible" data-summary-empty="Sin fondo ni banner">
+                    <summary class="hc-group-title">
+                        <span>Fondo y banner</span>
+                        <span class="hc-rule" aria-hidden="true"></span>
+                        <span class="hc-val"></span>
+                        <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </summary>
+                    <div class="hc-disclosure-body">
+                        <div class="hc-field">
+                            <div class="hc-field-head"><label for="cfgBgAlpha">Color de fondo del chat</label><output class="hc-val" for="cfgBgAlpha"></output></div>
+                            <div class="hc-color-row">
+                                <input class="hc-color" id="cfgBgColor" type="color" value="#000000" aria-label="Color de fondo">
+                                <input class="hc-slider" id="cfgBgAlpha" type="range" min="0" max="100" step="1" value="0" data-unit=" %" data-ticks="0,25,50,75,100" aria-label="Opacidad del fondo">
+                            </div>
+                            <div class="hc-ticks" data-for="cfgBgAlpha"></div>
+                            <small class="hc-hint">En 0 % no hay fondo y se usa el del tema</small>
+                        </div>
+                        <label class="hc-switch" for="cfgTextBg">
+                            <span>Fondo de texto<small>Caja oscura detrás de cada mensaje</small></span>
+                            <input id="cfgTextBg" data-summary="Fondo" type="checkbox" role="switch">
+                        </label>
+                        <div class="hc-field" id="fieldTextBgWidth">
+                            <div class="hc-field-head"><label for="cfgTextBgWidth">Ancho del fondo</label><output class="hc-val" for="cfgTextBgWidth" data-summary data-summary-if="cfgTextBg"></output></div>
+                            <input class="hc-slider" id="cfgTextBgWidth" type="range" min="0" max="1" step="1" value="0" data-steps="textBgWidth">
+                            <div class="hc-ticks" data-for="cfgTextBgWidth"></div>
+                        </div>
+                        <label class="hc-switch" for="cfgPinnedBanner">
+                            <span>Banner de mensaje fijado<small>Muestra el pin del canal arriba</small></span>
+                            <input id="cfgPinnedBanner" data-summary="Banner" type="checkbox" role="switch">
+                        </label>
+                    </div>
+                </details>
+
+                <details class="hc-group hc-disclosure hc-collapsible" data-summary-empty="Solo mensajes">
+                    <summary class="hc-group-title">
+                        <span>Mensajes</span>
+                        <span class="hc-rule" aria-hidden="true"></span>
+                        <span class="hc-val"></span>
+                        <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </summary>
+                    <div class="hc-disclosure-body">
+                        <label class="hc-switch" for="cfgTimestamps">
+                            <span>Mostrar hora<small>La hora del mensaje (HH:MM) antes del nombre</small></span>
+                            <input id="cfgTimestamps" data-summary="Hora" type="checkbox" role="switch">
+                        </label>
+                        <label class="hc-switch" for="cfgPlatformIcon">
+                            <span>Icono de Kick<small>Una K verde antes de las badges</small></span>
+                            <input id="cfgPlatformIcon" data-summary="Icono" type="checkbox" role="switch">
+                        </label>
+                        <div class="hc-field" id="fieldEvents">
+                            <label class="hc-switch" for="cfgDonations">
+                                <span>Donaciones<small>Cuando alguien envía Kicks</small></span>
+                                <input id="cfgDonations" data-summary="Donaciones" type="checkbox" role="switch" checked>
+                            </label>
+                            <label class="hc-switch" for="cfgRewards">
+                                <span>Recompensas<small>Canjes de puntos del canal</small></span>
+                                <input id="cfgRewards" data-summary="Recompensas" type="checkbox" role="switch">
+                            </label>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="hc-group hc-disclosure hc-collapsible" data-summary-empty="Desactivado">
+                    <summary class="hc-group-title">
+                        <span>Sonido</span>
+                        <span class="hc-rule" aria-hidden="true"></span>
+                        <span class="hc-val"></span>
+                        <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </summary>
+                    <div class="hc-disclosure-body">
+                        <label class="hc-switch" for="cfgSound">
+                            <span>Sonido de mensaje nuevo<small>Suena con cada mensaje; el historial entra en silencio</small></span>
+                            <input id="cfgSound" type="checkbox" role="switch">
+                        </label>
+                        <div id="fieldSound" class="hc-field">
+                            <div class="hc-field">
+                                <div class="hc-field-head"><label for="cfgSoundType">Sonido</label></div>
+                                <div class="hc-select">
+                                    <select id="cfgSoundType" data-summary data-summary-if="cfgSound"><!-- Options come from SOUNDS in features/catalog.js --></select>
+                                </div>
+                            </div>
+                            <div class="hc-field">
+                                <div class="hc-field-head"><label for="cfgSoundVolume">Volumen</label><output class="hc-val" for="cfgSoundVolume" data-summary data-summary-if="cfgSound"></output></div>
+                                <input class="hc-slider" id="cfgSoundVolume" type="range" min="1" max="100" step="1" value="50" data-unit=" %" data-ticks="1,25,50,75,100">
+                                <div class="hc-ticks" data-for="cfgSoundVolume"></div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="hc-group hc-disclosure hc-collapsible">
+                    <summary class="hc-group-title">
+                        <span>Filtros</span>
+                        <span class="hc-rule" aria-hidden="true"></span>
+                        <span class="hc-val"></span>
+                        <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </summary>
+                    <div class="hc-disclosure-body">
+                        <label class="hc-switch" for="cfgHideBots">
+                            <span>Ocultar bots<small>No muestra los mensajes de las cuentas de la lista</small></span>
+                            <input id="cfgHideBots" data-summary="Sin bots" type="checkbox" role="switch">
+                        </label>
+                        <div class="hc-field" id="fieldBots">
+                            <div class="hc-field-head"><label for="cfgBots">Bots</label></div>
+                            <input class="hc-input" id="cfgBots" type="text" spellcheck="false" autocomplete="off"
+                                placeholder="botrix, kicklet" aria-describedby="cfgBotsHint">
+                            <small class="hc-hint" id="cfgBotsHint">Nombres de usuario separados por comas</small>
+                        </div>
+                        <div class="hc-field">
+                            <div class="hc-field-head"><label for="cfgIgnoredUsers">Usuarios ignorados</label></div>
+                            <input class="hc-input" id="cfgIgnoredUsers" type="text" spellcheck="false" autocomplete="off"
+                                placeholder="usuario1, usuario2" aria-describedby="cfgIgnoredHint">
+                            <small class="hc-hint" id="cfgIgnoredHint">Sus mensajes, donaciones y canjes no aparecen</small>
+                        </div>
+                        <label class="hc-switch" for="cfgHideCommands">
+                            <span>Ocultar comandos<small>Mensajes que empiezan con !, como !discord</small></span>
+                            <input id="cfgHideCommands" data-summary="Sin comandos" type="checkbox" role="switch">
+                        </label>
+                        <div class="hc-field">
+                            <div class="hc-field-head"><label for="cfgDeletedMessages">Mensajes borrados</label><output class="hc-val" for="cfgDeletedMessages" data-summary></output></div>
+                            <input class="hc-slider" id="cfgDeletedMessages" type="range" min="0" max="2" step="1" value="2" data-steps="deletedMessages">
+                            <div class="hc-ticks" data-for="cfgDeletedMessages"></div>
+                        </div>
+                    </div>
+                </details>
             </div>
 
-            <!-- Row 2: 3 options -->
-            <div class="menu-row">
-                <div class="menu-field">
-                    <label class="menu-label" for="cfgPinnedBanner">Banner mensaje pineado:</label>
-                    <input type="checkbox" id="cfgPinnedBanner" class="menu-checkbox">
-                </div>
-
-                <div class="menu-field">
-                    <label class="menu-label" for="cfgTextBg">Fondo de texto:</label>
-                    <input type="checkbox" id="cfgTextBg" class="menu-checkbox">
-                </div>
-
-                <div class="menu-field">
-                    <label class="menu-label" for="cfgTextBgWidth">Ancho fondo de texto:</label>
-                    <select id="cfgTextBgWidth" class="menu-pill-select gray">
-                        <option value="min" selected>Min</option>
-                        <option value="max">Max</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Message Preview Input Row -->
-            <div class="menu-preview-input-row">
-                <label class="menu-label" for="cfgPreviewInput">Mensaje de prueba:</label>
-                <div class="preview-input-container">
-                    <input type="text" id="cfgPreviewInput" class="menu-pill-input preview-input"
-                        value="Hola, este es un mensaje de prueba jeje Rlove"
-                        placeholder="Escribe un mensaje (ej: Rlove, catJAM, OMEGALUL)..." spellcheck="false"
-                        autocomplete="off">
-                    <button type="button" class="btn-test-send" id="btnTestSend"
-                        title="Enviar este mensaje como si fuera enviado en el chat de rageylo">
-                        🚀 Probar en chat
-                    </button>
-                </div>
-            </div>
-
-            <!-- Message Preview Box (Rageylo Chat Style) -->
-            <div class="menu-preview-box theme-dark" id="menuPreviewBox">
-                <div class="chatterino-line preview-line" id="previewLine">
-                    <span class="chat-badges" id="previewBadges">
-                        <img class="badge-img badge-7tv" id="preview7tvBadge"
-                            src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4Ij48cmVjdCB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHJ4PSIzIiBmaWxsPSIjMGVhNWU5Ii8+PHBhdGggZD0iTTUgNmgxNHYyLjVMMTIuNSAxOEg5bDUtNy41SDVWNnoiIGZpbGw9IiNmZmZmZmYiLz48L3N2Zz4="
-                            alt="7TV" title="7TV Supporter">
-                        <img class="badge-img" src="badges/founder.svg" alt="Fundador" title="Fundador">
-                        <img class="badge-img" src="badges/subscriber.svg" alt="Suscriptor" title="Suscriptor">
-                    </span>
-                    <span class="chat-author" id="previewAuthor">Yuuzito</span><span class="colon">:</span>
-                    <span class="preview-msg-text chat-text" id="previewMsgText"></span>
-                </div>
-            </div>
-
-            <!-- Generated URL Box -->
-            <div class="menu-url-box" id="menuUrlBox" title="Click para copiar enlace para OBS">
-                Cargando enlace...
-            </div>
-
-            <!-- Bottom Actions -->
-            <div class="menu-bottom-actions">
-                <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
-                    <button type="button" class="menu-btn-launch" id="btnLaunchOverlay">
-                        🚀 Abrir Overlay en Vivo
-                    </button>
-                    <button type="button" class="menu-btn-emote" id="btnCopyOverlayUrl">
-                        📋 Copiar URL para OBS
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <!-- Chatterino Split Window Layout (Overlay Feed) -->
-    <div class="chatterino-window hidden" id="overlayContainer">
-
-        <!-- Chatterino Split Header -->
-        <div class="chatterino-header" id="chatterinoHeader">
-            <div class="chatterino-tab">
-                <span class="chatterino-tab-dot"></span>
-                <span id="headerChannelName">#rageylo</span>
-            </div>
-            <div class="chatterino-header-actions">
-                <button class="settings-trigger" id="settingsTrigger"
-                    title="Ajustes y Menú de Opciones (o presiona 'C')">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path
-                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                        </path>
+            <div class="hc-config-foot">
+                <button class="hc-copy-btn" id="btnCopyOverlayUrl" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                        stroke-linejoin="round" aria-hidden="true">
+                        <rect x="9" y="9" width="12" height="12" rx="2" />
+                        <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
                     </svg>
+                    <span id="btnCopyLabel">Copiar URL para OBS</span>
                 </button>
+                <button class="hc-secondary-btn" id="btnRefreshCache" type="button">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                        stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                        <path d="M21 3v6h-6" />
+                    </svg>
+                    <span id="btnRefreshLabel" aria-live="polite">Actualizar caché</span>
+                </button>
+                <input class="hc-url-fallback hidden" id="urlFallback" type="text" readonly aria-label="URL del overlay">
+                <p class="hc-foot-note hidden" id="copyError">No se pudo copiar automáticamente. Copia el enlace con Ctrl/Cmd + C.</p>
+                <p class="hc-foot-note" id="copyNote"><button class="hc-link" id="btnObsHelp" type="button">¿Cómo agregarlo a OBS?</button></p>
             </div>
-        </div>
+        </aside>
 
-        <!-- Pinned Banner -->
-        <div class="pinned-banner hidden" id="pinnedBanner">
-            <span class="pinned-banner-icon">📌</span>
-            <span id="pinnedBannerText">Mensaje fijado: Bienvenidos al chat de Kick</span>
-        </div>
-
-        <!-- Chatterino Message Feed -->
-        <div class="chatterino-chat-area" id="chatArea">
-            <div class="chatterino-messages" id="chatMessages">
-                <!-- Chatterino message rows stream here -->
+        <!-- How to add the overlay to OBS -->
+        <dialog class="hc-modal" id="obsHelp" aria-labelledby="obsHelpTitle">
+            <div class="hc-modal-head">
+                <h2 id="obsHelpTitle">Agregar el chat a OBS</h2>
+                <button class="hc-modal-x" id="obsHelpClose" type="button" aria-label="Cerrar">&times;</button>
             </div>
-        </div>
+            <ol class="hc-steps">
+                <li>Pulsa <strong>Copiar URL para OBS</strong>.</li>
+                <li>En OBS, en el panel <strong>Fuentes</strong>, pulsa <strong>+</strong> y elige <strong>Navegador</strong>.</li>
+                <li>Ponle un nombre (por ejemplo, «Chat») y pulsa <strong>Aceptar</strong>.</li>
+                <li>Borra lo que haya en el campo <strong>URL</strong> y pega la tuya con Ctrl/Cmd + V.</li>
+                <li>Ajusta <strong>Ancho</strong> y <strong>Alto</strong> (por ejemplo, 400 × 600) y pulsa <strong>Aceptar</strong>.</li>
+                <li>Mueve y redimensiona la fuente en la escena donde quieras ver el chat.</li>
+            </ol>
+            <p class="hc-modal-note">La configuración va dentro de la URL: si cambias algo aquí, vuelve a copiarla y reemplázala en las propiedades de la fuente.</p>
+            <div class="hc-modal-foot">
+                <button class="hc-copy-btn" id="obsHelpOk" type="button">Entendido</button>
+            </div>
+        </dialog>
 
-        <!-- Connection Status Indicator -->
-        <div id="statusIndicator" class="status-indicator hidden">
-            <span id="statusDot" class="status-dot connecting"></span>
-            <span id="statusText">Iniciando...</span>
-        </div>
+        <!-- Right panel: test chat (the overlay with example messages) -->
+        <main class="hc-test" aria-label="Chat de prueba">
+            <div class="hc-test-head">
+                <div class="hc-test-title">
+                    <strong>Chat de prueba</strong>
+                </div>
+                <!-- Only for the test chat: not saved in the OBS URL -->
+                <div class="hc-field hc-speed">
+                    <label for="cfgTestSpeed">Velocidad</label>
+                    <input class="hc-slider" id="cfgTestSpeed" type="range" min="0" max="8" step="1" value="2" data-steps="testSpeed">
+                    <output class="hc-val" for="cfgTestSpeed"></output>
+                </div>
+                <div class="hc-head-actions">
+                    <button class="hc-ghost hidden" id="menuCloseBtn" type="button" title="Guardar y volver al overlay (Esc)">Volver al overlay</button>
+                </div>
+            </div>
 
+            <div class="hc-stage">
+                <!-- Chatterino Split Window Layout (Overlay Feed) -->
+                <div class="chatterino-window theme-dark" id="overlayContainer">
+
+                    <!-- Pinned Banner -->
+                    <div class="pinned-banner hidden" id="pinnedBanner">
+                        <span class="pinned-banner-icon">📌</span>
+                        <span id="pinnedBannerText">Mensaje fijado: Bienvenidos al chat de Kick</span>
+                    </div>
+
+                    <!-- Chatterino Message Feed -->
+                    <div class="chatterino-chat-area" id="chatArea">
+                        <div class="chatterino-messages" id="chatMessages">
+                            <!-- Chatterino message rows stream here -->
+                        </div>
+                    </div>
+
+                    <!-- Connection Status Indicator -->
+                    <div id="statusIndicator" class="status-indicator hidden">
+                        <span id="statusDot" class="status-dot connecting"></span>
+                        <span id="statusText">Iniciando...</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <form class="hc-composer" id="testComposer">
+                <input id="cfgPreviewInput" type="text" autocomplete="off" spellcheck="false"
+                    value="Hola, este es un mensaje de prueba jeje Rlove"
+                    placeholder="Escribe un mensaje de prueba..." aria-label="Mensaje de prueba">
+                <button class="hc-send" id="btnTestSend" type="submit">Enviar</button>
+            </form>
+        </main>
     </div>
 
     <!-- Scripts -->
-    <script src="kick-client.js?v=9"></script>
-    <script src="app.js?v=9"></script>
+    <script src="kick-client.js?v=16"></script>
+    <script src="features/catalog.js?v=3"></script>
+    <script src="features/options.js?v=1"></script>
+    <script src="features/sound.js?v=1"></script>
+    <script src="features/events.js?v=2"></script>
+    <script src="app.js?v=33"></script>
 </body>
 
 </html>

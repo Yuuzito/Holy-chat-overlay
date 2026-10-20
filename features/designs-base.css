@@ -1,0 +1,274 @@
+/* ==========================================================================
+   Holy Chat - message designs (Estilo), part 1: shared rules, the first 12 and Terciopelo.
+   The design class sits on .chatterino-window (design-<id>); "chatterino" adds none.
+   --uc is the author's color, set on each row from app.js.
+   ========================================================================== */
+
+/* Every design sets its text color; it beats the themes' row colors */
+.has-design .chatterino-line,
+.has-design .chat-text,
+.has-design .colon {
+    color: var(--design-text, #efeff1) !important;
+}
+
+/* Card designs: one box per message with a little air around it. A full chat never squashes
+   a card: the oldest ones leave through the top instead */
+.has-design .chatterino-line {
+    flex-shrink: 0;
+    margin: 3px 6px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border-left: 0;
+}
+
+/* Name above the text */
+.design-stacked .chat-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.design-stacked .chat-head .chat-badges {
+    margin-right: 0;
+}
+
+.design-stacked .colon {
+    display: none;
+}
+
+.design-stacked .chat-text {
+    display: block;
+    margin-top: 2px;
+}
+
+/* Names in a right-aligned column, text in the other */
+.design-columns .chatterino-line {
+    display: grid;
+    grid-template-columns: minmax(0, 34%) 1fr;
+    column-gap: 10px;
+}
+
+.design-columns .chat-head {
+    justify-self: end;
+    text-align: right;
+}
+
+.design-columns .colon {
+    display: none;
+}
+
+/* The ticker and the scattered layout keep each message on one line, whatever the design */
+.has-design .layout-horizontal .chat-head,
+.has-design .layout-horizontal .chat-text {
+    display: inline;
+    position: static;
+    transform: none;
+    margin: 0 4px 0 0;
+}
+
+.has-design .layout-horizontal .chatterino-line {
+    display: block;
+    margin: 0;
+}
+
+/* ---------- Tarjetas (Botrix "Default") ---------- */
+.design-default {
+    --design-text: #f1f1f3;
+}
+
+.design-default .chatterino-line {
+    background: rgba(40, 40, 46, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    --card-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--card-shadow);
+}
+
+/* ---------- Aurora ---------- */
+.design-aurora {
+    --design-text: #e6f6fb;
+}
+
+.design-aurora .chatterino-line {
+    background: linear-gradient(135deg, rgba(16, 32, 52, 0.9), rgba(12, 46, 54, 0.86));
+    border: 1px solid rgba(90, 220, 230, 0.35);
+    --card-shadow: 0 0 12px rgba(60, 200, 220, 0.14);
+    box-shadow: var(--card-shadow);
+}
+
+/* ---------- Burbujas: the name in a black tag over the bubble's top-left edge ---------- */
+.design-bubbles {
+    --design-text: #f1f1f3;
+}
+
+.design-bubbles .chatterino-line {
+    position: relative;
+    margin-top: 16px;
+    padding: 14px 12px 8px;
+    border-radius: 16px;
+    background: rgba(28, 28, 34, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.design-bubbles .chat-head {
+    position: absolute;
+    top: -12px;
+    left: 10px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #0b0b0d;
+    font-size: 0.86em;
+}
+
+/* ---------- Pastel (Botrix "Cake"): stacked blocks, close together ---------- */
+.design-cake {
+    --design-text: #ececf0;
+}
+
+.design-cake .chatterino-line {
+    margin: 1px 6px;
+    border-radius: 3px;
+    background: rgba(52, 52, 58, 0.8);
+}
+
+.design-cake .chat-text::before {
+    content: ': ';
+    opacity: 0.6;
+}
+
+/* ---------- Carbono: a thick stripe in the author's color ---------- */
+.design-carbon {
+    --design-text: #d4d4d8;
+}
+
+.design-carbon .chatterino-line {
+    background: rgba(28, 28, 32, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-left: 5px solid var(--uc, #53fc18);
+}
+
+/* A dot instead of the colon (Carbono, Atardecer) */
+.design-carbon .colon,
+.design-sunset .colon {
+    font-size: 0;
+    margin-right: 0;
+}
+
+.design-carbon .colon::before,
+.design-sunset .colon::before {
+    content: '•';
+    font-size: var(--font-size);
+    margin: 0 6px 0 5px;
+    opacity: 0.45;
+}
+
+/* ---------- Vidrio ---------- */
+.design-glass {
+    --design-text: #eef2f8;
+}
+
+.design-glass .chatterino-line {
+    background: linear-gradient(180deg, rgba(130, 150, 185, 0.3), rgba(40, 48, 66, 0.74) 45%);
+    border: 1px solid rgba(200, 220, 255, 0.18);
+}
+
+/* ---------- Mínimo: no box, a thin rule in the author's color ---------- */
+.design-minimal {
+    --design-text: #f4f4f5;
+}
+
+.design-minimal .chatterino-line {
+    margin: 4px 6px;
+    padding: 2px 10px;
+    border-radius: 0;
+    background: none;
+    border-left: 3px solid var(--uc, #53fc18);
+}
+
+.design-minimal .chat-text {
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- Acento Kick: Kick green glow and stripe, small header with a green dot ---------- */
+.design-platform-accent {
+    --design-text: #f4f4f5;
+}
+
+.design-platform-accent .chatterino-line {
+    background: linear-gradient(90deg, rgba(83, 252, 24, 0.16), rgba(10, 10, 12, 0.92) 45%);
+    border-left: 4px solid #53fc18;
+}
+
+.design-platform-accent .chat-head {
+    font-size: 0.84em;
+}
+
+.design-platform-accent .chat-head::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #53fc18;
+}
+
+/* ---------- Columnas (Botrix "Side"), Cinta simple and Transparente: text only ---------- */
+.design-side,
+.design-streamline,
+.design-transparent {
+    --design-text: #ffffff;
+}
+
+.design-side .chatterino-line,
+.design-streamline .chatterino-line,
+.design-transparent .chatterino-line {
+    margin: 2px 6px;
+    padding: 2px 6px;
+    background: none;
+    border: 0;
+    box-shadow: none;
+}
+
+.design-streamline .chatterino-line {
+    padding: 0 12px;
+}
+
+/* ---------- Blanco: white bubbles as wide as their text ---------- */
+.design-white {
+    --design-text: #1d1d22;
+}
+
+.design-white .chatterino-line {
+    width: fit-content;
+    max-width: calc(100% - 12px);
+    border-radius: 14px;
+    background: #ffffff;
+    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    box-shadow: var(--card-shadow);
+}
+
+/* Names darker, so light colors still read on white */
+.design-white .chat-author,
+.design-whatschat .chat-author,
+.design-sky .chat-author,
+.design-pastelpop .chat-author,
+.design-frutigeraero .chat-author {
+    filter: brightness(0.7) saturate(1.3);
+}
+
+/* ---------- Terciopelo: pills in a horizontal strip ---------- */
+.design-velvet {
+    --design-text: #f3e8ff;
+}
+
+.design-velvet .chatterino-line {
+    border-radius: 999px;
+    padding: 4px 14px;
+    background: rgba(30, 16, 40, 0.92);
+    border: 1px solid var(--uc, #53fc18);
+}
+
+.design-velvet .chat-author {
+    text-transform: uppercase;
+    font-size: 0.86em;
+}
