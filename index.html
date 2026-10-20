@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joseo chat overlay</title>
+    <link rel="stylesheet" href="overlay.css">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2353fc18'><path d='M4 3h5v6.5L14.5 3H20l-6.8 7.5L20 21h-5.5L9 12.5V21H4V3z'/></svg>">
+</head>
+
+<body>
+
+    <!-- Initial Menu (Exact options from Matin Aniss Joseo chat Overlay) -->
+    <div id="initialMenu" class="menu-wrapper">
+        <button class="menu-close-btn hidden" id="menuCloseBtn" title="Cerrar y volver al overlay">&times;</button>
+
+        <h1 class="menu-title">Joseo chat overlay</h1>
+        <div class="menu-subtitle">
+            Hecho con <img src="badges/rlove.webp"
+                onerror="this.src='https://cdn.7tv.app/emote/01HK6RMJ380009PKX0NCN3SHG1/2x.webp'" alt="Rlove"
+                title="Rlove" style="width: 24px; height: 24px; object-fit: contain; vertical-align: middle;"> por
+            Yuuzito
+        </div>
+        <div class="menu-disclaimer">No afiliado con kick</div>
+
+        <form class="menu-form" id="configForm" onsubmit="return false;">
+            <!-- Row 1: 7 options -->
+            <div class="menu-row">
+                <div class="menu-field">
+                    <label class="menu-label" for="cfgChannel">Nombre canal:</label>
+                    <input type="text" id="cfgChannel" class="menu-pill-input" value="rageylo" spellcheck="false"
+                        autocomplete="off">
+                </div>
+
+                <div class="menu-field">
+                    <label class="menu-label" for="cfg7tvCosmetics">7TV Cosmetics:</label>
+                    <input type="checkbox" id="cfg7tvCosmetics" class="menu-checkbox" checked>
+                </div>
+
+                <div class="menu-field">
+                    <label class="menu-label" for="cfg7tvEmotes">7TV Emotes:</label>
+                    <input type="checkbox" id="cfg7tvEmotes" class="menu-checkbox" checked>
+                </div>
+
+                <div class="menu-field">
+                    <label class="menu-label" for="cfgTheme">Tema:</label>
+                    <select id="cfgTheme" class="menu-pill-select">
+                        <option value="dark" selected>Dark</option>
+                        <option value="transparent">Transparent</option>
+                        <option value="light">Light</option>
+                    </select>
+                </div>
+
+                <div class="menu-field">
+                    <label class="menu-label" for="cfgTextShadow">Sombra de texto:</label>
+                    <select id="cfgTextShadow" class="menu-pill-select">
+                        <option value="none">None</option>
+                        <option value="small" selected>Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+
+                <div class="menu-field">
+                    <label class="menu-label" for="cfgTextSize">Tamaño texto:</label>
+                    <select id="cfgTextSize" class="menu-pill-select">
+                        <option value="small">Small</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="large">Large</option>
+                    </select>
+                </div>
+
+                <div class="menu-field">
+                    <label class="menu-label" for="cfgAnimation">Animación:</label>
+                    <select id="cfgAnimation" class="menu-pill-select">
+                        <option value="none" selected>None</option>
+                        <option value="slide">Slide</option>
+                        <option value="fade">Fade</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 2: 3 options -->
+            <div class="menu-row">
+                <div class="menu-field">
+                    <label class="menu-label" for="cfgPinnedBanner">Banner mensaje pineado:</label>
+                    <input type="checkbox" id="cfgPinnedBanner" class="menu-checkbox">
+                </div>
+
+                <div class="menu-field">
+                    <label class="menu-label" for="cfgTextBg">Fondo de texto:</label>
+                    <input type="checkbox" id="cfgTextBg" class="menu-checkbox">
+                </div>
+
+                <div class="menu-field">
+                    <label class="menu-label" for="cfgTextBgWidth">Ancho fondo de texto:</label>
+                    <select id="cfgTextBgWidth" class="menu-pill-select gray">
+                        <option value="min" selected>Min</option>
+                        <option value="max">Max</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Message Preview Input Row -->
+            <div class="menu-preview-input-row">
+                <label class="menu-label" for="cfgPreviewInput">Mensaje de prueba:</label>
+                <div class="preview-input-container">
+                    <input type="text" id="cfgPreviewInput" class="menu-pill-input preview-input"
+                        value="Hola, este es un mensaje de prueba jeje Rlove"
+                        placeholder="Escribe un mensaje (ej: Rlove, catJAM, OMEGALUL)..." spellcheck="false"
+                        autocomplete="off">
+                    <button type="button" class="btn-test-send" id="btnTestSend"
+                        title="Enviar este mensaje como si fuera enviado en el chat de rageylo">
+                        🚀 Probar en chat
+                    </button>
+                </div>
+            </div>
+
+            <!-- Message Preview Box (Rageylo Chat Style) -->
+            <div class="menu-preview-box theme-dark" id="menuPreviewBox">
+                <div class="chatterino-line preview-line" id="previewLine">
+                    <span class="chat-badges" id="previewBadges">
+                        <img class="badge-img badge-7tv" id="preview7tvBadge"
+                            src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4Ij48cmVjdCB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHJ4PSIzIiBmaWxsPSIjMGVhNWU5Ii8+PHBhdGggZD0iTTUgNmgxNHYyLjVMMTIuNSAxOEg5bDUtNy41SDVWNnoiIGZpbGw9IiNmZmZmZmYiLz48L3N2Zz4="
+                            alt="7TV" title="7TV Supporter">
+                        <img class="badge-img" src="badges/founder.svg" alt="Fundador" title="Fundador">
+                        <img class="badge-img" src="badges/subscriber.svg" alt="Suscriptor" title="Suscriptor">
+                    </span>
+                    <span class="chat-author" id="previewAuthor">Yuuzito</span><span class="colon">:</span>
+                    <span class="preview-msg-text chat-text" id="previewMsgText"></span>
+                </div>
+            </div>
+
+            <!-- Generated URL Box -->
+            <div class="menu-url-box" id="menuUrlBox" title="Click para copiar enlace para OBS">
+                Cargando enlace...
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="menu-bottom-actions">
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+                    <button type="button" class="menu-btn-launch" id="btnLaunchOverlay">
+                        🚀 Abrir Overlay en Vivo
+                    </button>
+                    <button type="button" class="menu-btn-emote" id="btnCopyOverlayUrl">
+                        📋 Copiar URL para OBS
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Chatterino Split Window Layout (Overlay Feed) -->
+    <div class="chatterino-window hidden" id="overlayContainer">
+
+        <!-- Chatterino Split Header -->
+        <div class="chatterino-header" id="chatterinoHeader">
+            <div class="chatterino-tab">
+                <span class="chatterino-tab-dot"></span>
+                <span id="headerChannelName">#rageylo</span>
+            </div>
+            <div class="chatterino-header-actions">
+                <button class="settings-trigger" id="settingsTrigger"
+                    title="Ajustes y Menú de Opciones (o presiona 'C')">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Pinned Banner -->
+        <div class="pinned-banner hidden" id="pinnedBanner">
+            <span class="pinned-banner-icon">📌</span>
+            <span id="pinnedBannerText">Mensaje fijado: Bienvenidos al chat de Kick</span>
+        </div>
+
+        <!-- Chatterino Message Feed -->
+        <div class="chatterino-chat-area" id="chatArea">
+            <div class="chatterino-messages" id="chatMessages">
+                <!-- Chatterino message rows stream here -->
+            </div>
+        </div>
+
+        <!-- Connection Status Indicator -->
+        <div id="statusIndicator" class="status-indicator hidden">
+            <span id="statusDot" class="status-dot connecting"></span>
+            <span id="statusText">Iniciando...</span>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="kick-client.js?v=7"></script>
+    <script src="app.js?v=7"></script>
+</body>
+
+</html>
