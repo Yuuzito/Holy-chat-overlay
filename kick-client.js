@@ -90,70 +90,80 @@ class KickChatClient extends EventTarget {
         rageylo: { channelId: 19024162, chatroomId: 18761973, kickUserId: 19996585 }
     };
 
-    static GLOBAL_EMOTES = new Map();
-    static GLOBAL_EMOTES_LOWER = new Map();
+    static CHANNEL_PACKS = new Map();
+    static CHANNEL_PACKS_LOWER = new Map();
 
-    static registerEmote(name, url, zeroWidth = false) {
-        if (!name || !url) return;
-        const entry = { url, zeroWidth: Boolean(zeroWidth) };
-        KickChatClient.GLOBAL_EMOTES.set(name, entry);
-        KickChatClient.GLOBAL_EMOTES_LOWER.set(name.toLowerCase(), name);
+    static getChannelEmotes(channel) {
+        const slug = (channel || 'rageylo').toLowerCase().trim();
+        if (KickChatClient.CHANNEL_PACKS.has(slug)) {
+            return KickChatClient.CHANNEL_PACKS.get(slug);
+        }
+        const map = new Map();
+        const lower = new Map();
+        const cached = KickCache.get(`emotes_${slug}`);
+        if (Array.isArray(cached) && cached.length > 0) {
+            cached.forEach(([name, em]) => {
+                if (name && em) {
+                    map.set(name, em);
+                    lower.set(name.toLowerCase(), name);
+                }
+            });
+        }
+        KickChatClient.CHANNEL_PACKS.set(slug, map);
+        KickChatClient.CHANNEL_PACKS_LOWER.set(slug, lower);
+        return map;
     }
 
-    static register7TVList(emotes) {
-        if (!Array.isArray(emotes)) return;
-        emotes.forEach(em => {
-            if (!em || !em.name || !em.id) return;
-            const flags = em.flags || 0;
-            const dataFlags = (em.data && em.data.flags) || 0;
-            const zeroWidth = Boolean((flags & 1) || (dataFlags & 256));
-            KickChatClient.registerEmote(em.name, `https://cdn.7tv.app/emote/${em.id}/2x.webp`, zeroWidth);
-        });
+    static getChannelLowerMap(channel) {
+        const slug = (channel || 'rageylo').toLowerCase().trim();
+        if (!KickChatClient.CHANNEL_PACKS_LOWER.has(slug)) {
+            KickChatClient.getChannelEmotes(slug);
+        }
+        return KickChatClient.CHANNEL_PACKS_LOWER.get(slug) || new Map();
+    }
+
+    static async loadChannelPack(channel, kickUserId = null) {
+        const slug = (channel || 'rageylo').toLowerCase().trim();
+        const userId = kickUserId || (slug === 'rageylo' ? 19996585 : null);
+        if (!userId) return null;
+
+        try {
+            const res = await fetch(`https://7tv.io/v3/users/kick/${userId}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.emote_set && Array.isArray(data.emote_set.emotes)) {
+                    const map = new Map();
+                    const lower = new Map();
+                    data.emote_set.emotes.forEach(em => {
+                        if (!em || !em.name || !em.id) return;
+                        const flags = em.flags || 0;
+                        const dataFlags = (em.data && em.data.flags) || 0;
+                        const zeroWidth = Boolean((flags & 1) || (dataFlags & 256));
+                        map.set(em.name, {
+                            url: `https://cdn.7tv.app/emote/${em.id}/2x.webp`,
+                            zeroWidth
+                        });
+                        lower.set(em.name.toLowerCase(), em.name);
+                    });
+                    KickChatClient.CHANNEL_PACKS.set(slug, map);
+                    KickChatClient.CHANNEL_PACKS_LOWER.set(slug, lower);
+                    KickCache.set(`emotes_${slug}`, Array.from(map.entries()), 6 * 60 * 60 * 1000);
+                    if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('channel_emotes_loaded', { detail: { channel: slug } }));
+                    }
+                    return map;
+                }
+            }
+        } catch (e) {
+            console.warn(`[7TV] Error cargando pack de emotes del canal "${slug}":`, e);
+        }
+        return null;
     }
 
     static initEmoteStore() {
-        // Pre-register Rlove with local file fallback
-        KickChatClient.registerEmote('Rlove', 'badges/rlove.webp');
-        KickChatClient.registerEmote('AnotherLove', 'https://cdn.7tv.app/emote/01HG0SD1BR000BMG8TJHG4V8GQ/2x.webp');
-        KickChatClient.registerEmote('BLUBBERS', 'https://cdn.7tv.app/emote/60ae894672e0bf3235be6b4f/2x.webp');
-        KickChatClient.registerEmote('BOOBA', 'https://cdn.7tv.app/emote/60ae890172e0bf3235be6af4/2x.webp');
-        KickChatClient.registerEmote('prayge', 'https://cdn.7tv.app/emote/60ae8d0e72e0bf3235be708e/2x.webp');
-        KickChatClient.registerEmote('OMEGALUL', 'https://cdn.7tv.app/emote/603cbdb1e3c3eb000da7d7c6/2x.webp');
-        KickChatClient.registerEmote('catJAM', 'https://cdn.7tv.app/emote/603ca85a229742000d3d526e/2x.webp');
-        KickChatClient.registerEmote('KEKW', 'https://cdn.7tv.app/emote/603cb8db980209000dfb37c3/2x.webp');
-        KickChatClient.registerEmote('EZ', 'https://cdn.7tv.app/emote/63071b782b4cc420a7efb0c7/2x.webp');
-        KickChatClient.registerEmote('pepeJAM', 'https://cdn.7tv.app/emote/60ae8a6b72e0bf3235be6cd1/2x.webp');
-        KickChatClient.registerEmote('Catge', 'https://cdn.7tv.app/emote/61225883ef508493126f54c9/2x.webp');
-        KickChatClient.registerEmote('monkaW', 'https://cdn.7tv.app/emote/603cae537d8e85000d603a9f/2x.webp');
-        KickChatClient.registerEmote('Ratge', 'https://cdn.7tv.app/emote/61491db1234c9c1015693026/2x.webp');
-        KickChatClient.registerEmote('MONKE', 'https://cdn.7tv.app/emote/60a6a57564d6032e3a1f4684/2x.webp');
-        KickChatClient.registerEmote('RIPBOZO', 'https://cdn.7tv.app/emote/615cb38c92a2a0ff9e2b1758/2x.webp');
-        KickChatClient.registerEmote('xdd666', 'https://cdn.7tv.app/emote/6314f86d8b3c3c78adad3655/2x.webp');
-        KickChatClient.registerEmote('peepoLove', 'https://cdn.7tv.app/emote/60ae8a2872e0bf3235be6c70/2x.webp');
-        KickChatClient.registerEmote('YEPHIGH', 'https://cdn.7tv.app/emote/60ae8e7a72e0bf3235be72b7/2x.webp');
-        KickChatClient.registerEmote('FeelsOldMan', 'https://cdn.7tv.app/emote/60ae885e72e0bf3235be6a09/2x.webp');
-
-        // Restore cached emotes from localStorage
-        const cached = KickCache.get('emotes_rageylo');
-        if (Array.isArray(cached)) {
-            cached.forEach(([name, em]) => {
-                if (name && em) KickChatClient.registerEmote(name, em.url, em.zeroWidth);
-            });
-        }
-
-        // Fetch full 7TV emote set for rageylo asynchronously
-        fetch('https://7tv.io/v3/users/kick/19996585')
-            .then(r => r.ok ? r.json() : null)
-            .then(data => {
-                if (data && data.emote_set && Array.isArray(data.emote_set.emotes)) {
-                    KickChatClient.register7TVList(data.emote_set.emotes);
-                    KickCache.set('emotes_rageylo', Array.from(KickChatClient.GLOBAL_EMOTES.entries()), 6 * 60 * 60 * 1000);
-                    if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('emotes_loaded'));
-                    }
-                }
-            })
-            .catch(e => console.warn('[7TV] Background fetch for rageylo failed:', e));
+        // Pre-cargar pack de emotes del canal por defecto (rageylo) para vista previa
+        KickChatClient.getChannelEmotes('rageylo');
+        KickChatClient.loadChannelPack('rageylo', 19996585);
     }
 
     constructor(options = {}) {
@@ -177,11 +187,14 @@ class KickChatClient extends EventTarget {
 
         this.sevenTVEmotes = options.sevenTVEmotes !== false;
 
-        // Channel assets
+        // Channel assets - EXCLUSIVAMENTE limitados al pack de emotes del canal seleccionado
         this.subscriberBadges = [];
-        this.emotes = KickChatClient.GLOBAL_EMOTES;
-        this.lowerEmoteMap = KickChatClient.GLOBAL_EMOTES_LOWER;
+        this.emotes = new Map();
+        this.lowerEmoteMap = new Map();
         this.sevenTvStyles = new Map(); // kick user id -> Promise<style|null>
+
+        // Restaurar caché inmediata de este canal si ya existe
+        this.restoreCachedEmotes();
     }
 
     /* ------------------------------------------------------------------ */
@@ -289,8 +302,23 @@ class KickChatClient extends EventTarget {
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Emotes (Kick native + 7TV channel + 7TV global)                    */
+    /*  Emotes (Pack exclusivo del canal: Kick sub emotes + 7TV canal)    */
     /* ------------------------------------------------------------------ */
+
+    restoreCachedEmotes() {
+        const cached = KickCache.get(`emotes_${this.channelSlug}`);
+        if (Array.isArray(cached) && cached.length > 0) {
+            this.emotes.clear();
+            this.lowerEmoteMap.clear();
+            cached.forEach(([name, em]) => {
+                if (name && em) {
+                    this.emotes.set(name, em);
+                    this.lowerEmoteMap.set(name.toLowerCase(), name);
+                }
+            });
+            console.log(`[Kick] [Cache] Restored ${cached.length} emotes exclusively for #${this.channelSlug}`);
+        }
+    }
 
     add7TVEmoteSet(emotes) {
         if (!Array.isArray(emotes)) return 0;
@@ -304,23 +332,41 @@ class KickChatClient extends EventTarget {
                 url: `https://cdn.7tv.app/emote/${em.id}/2x.webp`,
                 zeroWidth
             });
+            this.lowerEmoteMap.set(em.name.toLowerCase(), em.name);
             count++;
         });
         return count;
     }
 
     async loadEmotes() {
-        // 1) Fast path: restore emotes instantly from cache
-        const cached = KickCache.get(`emotes_${this.channelSlug}`);
-        if (Array.isArray(cached) && cached.length > 0) {
-            cached.forEach(([name, em]) => {
-                if (name && em) this.emotes.set(name, em);
-            });
-            console.log(`[Kick] [Cache] Restored ${cached.length} emotes instantly for #${this.channelSlug}`);
+        // 1) Restaurar inmediatamente desde la caché local de este canal
+        this.restoreCachedEmotes();
+
+        // 2) Cargar EXCLUSIVAMENTE el pack de emotes de 7TV del canal seleccionado
+        if (this.sevenTVEmotes) {
+            const targetUserId = this.kickUserId || (this.channelSlug === 'rageylo' ? 19996585 : null);
+            if (targetUserId) {
+                try {
+                    const res = await fetch(`https://7tv.io/v3/users/kick/${targetUserId}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.emote_set && Array.isArray(data.emote_set.emotes)) {
+                            // Limpiar para asegurar que SOLO existan los emotes actuales de su pack
+                            this.emotes.clear();
+                            this.lowerEmoteMap.clear();
+                            const n = this.add7TVEmoteSet(data.emote_set.emotes);
+                            console.log(`[7TV] Pack de emotes del canal #${this.channelSlug} cargado: ${n} emotes (globales 7TV excluidos)`);
+                        }
+                    } else {
+                        console.warn(`[7TV] No se encontró pack de 7TV para kick user ${targetUserId}:`, res.status);
+                    }
+                } catch (e) {
+                    console.warn(`[7TV] Error cargando pack de emotes del canal #${this.channelSlug}:`, e);
+                }
+            }
         }
 
-        // 2) Background refresh from Kick and 7TV
-        // a) Kick channel emotes
+        // 3) Emotes de suscriptor nativos de Kick del propio canal (si tiene)
         try {
             const kickData = await this.fetchJsonWithFallback(`https://kick.com/emotes/${this.channelSlug}`);
             if (Array.isArray(kickData)) {
@@ -332,54 +378,27 @@ class KickChatClient extends EventTarget {
                                     url: `https://files.kick.com/emotes/${em.id}/fullsize`,
                                     zeroWidth: false
                                 });
+                                this.lowerEmoteMap.set(em.name.toLowerCase(), em.name);
                             }
                         });
                     }
                 });
             }
         } catch (e) {
-            console.warn('[Kick] Kick emotes failed:', e);
+            // Kick sub emotes opcionales
         }
 
-        // b) 7TV global emotes & channel emotes
-        if (this.sevenTVEmotes) {
-            try {
-                const res = await fetch('https://7tv.io/v3/emote-sets/global');
-                if (res.ok) {
-                    const data = await res.json();
-                    const n = this.add7TVEmoteSet(data.emotes);
-                    console.log(`[7TV] Global emotes loaded: ${n}`);
-                }
-            } catch (e) {
-                console.warn('[7TV] global emotes failed:', e);
-            }
-
-            // c) 7TV channel emotes
-            if (this.kickUserId) {
-                try {
-                    const res = await fetch(`https://7tv.io/v3/users/kick/${this.kickUserId}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        const n = this.add7TVEmoteSet(data && data.emote_set && data.emote_set.emotes);
-                        console.log(`[7TV] Channel emotes loaded: ${n}`);
-                    } else {
-                        console.warn('[7TV] No 7TV set linked to this Kick channel:', res.status);
-                    }
-                } catch (e) {
-                    console.warn('[7TV] channel emotes failed:', e);
-                }
-            }
-        }
-
-        // Save fresh snapshot to cache (TTL: 6 hours)
+        // Guardar snapshot actualizado en la caché de este canal
         if (this.emotes.size > 0) {
             KickCache.set(`emotes_${this.channelSlug}`, Array.from(this.emotes.entries()), 6 * 60 * 60 * 1000);
+            KickChatClient.CHANNEL_PACKS.set(this.channelSlug, this.emotes);
+            KickChatClient.CHANNEL_PACKS_LOWER.set(this.channelSlug, this.lowerEmoteMap);
         }
     }
 
     startEmoteRefresher() {
         this.stopEmoteRefresher();
-        // Sincronización periódica automática en segundo plano cada 5 minutos
+        // Sincronización periódica automática del pack del canal cada 5 minutos
         this.emoteRefreshInterval = setInterval(() => {
             this.refresh7TVEmotes();
         }, 5 * 60 * 1000);
@@ -402,19 +421,17 @@ class KickChatClient extends EventTarget {
             if (res.ok) {
                 const data = await res.json();
                 if (data && data.emote_set && Array.isArray(data.emote_set.emotes)) {
-                    data.emote_set.emotes.forEach(em => {
-                        if (!em || !em.name || !em.id) return;
-                        const flags = em.flags || 0;
-                        const dataFlags = (em.data && em.data.flags) || 0;
-                        const zeroWidth = Boolean((flags & 1) || (dataFlags & 256));
-                        KickChatClient.registerEmote(em.name, `https://cdn.7tv.app/emote/${em.id}/2x.webp`, zeroWidth);
-                    });
-                    KickCache.set(`emotes_${this.channelSlug}`, Array.from(KickChatClient.GLOBAL_EMOTES.entries()), 6 * 60 * 60 * 1000);
-                    console.log(`[7TV] Sincronización automática periódica exitosa (#${this.channelSlug})`);
+                    this.emotes.clear();
+                    this.lowerEmoteMap.clear();
+                    const n = this.add7TVEmoteSet(data.emote_set.emotes);
+                    KickCache.set(`emotes_${this.channelSlug}`, Array.from(this.emotes.entries()), 6 * 60 * 60 * 1000);
+                    KickChatClient.CHANNEL_PACKS.set(this.channelSlug, this.emotes);
+                    KickChatClient.CHANNEL_PACKS_LOWER.set(this.channelSlug, this.lowerEmoteMap);
+                    console.log(`[7TV] Sincronización periódica del pack de #${this.channelSlug}: ${n} emotes`);
                 }
             }
         } catch (e) {
-            console.warn('[7TV] Error en sincronización periódica:', e);
+            console.warn('[7TV] Error en sincronización periódica del pack:', e);
         }
     }
 
@@ -734,8 +751,9 @@ class KickChatClient extends EventTarget {
         if (!content) return '';
 
         const sevenTVEnabled = options.sevenTVEmotes !== false;
-        const emotesMap = options.emotes || KickChatClient.GLOBAL_EMOTES;
-        const lowerMap = options.lowerMap || KickChatClient.GLOBAL_EMOTES_LOWER;
+        const targetChannel = (options.channel || 'rageylo').toLowerCase().trim();
+        const emotesMap = options.emotes || KickChatClient.getChannelEmotes(targetChannel);
+        const lowerMap = options.lowerMap || KickChatClient.getChannelLowerMap(targetChannel);
 
         const escapeHtml = (str) => str
             .replace(/&/g, '&amp;')
@@ -806,7 +824,8 @@ class KickChatClient extends EventTarget {
         return KickChatClient.parseContentToHtml(content, {
             sevenTVEmotes: this.sevenTVEmotes,
             emotes: this.emotes,
-            lowerMap: this.lowerEmoteMap
+            lowerMap: this.lowerEmoteMap,
+            channel: this.channelSlug
         });
     }
 

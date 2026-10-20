@@ -208,13 +208,21 @@
             }
         }
 
-        // 7TV Emotes toggle & Dynamic parsing of the preview message text
+        // 7TV Emotes toggle & Dynamic parsing of the preview message text using the selected channel's emote pack
         const has7tvEmotes = cfg7tvEmotes ? cfg7tvEmotes.checked : true;
+        const currentChannel = (cfgChannel ? cfgChannel.value.trim().toLowerCase() : config.channel) || 'rageylo';
+        const channelEmotes = (client && client.channelSlug === currentChannel) ? client.emotes : (window.KickChatClient ? KickChatClient.getChannelEmotes(currentChannel) : null);
+        const channelLower = (client && client.channelSlug === currentChannel) ? client.lowerEmoteMap : (window.KickChatClient ? KickChatClient.getChannelLowerMap(currentChannel) : null);
         const rawMessage = (cfgPreviewInput ? cfgPreviewInput.value : 'Hola, este es un mensaje de prueba jeje Rlove') || 'Hola, este es un mensaje de prueba jeje Rlove';
 
         if (previewMsgText) {
             if (window.KickChatClient && KickChatClient.parseContentToHtml) {
-                previewMsgText.innerHTML = KickChatClient.parseContentToHtml(rawMessage, { sevenTVEmotes: has7tvEmotes });
+                previewMsgText.innerHTML = KickChatClient.parseContentToHtml(rawMessage, {
+                    sevenTVEmotes: has7tvEmotes,
+                    emotes: channelEmotes,
+                    lowerMap: channelLower,
+                    channel: currentChannel
+                });
             } else {
                 previewMsgText.textContent = rawMessage;
             }
@@ -411,6 +419,17 @@
     }
 
     window.addEventListener('emotes_loaded', updateMenuPreviewAndUrl);
+    window.addEventListener('channel_emotes_loaded', updateMenuPreviewAndUrl);
+
+    if (cfgChannel) {
+        cfgChannel.addEventListener('input', () => {
+            updateMenuPreviewAndUrl();
+            const ch = cfgChannel.value.trim().toLowerCase();
+            if (ch && window.KickChatClient && KickChatClient.loadChannelPack) {
+                KickChatClient.loadChannelPack(ch);
+            }
+        });
+    }
 
     [cfg7tvCosmetics, cfg7tvEmotes, cfgTheme, cfgTextShadow, cfgTextSize, cfgAnimation, cfgPinnedBanner, cfgTextBg, cfgTextBgWidth].forEach(el => {
         if (el) el.addEventListener('change', updateMenuPreviewAndUrl);
