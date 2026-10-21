@@ -179,8 +179,9 @@ body {
 .chat-author {
     font-weight: 800;
     cursor: default;
-    display: inline;
-    text-shadow: none !important;
+    display: inline-block;
+    vertical-align: baseline;
+    color: #53fc18;
 }
 
 .colon {

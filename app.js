@@ -2599,22 +2599,48 @@
      */
     function applySevenTVNameStyle(authorSpan, style) {
         if (!style || !config.sevenTVCosmetics) return;
+
+        // 1) Aplicar color base sólido de 7TV (si tiene) de forma que el nombre NUNCA quede invisible
+        if (style.color) {
+            authorSpan.style.color = style.color;
+        }
+
         const paint = style.paint;
-        if (paint) {
-            if (paint.background) {
-                authorSpan.style.backgroundImage = paint.background;
-                authorSpan.style.backgroundSize = paint.background.startsWith('url(') ? 'cover' : '';
+        if (!paint) return;
+
+        // 2) Sombra y filtros de paint
+        if (paint.filter) {
+            authorSpan.style.filter = paint.filter;
+        }
+
+        // 3) Aplicación de Paint (URL/Imagen o Gradiente)
+        if (paint.function === 'URL' && paint.image_url) {
+            // Paint de imagen (ej: el paint de Pascua de noah4eva)
+            // Precargar la imagen para asegurar que el texto nunca quede transparente/invisible si tarda o falla
+            const img = new Image();
+            img.onload = () => {
+                authorSpan.style.backgroundImage = `url("${paint.image_url}")`;
+                authorSpan.style.backgroundRepeat = 'repeat';
+                authorSpan.style.backgroundPosition = 'center';
+                authorSpan.style.backgroundSize = 'cover';
                 authorSpan.style.webkitBackgroundClip = 'text';
                 authorSpan.style.backgroundClip = 'text';
                 authorSpan.style.webkitTextFillColor = 'transparent';
                 authorSpan.style.color = 'transparent';
-                authorSpan.style.textShadow = 'none';
-            } else if (paint.color) {
-                authorSpan.style.color = paint.color;
-            }
-            if (paint.filter) authorSpan.style.filter = paint.filter;
-        } else if (style.color) {
-            authorSpan.style.color = style.color;
+            };
+            img.src = paint.image_url;
+        } else if (paint.background) {
+            // Paint de gradiente CSS
+            authorSpan.style.backgroundImage = paint.background;
+            authorSpan.style.backgroundRepeat = 'repeat';
+            authorSpan.style.backgroundPosition = 'center';
+            authorSpan.style.backgroundSize = 'cover';
+            authorSpan.style.webkitBackgroundClip = 'text';
+            authorSpan.style.backgroundClip = 'text';
+            authorSpan.style.webkitTextFillColor = 'transparent';
+            authorSpan.style.color = 'transparent';
+        } else if (paint.color) {
+            authorSpan.style.color = paint.color;
         }
     }
 

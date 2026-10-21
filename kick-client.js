@@ -337,31 +337,38 @@ class SevenTVCosmetics {
     }
 
     static intToRgba(n) {
+        if (n == null) return null;
         const u = n >>> 0;
         const r = (u >>> 24) & 255;
         const g = (u >>> 16) & 255;
         const b = (u >>> 8) & 255;
         const a = (u & 255) / 255;
+        if (a < 0.05 || (r === 0 && g === 0 && b === 0)) return null;
         return `rgba(${r}, ${g}, ${b}, ${a.toFixed(3)})`;
     }
 
     static paintToCss(paint) {
         if (!paint) return null;
         const rgba = SevenTVCosmetics.intToRgba;
-        const out = { background: null, color: null, filter: null };
+        const fn = (paint.function || '').toUpperCase();
+        // function and image_url let app.js preload an image paint before clipping the text
+        const out = { function: fn, image_url: paint.image_url || null, background: null, color: null, filter: null };
 
         const stops = (paint.stops || [])
-            .map(s => `${rgba(s.color)} ${(s.at * 100).toFixed(2)}%`)
+            .map(s => {
+                const c = rgba(s.color);
+                return c ? `${c} ${(s.at * 100).toFixed(2)}%` : null;
+            })
+            .filter(Boolean)
             .join(', ');
         const repeat = paint.repeat ? 'repeating-' : '';
-        const fn = (paint.function || '').toUpperCase();
 
         if (fn === 'LINEAR_GRADIENT' && stops) {
             out.background = `${repeat}linear-gradient(${paint.angle || 0}deg, ${stops})`;
         } else if (fn === 'RADIAL_GRADIENT' && stops) {
             out.background = `${repeat}radial-gradient(${paint.shape || 'circle'}, ${stops})`;
         } else if (fn === 'URL' && paint.image_url) {
-            out.background = `url("${paint.image_url}") center / cover no-repeat`;
+            out.background = `url("${paint.image_url}")`;
         } else if (paint.color != null) {
             out.color = rgba(paint.color);
         } else {
@@ -370,7 +377,11 @@ class SevenTVCosmetics {
 
         if (Array.isArray(paint.shadows) && paint.shadows.length) {
             out.filter = paint.shadows
-                .map(s => `drop-shadow(${s.x_offset}px ${s.y_offset}px ${s.radius}px ${rgba(s.color)})`)
+                .map(s => {
+                    const c = rgba(s.color);
+                    return c ? `drop-shadow(${s.x_offset || 0}px ${s.y_offset || 0}px ${s.radius || 1}px ${c})` : null;
+                })
+                .filter(Boolean)
                 .join(' ');
         }
         return out;
@@ -1383,8 +1394,8 @@ class KickChatClient extends EventTarget {
         const sender = data.sender || {};
         const identity = sender.identity || {};
 
-        let color = identity.color;
-        if (!color || color === '#000000') {
+        let color = identity.color || sender.color;
+        if (!color || color === '#000000' || color === '#000' || color.toLowerCase() === 'black' || color === 'transparent') {
             color = this.generateUserColor(sender.username || 'user');
         }
 
