@@ -425,6 +425,10 @@ class SevenTVEvents {
             if (pack.setId) out.set(`emote_set.*|${pack.setId}`, { type: 'emote_set.*', objectId: pack.setId });
             if (pack.sevenTvUserId) out.set(`user.*|${pack.sevenTvUserId}`, { type: 'user.*', objectId: pack.sevenTvUserId });
         });
+        const globalPack = KickChatClient.getGlobalPack();
+        if (globalPack && globalPack.setId) {
+            out.set(`emote_set.*|${globalPack.setId}`, { type: 'emote_set.*', objectId: globalPack.setId });
+        }
         return out;
     }
 
@@ -496,7 +500,10 @@ class SevenTVEvents {
                 this.hadSession = true;
                 this.sync();
                 // Changes made while disconnected were not pushed: check each pack once
-                if (resumed) this.channels.forEach(slug => KickChatClient.loadPack(slug, { force: true }));
+                if (resumed) {
+                    this.channels.forEach(slug => KickChatClient.loadPack(slug, { force: true }));
+                    KickChatClient.loadGlobalPack({ force: true });
+                }
                 break;
             }
             case this.OP.DISPATCH: {
@@ -504,6 +511,7 @@ class SevenTVEvents {
                 const body = msg.d && msg.d.body;
                 if (type === 'emote_set.update') {
                     this.channels.forEach(slug => KickChatClient.applySetChanges(slug, body));
+                    KickChatClient.applyGlobalSetChanges(body);
                 } else if (type === 'user.update') {
                     this.channels.forEach(slug => KickChatClient.applyUserChanges(slug, body));
                 }
@@ -654,6 +662,8 @@ class KickChatClient extends EventTarget {
     // slug -> { setId, sevenTvUserId, kickConnectionIndex, signature, emotes: Map<name, {url, zeroWidth}> }
     static PACKS = new Map();
     static PACK_LOADS = new Map();  // slug -> in-flight Promise
+    static GLOBAL_PACK = null;
+    static GLOBAL_PACK_LOAD = null; // in-flight Promise for 7TV global emote set
     static EMPTY_PACK = Object.freeze({ setId: null, sevenTvUserId: null, kickConnectionIndex: null, signature: '', emotes: new Map() });
     // A pack checked this recently is used as is (e.g. OBS reloading the scene) unless forced
     static PACK_FRESH_MS = 10 * 60 * 1000;
@@ -682,6 +692,92 @@ class KickChatClient extends EventTarget {
     static isPackFresh(slug) {
         const checkedAt = KickCache.get(`pack_checked_${slug}`);
         return typeof checkedAt === 'number' && Date.now() - checkedAt < this.PACK_FRESH_MS && this.PACKS.has(slug);
+    }
+
+    static getGlobalPack() {
+        if (!this.GLOBAL_PACK) {
+            const cached = KickCache.get('pack_global_7tv');
+            if (!cached || !Array.isArray(cached.emotes)) return this.EMPTY_PACK;
+            this.GLOBAL_PACK = {
+                setId: cached.setId || null,
+                signature: cached.signature || '',
+                emotes: new Map(cached.emotes)
+            };
+        }
+        return this.GLOBAL_PACK;
+    }
+
+    static isGlobalPackFresh() {
+        const checkedAt = KickCache.get('pack_checked_global_7tv');
+        return typeof checkedAt === 'number' && Date.now() - checkedAt < this.PACK_FRESH_MS && Boolean(this.GLOBAL_PACK && this.GLOBAL_PACK.emotes.size);
+    }
+
+    /**
+     * Downloads 7TV global emote set (EZ, Clap, peepoSad, PETPET, etc.). Cached for 7 days.
+     */
+    static loadGlobalPack({ force = false } = {}) {
+        if (this.GLOBAL_PACK_LOAD) return this.GLOBAL_PACK_LOAD;
+        this.getGlobalPack();
+        if (!force && this.isGlobalPackFresh()) return Promise.resolve(this.getGlobalPack());
+
+        const promise = (async () => {
+            const res = await fetch('https://7tv.io/v3/emote-sets/global');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const setId = (data && data.id) || 'global';
+            const rawEmotes = (data && Array.isArray(data.emotes)) ? data.emotes : [];
+            return this.storeGlobalPack({ setId }, rawEmotes);
+        })().catch(e => {
+            console.warn('[7TV] Error cargando pack de emotes globales:', e);
+            return this.getGlobalPack();
+        }).finally(() => {
+            this.GLOBAL_PACK_LOAD = null;
+        });
+
+        this.GLOBAL_PACK_LOAD = promise;
+        return promise;
+    }
+
+    static storeGlobalPack(meta, rawEmotes) {
+        const entries = rawEmotes
+            .filter(em => em && em.name && em.id)
+            .map(em => KickChatClient.packEntry(em));
+        return this.saveGlobalPack(meta, entries);
+    }
+
+    static saveGlobalPack(meta, entries) {
+        KickCache.set('pack_checked_global_7tv', Date.now(), this.PACK_CACHE_TTL);
+
+        const signature = KickChatClient.hashString(
+            `${meta.setId}|${entries.map(([name, e]) => `${name}=${e.url}${e.zeroWidth ? '~' : ''}`).join('\n')}`
+        );
+        const current = this.GLOBAL_PACK;
+        if (current && current.signature === signature) {
+            return current;
+        }
+
+        const pack = {
+            setId: meta.setId,
+            signature,
+            emotes: new Map(entries)
+        };
+        this.GLOBAL_PACK = pack;
+        KickCache.set('pack_global_7tv', {
+            setId: pack.setId,
+            signature,
+            emotes: entries
+        }, entries.length ? this.PACK_CACHE_TTL : 30 * 60 * 1000);
+
+        if (!current || current.signature !== signature) {
+            console.log(`[7TV] Pack de emotes globales actualizado: ${entries.length} emotes (set ${pack.setId || 'global'})`);
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('global_emotes_loaded', {
+                    detail: { setId: pack.setId, count: entries.length }
+                }));
+            }
+        }
+        if (typeof SevenTVEvents !== 'undefined') SevenTVEvents.sync();
+        return pack;
     }
 
     /**
@@ -734,8 +830,12 @@ class KickChatClient extends EventTarget {
         if (!slug) return { channel: false, emotes: 0 };
         SevenTVCosmetics.expireAll();
         const info = await this.fetchChannelInfo(slug);
-        const pack = await this.loadPack(slug, { kickUserId: info && info.kickUserId, force: true });
-        return { channel: Boolean(info), emotes: pack.emotes.size };
+        const [pack, globalPack] = await Promise.all([
+            this.loadPack(slug, { kickUserId: info && info.kickUserId, force: true }),
+            this.loadGlobalPack({ force: true })
+        ]);
+        const totalEmotes = (pack ? pack.emotes.size : 0) + (globalPack ? globalPack.emotes.size : 0);
+        return { channel: Boolean(info), emotes: totalEmotes };
     }
 
     // One pack entry from a 7TV active emote. em.name is the name inside the set (it can be an alias)
@@ -842,6 +942,48 @@ class KickChatClient extends EventTarget {
         this.savePack(slug, pack, Array.from(emotes.entries()));
     }
 
+    static applyGlobalSetChanges(body) {
+        const pack = this.getGlobalPack();
+        if (!pack.setId || !body || body.id !== pack.setId) return;
+
+        const emotes = new Map(pack.emotes);
+        let changed = false;
+        const remove = (old) => {
+            if (!old || !old.id) return;
+            const byName = emotes.get(old.name);
+            if (byName && byName.url.includes(`/emote/${old.id}/`)) {
+                emotes.delete(old.name);
+                changed = true;
+                return;
+            }
+            for (const [name, e] of emotes) {
+                if (e.url.includes(`/emote/${old.id}/`)) {
+                    emotes.delete(name);
+                    changed = true;
+                }
+            }
+        };
+        const add = (em) => {
+            if (!em || !em.name || !em.id) return;
+            const [name, entry] = KickChatClient.packEntry(em);
+            emotes.set(name, entry);
+            changed = true;
+        };
+
+        (body.pulled || []).forEach(c => { if (c.key === 'emotes') remove(c.old_value); });
+        (body.updated || []).forEach(c => {
+            if (c.key !== 'emotes') return;
+            remove(c.old_value);
+            add(c.value);
+        });
+        (body.pushed || []).forEach(c => { if (c.key === 'emotes') add(c.value); });
+
+        if (!changed) return;
+        console.log(`[7TV] Cambio en vivo en el set global` +
+            `: +${(body.pushed || []).length} -${(body.pulled || []).length} ~${(body.updated || []).length}`);
+        this.saveGlobalPack(pack, Array.from(emotes.entries()));
+    }
+
     /**
      * Applies an EventAPI "user.update": when the streamer switches the active set of their Kick
      * connection, the new set is downloaded (once).
@@ -935,7 +1077,10 @@ class KickChatClient extends EventTarget {
         this.subscriberBadgeUrls = new Map(); // months -> url
 
         // Restore this channel's cached pack right away so the first messages already have emotes
-        if (this.sevenTVEmotes) KickChatClient.getPack(this.channelSlug);
+        if (this.sevenTVEmotes) {
+            KickChatClient.getPack(this.channelSlug);
+            KickChatClient.getGlobalPack();
+        }
     }
 
     /* ------------------------------------------------------------------ */
@@ -972,6 +1117,7 @@ class KickChatClient extends EventTarget {
 
         if (this.sevenTVEmotes) {
             KickChatClient.loadPack(slug, { kickUserId: this.kickUserId });
+            KickChatClient.loadGlobalPack();
             SevenTVEvents.watch(slug);
             this.startEmoteRefresher();
         }
@@ -985,6 +1131,7 @@ class KickChatClient extends EventTarget {
         // in case an event was lost without the socket noticing
         this.emoteRefreshInterval = setInterval(() => {
             KickChatClient.loadPack(this.channelSlug, { kickUserId: this.kickUserId, force: true });
+            KickChatClient.loadGlobalPack({ force: true });
         }, 60 * 60 * 1000);
     }
 
@@ -1268,6 +1415,9 @@ class KickChatClient extends EventTarget {
         const emotesMap = options.sevenTVEmotes === false
             ? null
             : (options.emotes || KickChatClient.getPack(options.channel).emotes);
+        const globalEmotesMap = options.sevenTVEmotes === false
+            ? null
+            : (options.globalEmotes || KickChatClient.getGlobalPack().emotes);
 
         // Tokenize: Kick native emotes become standalone tokens, rest split by whitespace
         const tokens = [];
@@ -1306,7 +1456,7 @@ class KickChatClient extends EventTarget {
                     out.push({ html: part, isEmote: false, space: true });
                     continue;
                 }
-                const em = emotesMap ? emotesMap.get(part) : undefined;
+                const em = (emotesMap && emotesMap.get(part)) || (globalEmotesMap && globalEmotesMap.get(part));
                 if (em) {
                     if (em.zeroWidth && out.length >= 2 && out[out.length - 1].space && out[out.length - 2].isEmote) {
                         out.pop();

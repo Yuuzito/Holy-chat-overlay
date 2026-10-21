@@ -165,6 +165,11 @@
         return n >= 0 && n <= 6 ? n : 1;
     }
 
+    function msgShadowLevel(value) {
+        const n = parseInt(value, 10);
+        return n >= 0 && n <= 5 ? n : 0;
+    }
+
     // Text size in px: 10–60 (older links went from 12 to 24)
     function clampFontSize(px) {
         return Math.min(60, Math.max(10, px));
@@ -175,12 +180,16 @@
         channel: (params.get('channel') || params.get('kick') || (cachedConfig && cachedConfig.channel) || 'rageylo').toLowerCase().trim(),
         sevenTVCosmetics: params.get('sevenTVCosmeticsEnabled') !== null ? (params.get('sevenTVCosmeticsEnabled') === 'true') : (cachedConfig ? cachedConfig.sevenTVCosmetics !== false : true),
         sevenTVEmotes: params.get('sevenTVEmotesEnabled') !== null ? (params.get('sevenTVEmotesEnabled') === 'true') : (cachedConfig ? cachedConfig.sevenTVEmotes !== false : true),
-        theme: (params.get('theme') || (cachedConfig && cachedConfig.theme) || 'dark').toLowerCase(),
+        theme: (params.get('theme') || (cachedConfig && cachedConfig.theme) || 'transparent').toLowerCase(),
         shadow: shadowLevel(params.get('shadow') !== null ? params.get('shadow')
             : params.get('textShadow') !== null ? params.get('textShadow').toLowerCase()
                 : cachedConfig && cachedConfig.shadow !== undefined ? cachedConfig.shadow
-                    : (cachedConfig && cachedConfig.textShadow) || 'small'),
-        textSize: (params.get('textSize') || (cachedConfig && cachedConfig.textSize) || 'medium').toLowerCase(),
+                    : (cachedConfig && cachedConfig.textShadow) || 0),
+        msgShadow: msgShadowLevel(params.get('msgShadow') !== null ? params.get('msgShadow')
+            : params.get('dropShadow') !== null ? params.get('dropShadow')
+                : cachedConfig && cachedConfig.msgShadow !== undefined ? cachedConfig.msgShadow
+                    : 1),
+        textSize: (params.get('textSize') || (cachedConfig && cachedConfig.textSize) || 'large').toLowerCase(),
         animation: window.HolyCatalog.animationId((params.get('animation') || (cachedConfig && cachedConfig.animation) || 'none').toLowerCase()),
         showPin: params.get('showPinEnabled') !== null ? (params.get('showPinEnabled') === 'true') : (cachedConfig ? cachedConfig.showPin === true : false),
         textBg: params.get('textBackgroundEnabled') !== null ? (params.get('textBackgroundEnabled') === 'true') : (cachedConfig ? cachedConfig.textBg === true : false),
@@ -189,13 +198,13 @@
         hideBots: params.get('hideBots') !== null ? (params.get('hideBots') === 'true') : (cachedConfig ? cachedConfig.hideBots === true : false),
         bots: botList(params.get('bots') !== null ? params.get('bots') : (cachedConfig && typeof cachedConfig.bots === 'string' ? cachedConfig.bots : DEFAULT_BOTS)),
         hideCommands: params.get('hideCommands') !== null ? (params.get('hideCommands') === 'true') : (cachedConfig ? cachedConfig.hideCommands === true : false),
-        deletedMessages: deletedMode(params.get('deletedMessages') || (cachedConfig && cachedConfig.deletedMessages)),
+        deletedMessages: deletedMode(params.get('deletedMessages') || (cachedConfig && cachedConfig.deletedMessages) || 'hide'),
         layout: layoutMode(params.get('layout') || (cachedConfig && cachedConfig.layout)),
 
         // Additional Chatterino Layout Options:
-        fontSize: clampFontSize(parseInt(params.get('size'), 10) || (cachedConfig && cachedConfig.fontSize) || textSizeToPx(params.get('textSize') || (cachedConfig && cachedConfig.textSize) || 'medium')),
-        emoteSize: clampEmoteSize(parseInt(params.get('emoteSize'), 10) || (cachedConfig && cachedConfig.emoteSize) || 28),
-        badgeSize: clampBadgeSize(parseInt(params.get('badgeSize'), 10) || (cachedConfig && cachedConfig.badgeSize) || 18),
+        fontSize: clampFontSize(parseInt(params.get('size'), 10) || (cachedConfig && cachedConfig.fontSize) || 40),
+        emoteSize: clampEmoteSize(parseInt(params.get('emoteSize'), 10) || (cachedConfig && cachedConfig.emoteSize) || 60),
+        badgeSize: clampBadgeSize(parseInt(params.get('badgeSize'), 10) || (cachedConfig && cachedConfig.badgeSize) || 40),
         font: fontKey(params.get('font') || (cachedConfig && cachedConfig.font)),
         fontWeight: fontWeight(params.get('fontWeight') || (cachedConfig && cachedConfig.fontWeight)),
         altRows: params.get('alt') !== null ? params.get('alt') !== 'false' : (cachedConfig ? cachedConfig.altRows !== false : true),
@@ -238,6 +247,7 @@
     const cfgTheme = document.getElementById('cfgTheme');
     const cfgLayout = document.getElementById('cfgLayout');
     const cfgTextShadow = document.getElementById('cfgTextShadow');
+    const cfgMsgShadow = document.getElementById('cfgMsgShadow');
     const cfgTextSize = document.getElementById('cfgTextSize');
     const cfgEmoteSize = document.getElementById('cfgEmoteSize');
     const cfgBadgeSize = document.getElementById('cfgBadgeSize');
@@ -299,6 +309,7 @@
         theme: { values: ['dark', 'transparent', 'light'], labels: ['Oscuro', 'Transparente', 'Claro'] },
         layout: { values: LAYOUTS, labels: ['Vertical', 'Horizontal', 'Aleatorio'] },
         shadow: { values: [0, 1, 2, 3, 4, 5, 6], labels: ['Nada', '1', '2', '3', '4', '5', '6'] },
+        msgShadow: { values: [0, 1, 2, 3, 4, 5], labels: ['Nada', '1', '2', '3', '4', '5'] },
         textBgWidth: { values: ['min', 'max'], labels: ['Mínimo', 'Máximo'] },
         deletedMessages: { values: DELETED_MODES, labels: ['Ocultar', 'Tachar', 'Aviso'] },
         fadeTime: { values: FADE_TIMES, labels: ['1 s', '3 s', '5 s', '10 s', '15 s', '30 s', '1 min', '2 min', '5 min', '∞'] },
@@ -308,7 +319,7 @@
     };
     Object.assign(STEPS, window.HolyOptions.STEPS);
     const SIZE_TICKS = [10, 14, 20, 30, 45, 60];
-    const sliders = [cfgLayout, cfgTheme, cfgFontWeight, cfgTextSize, cfgEmoteSize, cfgBadgeSize, cfgTextShadow, cfgTextBgWidth, cfgDeletedMessages, cfgTestSpeed, cfgFadeTime,
+    const sliders = [cfgLayout, cfgTheme, cfgFontWeight, cfgTextSize, cfgEmoteSize, cfgBadgeSize, cfgTextShadow, cfgMsgShadow, cfgTextBgWidth, cfgDeletedMessages, cfgTestSpeed, cfgFadeTime,
         document.getElementById('cfgDirection'), document.getElementById('cfgBgAlpha'), document.getElementById('cfgSoundVolume')].filter(Boolean);
 
     if (cfgAnimation) {
@@ -412,47 +423,47 @@
     const PRESETS = [
         {
             id: 'rageylo', name: 'Rageylo', desc: 'El diseño por defecto',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 4, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 0, deletedMessages: 'hide' }
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 0, msgShadow: 1, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 0, deletedMessages: 'hide' }
         },
         {
             id: 'game', name: 'Juego', desc: 'Sobre el juego: transparente, sombra fuerte, cada mensaje dura 1 minuto',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 800, fontSize: 16, emoteSize: 32, badgeSize: 20, shadow: 5, animation: 'slide', textBg: false, textBgWidth: 'min', fadeTime: 60 }
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 800, fontSize: 16, emoteSize: 32, badgeSize: 20, shadow: 5, msgShadow: 2, animation: 'slide', textBg: false, textBgWidth: 'min', fadeTime: 60 }
         },
         {
             id: 'ticker', name: 'Cinta', desc: 'Cinta horizontal para la parte de abajo de la pantalla',
-            settings: { design: 'chatterino', layout: 'horizontal', theme: 'transparent', font: 'rubik', fontWeight: 700, fontSize: 18, emoteSize: 36, badgeSize: 22, shadow: 3, animation: 'fade', textBg: true, textBgWidth: 'min', fadeTime: 0 }
+            settings: { design: 'chatterino', layout: 'horizontal', theme: 'transparent', font: 'rubik', fontWeight: 700, fontSize: 18, emoteSize: 36, badgeSize: 22, shadow: 3, msgShadow: 0, animation: 'fade', textBg: true, textBgWidth: 'min', fadeTime: 0 }
         },
         {
             id: 'floating', name: 'Flotante', desc: 'Mensajes en lugares al azar que aparecen y se van a los 10 segundos',
-            settings: { design: 'chatterino', layout: 'scatter', theme: 'transparent', font: 'fredoka', fontWeight: 600, fontSize: 18, emoteSize: 40, badgeSize: 22, shadow: 0, animation: 'slide', textBg: false, textBgWidth: 'min', fadeTime: 10 }
+            settings: { design: 'chatterino', layout: 'scatter', theme: 'transparent', font: 'fredoka', fontWeight: 600, fontSize: 18, emoteSize: 40, badgeSize: 22, shadow: 0, msgShadow: 0, animation: 'slide', textBg: false, textBgWidth: 'min', fadeTime: 10 }
         },
         {
             id: 'boxes', name: 'Cajitas', desc: 'Cada mensaje en su caja, se desvanecen a los 30 segundos',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'poppins', fontWeight: 600, fontSize: 16, emoteSize: 32, badgeSize: 20, shadow: 0, animation: 'fade', textBg: true, textBgWidth: 'min', fadeTime: 30 }
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'poppins', fontWeight: 600, fontSize: 16, emoteSize: 32, badgeSize: 20, shadow: 0, msgShadow: 0, animation: 'fade', textBg: true, textBgWidth: 'min', fadeTime: 30 }
         },
         {
             id: 'big', name: 'Grande', desc: 'Letra y emotes grandes con fondo, se lee de lejos; duran 2 minutos',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'nunito', fontWeight: 800, fontSize: 20, emoteSize: 40, badgeSize: 24, shadow: 3, animation: 'slide', textBg: true, textBgWidth: 'max', fadeTime: 120 }
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'nunito', fontWeight: 800, fontSize: 20, emoteSize: 40, badgeSize: 24, shadow: 3, msgShadow: 0, animation: 'slide', textBg: true, textBgWidth: 'max', fadeTime: 120 }
         },
         {
             id: 'light', name: 'Claro', desc: 'Fondo blanco y alto contraste',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'light', font: 'open-sans', fontWeight: 600, fontSize: 14, emoteSize: 28, badgeSize: 18, shadow: 0, animation: 'fade', textBg: false, textBgWidth: 'min', fadeTime: 0 }
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'light', font: 'open-sans', fontWeight: 600, fontSize: 14, emoteSize: 28, badgeSize: 18, shadow: 0, msgShadow: 0, animation: 'fade', textBg: false, textBgWidth: 'min', fadeTime: 0 }
         },
         {
             id: 'terminal', name: 'Terminal', desc: 'Monoespaciada y compacta, sin animaciones',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'dark', font: 'jetbrains-mono', fontWeight: 500, fontSize: 13, emoteSize: 24, badgeSize: 16, shadow: 0, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 0 }
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'dark', font: 'jetbrains-mono', fontWeight: 500, fontSize: 13, emoteSize: 24, badgeSize: 16, shadow: 0, msgShadow: 0, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 0 }
         },
         {
             id: 'bubbles', name: 'Burbujas', desc: 'Burbujas con el nombre en una etiqueta, aparecen con un pop y duran 1 minuto',
-            settings: { design: 'bubbles', layout: 'vertical', theme: 'transparent', font: 'poppins', fontWeight: 600, fontSize: 16, emoteSize: 30, badgeSize: 18, shadow: 0, animation: 'pop', textBg: false, textBgWidth: 'min', fadeTime: 60 }
+            settings: { design: 'bubbles', layout: 'vertical', theme: 'transparent', font: 'poppins', fontWeight: 600, fontSize: 16, emoteSize: 30, badgeSize: 18, shadow: 0, msgShadow: 0, animation: 'pop', textBg: false, textBgWidth: 'min', fadeTime: 60 }
         },
         {
             id: 'neon', name: 'Neón', desc: 'Tarjetas negras con borde y texto del color de cada usuario',
-            settings: { design: 'neon', layout: 'vertical', theme: 'transparent', font: 'rubik', fontWeight: 700, fontSize: 16, emoteSize: 30, badgeSize: 18, shadow: 0, animation: 'zoom', textBg: false, textBgWidth: 'min', fadeTime: 0 }
+            settings: { design: 'neon', layout: 'vertical', theme: 'transparent', font: 'rubik', fontWeight: 700, fontSize: 16, emoteSize: 30, badgeSize: 18, shadow: 0, msgShadow: 0, animation: 'zoom', textBg: false, textBgWidth: 'min', fadeTime: 0 }
         },
         {
             id: 'hacker', name: 'Hacker', desc: 'Terminal verde con líneas de escaneo, rebotan al entrar',
-            settings: { design: 'hacker', layout: 'vertical', theme: 'transparent', font: 'inconsolata', fontWeight: 600, fontSize: 16, emoteSize: 28, badgeSize: 18, shadow: 0, animation: 'bounce', textBg: false, textBgWidth: 'min', fadeTime: 0 }
+            settings: { design: 'hacker', layout: 'vertical', theme: 'transparent', font: 'inconsolata', fontWeight: 600, fontSize: 16, emoteSize: 28, badgeSize: 18, shadow: 0, msgShadow: 0, animation: 'bounce', textBg: false, textBgWidth: 'min', fadeTime: 0 }
         }
     ];
     const presetGrid = document.getElementById('presetGrid');
@@ -531,6 +542,7 @@
         cfgEmoteSize.value = s.emoteSize;
         cfgBadgeSize.value = s.badgeSize;
         setStep(cfgTextShadow, s.shadow);
+        if (s.msgShadow !== undefined && cfgMsgShadow) setStep(cfgMsgShadow, s.msgShadow);
         cfgAnimation.value = s.animation;
         const cfgDesign = document.getElementById('cfgDesign');
         if (cfgDesign) cfgDesign.value = s.design;
@@ -563,6 +575,7 @@
         if (cfgTheme) setStep(cfgTheme, config.theme);
         if (cfgLayout) setStep(cfgLayout, config.layout);
         if (cfgTextShadow) setStep(cfgTextShadow, config.shadow);
+        if (cfgMsgShadow) setStep(cfgMsgShadow, config.msgShadow);
         if (cfgAnimation) cfgAnimation.value = config.animation;
         if (cfgTextBgWidth) setStep(cfgTextBgWidth, config.textBgWidth);
         if (cfgTextSize) cfgTextSize.value = config.fontSize;
@@ -600,6 +613,7 @@
         config.theme = cfgTheme ? stepValue(cfgTheme) : 'dark';
         config.layout = cfgLayout ? stepValue(cfgLayout) : 'vertical';
         config.shadow = cfgTextShadow ? stepValue(cfgTextShadow) : 1;
+        config.msgShadow = cfgMsgShadow ? stepValue(cfgMsgShadow) : 0;
         config.animation = cfgAnimation ? window.HolyCatalog.animationId(cfgAnimation.value) : 'none';
         config.textBgWidth = cfgTextBgWidth ? stepValue(cfgTextBgWidth) : 'min';
         config.fontSize = cfgTextSize ? clampFontSize(Number(cfgTextSize.value)) : 14;
@@ -627,6 +641,7 @@
         q.set('theme', config.theme);
         q.set('layout', config.layout);
         q.set('shadow', String(config.shadow));
+        q.set('msgShadow', String(config.msgShadow));
         q.set('textSize', config.textSize);
         q.set('size', String(config.fontSize));
         q.set('emoteSize', String(config.emoteSize));
@@ -703,6 +718,7 @@
                 theme: config.theme,
                 layout: config.layout,
                 shadow: config.shadow,
+                msgShadow: config.msgShadow,
                 textSize: config.textSize,
                 fontSize: config.fontSize,
                 emoteSize: config.emoteSize,
@@ -726,9 +742,12 @@
 
     const saveSettingsDebounced = debounce(saveSettings, 300);
 
-    // Loads the 7TV pack of the channel typed in the menu (debounced so typing a name is a single request)
+    // Loads the 7TV pack of the channel typed in the menu and 7TV global emotes
     function loadMenuChannelPack() {
-        if (window.KickChatClient) KickChatClient.loadPack(menuChannel());
+        if (window.KickChatClient) {
+            KickChatClient.loadPack(menuChannel());
+            KickChatClient.loadGlobalPack();
+        }
     }
 
     const loadMenuChannelPackDebounced = debounce(loadMenuChannelPack, 500);
@@ -2312,14 +2331,27 @@
 
     function packEmoteNameSet() {
         if (!window.KickChatClient) return { list: [], set: new Set() };
-        const emotes = KickChatClient.getPack(config.channel).emotes;
-        let names = packNamesCache.get(emotes);
-        if (!names) {
-            const list = Array.from(emotes.keys()).filter(n => !emotes.get(n).zeroWidth);
-            names = { list, set: new Set(list) };
-            packNamesCache.set(emotes, names);
+        const channelEmotes = KickChatClient.getPack(config.channel).emotes;
+        const globalEmotes = KickChatClient.getGlobalPack ? KickChatClient.getGlobalPack().emotes : null;
+        const list = [];
+        const seen = new Set();
+        if (channelEmotes) {
+            for (const [name, data] of channelEmotes) {
+                if (!data.zeroWidth && !seen.has(name)) {
+                    seen.add(name);
+                    list.push(name);
+                }
+            }
         }
-        return names;
+        if (globalEmotes) {
+            for (const [name, data] of globalEmotes) {
+                if (!data.zeroWidth && !seen.has(name)) {
+                    seen.add(name);
+                    list.push(name);
+                }
+            }
+        }
+        return { list, set: seen };
     }
 
     function packEmoteNames() {
@@ -2329,10 +2361,15 @@
     // A combo: a base emote followed by a zero-width emote, which the parser stacks on it
     function packComboPair() {
         if (!window.KickChatClient) return null;
-        const emotes = KickChatClient.getPack(config.channel).emotes;
+        const channelEmotes = KickChatClient.getPack(config.channel).emotes;
+        const globalEmotes = KickChatClient.getGlobalPack ? KickChatClient.getGlobalPack().emotes : null;
         const bases = [];
         const overlays = [];
-        emotes.forEach((e, name) => (e.zeroWidth ? overlays : bases).push(name));
+        const add = (e, name) => {
+            (e.zeroWidth ? overlays : bases).push(name);
+        };
+        if (channelEmotes) channelEmotes.forEach(add);
+        if (globalEmotes) globalEmotes.forEach(add);
         if (!bases.length || !overlays.length) return null;
         const base = bases[Math.floor(Math.random() * bases.length)];
         const overlay = overlays[Math.floor(Math.random() * overlays.length)];
@@ -2631,6 +2668,17 @@
     // Once the pack of the channel in the menu arrives, show its emotes in the test chat
     window.addEventListener('channel_emotes_loaded', (e) => {
         if (!isMenuMode() || !e.detail || e.detail.channel !== menuChannel()) return;
+        chatMessagesEl.querySelectorAll('.chatterino-line').forEach(row => {
+            if (row._msg) row._msg._parsed = null;
+        });
+        rerenderMessages();
+    });
+
+    window.addEventListener('global_emotes_loaded', () => {
+        if (!isMenuMode()) return;
+        chatMessagesEl.querySelectorAll('.chatterino-line').forEach(row => {
+            if (row._msg) row._msg._parsed = null;
+        });
         rerenderMessages();
     });
 
@@ -2697,6 +2745,8 @@
         if (chatArea) {
             chatArea.classList.remove(...STEPS.shadow.values.map(v => `shadow-${v}`));
             chatArea.classList.add(`shadow-${config.shadow}`);
+            chatArea.classList.remove(...STEPS.msgShadow.values.map(v => `msg-shadow-${v}`));
+            chatArea.classList.add(`msg-shadow-${config.msgShadow}`);
             chatArea.classList.toggle('text-bg-enabled', config.textBg);
             chatArea.classList.toggle('text-bg-max', config.textBgWidth === 'max');
             // Deleted messages are restyled by CSS, so switching the mode also changes the old ones
@@ -2843,14 +2893,16 @@
         // Redrawing every row (style, switches) reuses the last parse while text and pack are the same
         const content = msg.content || '';
         const emotes = config.sevenTVEmotes ? KickChatClient.getPack(config.channel).emotes : null;
+        const globalEmotes = config.sevenTVEmotes && KickChatClient.getGlobalPack ? KickChatClient.getGlobalPack().emotes : null;
         const cached = msg._parsed;
-        if (cached && cached.content === content && cached.emotes === emotes) return cached.html;
+        if (cached && cached.content === content && cached.emotes === emotes && cached.globalEmotes === globalEmotes) return cached.html;
         const html = KickChatClient.parseContentToHtml(content, {
             sevenTVEmotes: config.sevenTVEmotes,
             channel: config.channel,
-            emotes: emotes || undefined
+            emotes: emotes || undefined,
+            globalEmotes: globalEmotes || undefined
         });
-        msg._parsed = { content, emotes, html };
+        msg._parsed = { content, emotes, globalEmotes, html };
         return html;
     }
 
