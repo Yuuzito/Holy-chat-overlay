@@ -178,8 +178,8 @@
         theme: (params.get('theme') || (cachedConfig && cachedConfig.theme) || 'dark').toLowerCase(),
         shadow: shadowLevel(params.get('shadow') !== null ? params.get('shadow')
             : params.get('textShadow') !== null ? params.get('textShadow').toLowerCase()
-            : cachedConfig && cachedConfig.shadow !== undefined ? cachedConfig.shadow
-            : (cachedConfig && cachedConfig.textShadow) || 'small'),
+                : cachedConfig && cachedConfig.shadow !== undefined ? cachedConfig.shadow
+                    : (cachedConfig && cachedConfig.textShadow) || 'small'),
         textSize: (params.get('textSize') || (cachedConfig && cachedConfig.textSize) || 'medium').toLowerCase(),
         animation: window.HolyCatalog.animationId((params.get('animation') || (cachedConfig && cachedConfig.animation) || 'none').toLowerCase()),
         showPin: params.get('showPinEnabled') !== null ? (params.get('showPinEnabled') === 'true') : (cachedConfig ? cachedConfig.showPin === true : false),
@@ -411,8 +411,8 @@
     // mentions, Filtros or the pinned banner)
     const PRESETS = [
         {
-            id: 'chatterino', name: 'Chatterino', desc: 'El clásico: columna sobre fondo oscuro, los mensajes se quedan',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'dark', font: 'inter', fontWeight: 700, fontSize: 14, emoteSize: 28, badgeSize: 18, shadow: 1, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 0 }
+            id: 'rageylo', name: 'Rageylo', desc: 'El diseño por defecto',
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 5, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 0, deletedMessages: 'hide' }
         },
         {
             id: 'game', name: 'Juego', desc: 'Sobre el juego: transparente, sombra fuerte, cada mensaje dura 1 minuto',
@@ -537,6 +537,7 @@
         cfgTextBg.checked = s.textBg;
         setStep(cfgTextBgWidth, s.textBgWidth);
         setStep(cfgFadeTime, s.fadeTime);
+        if (s.deletedMessages !== undefined && cfgDeletedMessages) setStep(cfgDeletedMessages, s.deletedMessages);
         sliders.forEach(syncSlider);
         onMenuChange();
     }
@@ -745,7 +746,7 @@
         try {
             // Keep regular browser clean so refresh always reopens the menu
             window.history.pushState({}, '', buildGeneratedUrl(false));
-        } catch (e) {}
+        } catch (e) { }
     }
 
     function openMenu() {
@@ -880,11 +881,11 @@
     // -------------------------------------------------------------------------
     // Real 7TV paints (from 7TV's cosmetics API), turned into CSS by the same code as live chat
     const SEVENTV_PAINTS = {
-        bismuth: {"function":"LINEAR_GRADIENT","angle":135,"repeat":true,"stops":[{"at":0.0,"color":-1820262401},{"at":0.1,"color":-1820262401},{"at":0.1,"color":-9395969},{"at":0.2,"color":-9395969},{"at":0.2,"color":12582911},{"at":0.3,"color":12582911},{"at":0.3,"color":1140751359},{"at":0.4,"color":1140751359},{"at":0.4,"color":-18860801},{"at":0.5,"color":-18860801}],"shadows":[{"x_offset":0,"y_offset":0,"radius":3,"color":1278803967}]},
-        tangerine: {"function":"LINEAR_GRADIENT","angle":90,"repeat":false,"stops":[{"at":0.19,"color":-1795293185},{"at":0.5,"color":-3894017},{"at":0.79,"color":-1795293185},{"at":1.0,"color":-3894017}],"shadows":[{"x_offset":0,"y_offset":0,"radius":0.1,"color":-121202945}]},
-        mysticSmoke: {"function":"LINEAR_GRADIENT","angle":125,"repeat":false,"stops":[{"at":0.0,"color":-236456961},{"at":0.25,"color":-236456961},{"at":0.5,"color":-1642534913},{"at":0.75,"color":1650418687},{"at":1.0,"color":1650418687}],"shadows":[{"x_offset":0,"y_offset":0,"radius":0.1,"color":1650484223},{"x_offset":1,"y_offset":1,"radius":0.1,"color":805328895}]},
-        slime: {"function":"LINEAR_GRADIENT","angle":180,"repeat":false,"stops":[{"at":0.32,"color":-7274497},{"at":0.52,"color":-7274497},{"at":0.65,"color":15103743},{"at":0.82,"color":15103743},{"at":1.0,"color":15103743}],"shadows":[{"x_offset":0,"y_offset":0,"radius":0.1,"color":1558280703}]},
-        waterSurge: {"function":"LINEAR_GRADIENT","angle":125,"repeat":false,"stops":[{"at":0.09,"color":-1},{"at":0.36,"color":-1109262337},{"at":0.43,"color":1725026815},{"at":0.59,"color":10921727},{"at":1.0,"color":372396031}],"shadows":[{"x_offset":0,"y_offset":1,"radius":0.1,"color":291532543}]}
+        bismuth: { "function": "LINEAR_GRADIENT", "angle": 135, "repeat": true, "stops": [{ "at": 0.0, "color": -1820262401 }, { "at": 0.1, "color": -1820262401 }, { "at": 0.1, "color": -9395969 }, { "at": 0.2, "color": -9395969 }, { "at": 0.2, "color": 12582911 }, { "at": 0.3, "color": 12582911 }, { "at": 0.3, "color": 1140751359 }, { "at": 0.4, "color": 1140751359 }, { "at": 0.4, "color": -18860801 }, { "at": 0.5, "color": -18860801 }], "shadows": [{ "x_offset": 0, "y_offset": 0, "radius": 3, "color": 1278803967 }] },
+        tangerine: { "function": "LINEAR_GRADIENT", "angle": 90, "repeat": false, "stops": [{ "at": 0.19, "color": -1795293185 }, { "at": 0.5, "color": -3894017 }, { "at": 0.79, "color": -1795293185 }, { "at": 1.0, "color": -3894017 }], "shadows": [{ "x_offset": 0, "y_offset": 0, "radius": 0.1, "color": -121202945 }] },
+        mysticSmoke: { "function": "LINEAR_GRADIENT", "angle": 125, "repeat": false, "stops": [{ "at": 0.0, "color": -236456961 }, { "at": 0.25, "color": -236456961 }, { "at": 0.5, "color": -1642534913 }, { "at": 0.75, "color": 1650418687 }, { "at": 1.0, "color": 1650418687 }], "shadows": [{ "x_offset": 0, "y_offset": 0, "radius": 0.1, "color": 1650484223 }, { "x_offset": 1, "y_offset": 1, "radius": 0.1, "color": 805328895 }] },
+        slime: { "function": "LINEAR_GRADIENT", "angle": 180, "repeat": false, "stops": [{ "at": 0.32, "color": -7274497 }, { "at": 0.52, "color": -7274497 }, { "at": 0.65, "color": 15103743 }, { "at": 0.82, "color": 15103743 }, { "at": 1.0, "color": 15103743 }], "shadows": [{ "x_offset": 0, "y_offset": 0, "radius": 0.1, "color": 1558280703 }] },
+        waterSurge: { "function": "LINEAR_GRADIENT", "angle": 125, "repeat": false, "stops": [{ "at": 0.09, "color": -1 }, { "at": 0.36, "color": -1109262337 }, { "at": 0.43, "color": 1725026815 }, { "at": 0.59, "color": 10921727 }, { "at": 1.0, "color": 372396031 }], "shadows": [{ "x_offset": 0, "y_offset": 1, "radius": 0.1, "color": 291532543 }] }
     };
 
     // Real 7TV badges (cdn.7tv.app/badge/<id>)
@@ -932,650 +933,822 @@
 
     // Conversations between the test chatters: each reply answers the message before it
     const TEST_THREADS = [
-        { id: "A1", lines: [
-            { u: "tintinMC", t: "@sacksuu 438 jugadores en el server a las 22:15. Te faltan 62 para el corte de pelo, jaja {emote}" },
-            { u: "sacksuu", t: "@tintinMC eso es un bot que puso un pibe en el lobby, no cuenta. No me voy a cortar nada todavía" },
-            { u: "tintinMC", t: "@sacksuu los 438 son reales, los conté con el /list. Que lo confirme {channel} si querés" },
-            { u: "Fqkeeh", t: "@tintinMC @sacksuu nadie mete bots al server, la próxima se banea sin vuelta. Ya lo dije {emote}" },
-            { u: "sacksuu", t: "@Fqkeeh dale, pero la apuesta es la apuesta. Si llego a 500 me corto el pelo en vivo, lo juro" },
-            { u: "tintinMC", t: "@sacksuu y si no llegás, a bailar cumbia en la cancha del server. Preparate, que ya perdiste dos veces {emote}" }
-        ] },
-        { id: "A2", lines: [
-            { u: "sillazul", t: "@marttpeepo el clásico fue 1 a 1 y el gol de Central llegó en el 90. Empate, no lo discutas más {emote}" },
-            { u: "marttpeepo", t: "@sillazul empate en el papel, pero ganó Newell's en la cabeza. Así lo tengo anotado y no lo cambio {emote}" },
-            { u: "sillazul", t: "@marttpeepo en la cabeza no vale puntos, amigo. Bancá que el próximo clásico lo ganamos nosotros" },
-            { u: "aywidbi", t: "@sillazul el café que me debés sigue en pie, eh. Lo de la apuesta del derby no se olvida {emote}" },
-            { u: "marttpeepo", t: "@aywidbi y encima sillazul tiene un sub regalado tuyo, qué suerte. Mañana sí te pago yo el café, posta" },
-            { u: "sillazul", t: "@marttpeepo tranqui, con el laburo vas a llegar. Cata te manda mate y yo hoy no te jodo más con el clásico {emote}" }
-        ] },
-        { id: "A3", lines: [
-            { u: "lukitaselglorp", t: "Me comprometí la semana pasada con Jime, acá en Bahía Blanca. Ella dijo que sí y yo todavía no me lo creo {emote}" },
-            { u: "chungkingexpress", t: "@lukitaselglorp felicitaciones, posta! Que Jime te haga ver Casablanca un jueves y ya tenés el sí de la familia" },
-            { u: "noah4eva", t: "@lukitaselglorp qué hermoso, che. La despedida de solter@ es en noviembre? Tiren pa Mendoza que hay bodegas de sobra {emote}" },
-            { u: "lukitaselglorp", t: "@noah4eva noviembre en Bahía Blanca. Cada uno pone guita y el que no viene paga el fernet, eso es ley" },
-            { u: "noah4eva", t: "@lukitaselglorp me despierto a las 3 para votar la despedida, eh. Mandame el link y pongo lo que pueda {emote}" },
-            { u: "chungkingexpress", t: "@noah4eva ojo que para noviembre ya estás en Madrid, así que hacé el asado vos desde allá y lo mandamos por chat" }
-        ] },
-        { id: "A4", lines: [
-            { u: "mearzys", t: "Llevo 14 horas de guardia y me quedan 10. Desde el office miro el stream, estoy agotada {emote}" },
-            { u: "jmica", t: "@mearzys tomá agua y comé algo, enfermera. Acá no te piden nada más que aparecer {emote}" },
-            { u: "mearzys", t: "@jmica gracias, jefe. Mi mamá me llama el domingo a la noche y se alarga una hora. Alguien me manda un audio que diga 'estoy en guardia, mami'?" },
-            { u: "Fqkeeh", t: "@mearzys mandalo vos misma, y si hace falta te lo grabo yo el domingo. Pero nada de datos del hospital en el audio, eh" },
-            { u: "jmica", t: "@mearzys me sumo: si tu mamá insiste, mandale un audio de Atlético perdiendo, así corta seguro {emote}" },
-            { u: "mearzys", t: "@jmica no, Atlético perdiendo es lo que la pone peor. Mejor un audio de 'llegó el café'. Gracias chat, los quiero" }
-        ] },
-        { id: "A5", lines: [
-            { u: "Agu_sanhueza", t: "Tango se comió otro cable del cargador. Ya van tres cargadores, me quedé sin celular a las 3 de la tarde en pleno final {emote}" },
-            { u: "pachudani", t: "@Agu_sanhueza te entiendo, yo ya cambié tres auriculares por el perro de mi vecino. Tango es un crack, no un perro" },
-            { u: "tintinMC", t: "@Agu_sanhueza comprate un cargador de cable blindado, de los que vienen con kevlar. Tango no pasa esa {emote}" },
-            { u: "Agu_sanhueza", t: "@tintinMC ya lo intenté, el blindado también lo mastica. El último me salió 18 mil pesos y mi viejo me miró feo" },
-            { u: "pachudani", t: "@Agu_sanhueza ojo con los 18 mil, eh. Mirá que la suscripción también la pago yo y no me quejo tanto {emote}" },
-            { u: "Agu_sanhueza", t: "@pachudani dale, ustedes hacen fuerza que yo tengo el segundo final de Cálculo II la semana que viene. Tango, sos un problema" }
-        ] },
-        { id: "A6", lines: [
-            { u: "matiaz0800", t: "Perdí el celular en el colectivo la semana pasada, el que hace ruido cuando lo llamás. Lo busco en la comisaría {emote}" },
-            { u: "ferldz", t: "@matiaz0800 llamalo desde el fijo de casa a ver si aparece. Y Doña Rosa pisó el teclado en directo otra vez {emote}" },
-            { u: "tomasinfr", t: "@ferldz Doña Rosa tiene más seguidores que mi gato, que todavía no tiene nombre. La respeto por eso" },
-            { u: "matiaz0800", t: "@ferldz no, el celular no aparece. Pero el jueves hago milanesas igual, vengan los que quieran, hay para seis {emote}" },
-            { u: "ferldz", t: "@matiaz0800 llego tarde, como siempre. Yo llevo la ensalada, pero la gata se la come si la dejo en la mesa" },
-            { u: "tomasinfr", t: "@matiaz0800 yo llego después de cobrar y traigo fernet. Bancá que el gato no sabe el nombre pero sabe las milanesas {emote}" }
-        ] },
-        { id: "B1", lines: [
-            { u: "ferldz", t: "Doña Rosa se subió al teclado otra vez y mandó como diez letras al chat. Pido disculpas por ella {emote}" },
-            { u: "matiaz0800", t: "@ferldz sos el único que llega tarde a sus propias milanesas. El jueves cocino, así que hacé lugar en la mesa. {combo}" },
-            { u: "ferldz", t: "@matiaz0800 llego a las 22 si el colectivo no se muere. Doña Rosa ya se tomó el pan rallado de la mesada." },
-            { u: "noah4eva", t: "Me voy a Madrid en 20 días. Escribirlo a las 3 de la mañana da más pena, pero vine a despedirme igual. {emote}" },
-            { u: "matiaz0800", t: "@noah4eva yo perdí el celu en el colectivo la semana pasada, pero el jueves te mando la foto de la milanesa igual." },
-            { u: "ferldz", t: "@noah4eva mandá foto de Madrid, y no te olvides de las milanesas. En España el pan rallado es un misterio. {combo}" },
-            { u: "noah4eva", t: "@ferldz @matiaz0800 gracias, en serio. Me despiertan a las 3 y encima me dan de comer. Nos vemos desde el otro lado." }
-        ] },
-        { id: "B2", lines: [
-            { u: "Swagginhaze28", t: "Hola a todos, recién llego de Tucumán. Qué es el hype train? Lo vi escrito en el chat y no entendí nada {emote}" },
-            { u: "jmica", t: "@Swagginhaze28 Hype train: cuando el chat junta subs y la barra sube de nivel. Bienvenido, leé las reglas en el panel." },
-            { u: "Swagginhaze28", t: "@jmica ok, y los emotes raros que mandan todos, de dónde salen? Pregunté antes y nadie contestó, solo mandaban emotes. {combo}" },
-            { u: "MONKIWI", t: "@Swagginhaze28 Son de 7TV, instalás la extensión y listo. Y sí, gané el sorteo otra vez, no me miren así. La botella de malbec existe, lo juro." },
-            { u: "jmica", t: "@Swagginhaze28 Regla uno: nada de spam de emotes. Regla dos: nada de spoilers. Lo demás lo vas viendo solo." },
-            { u: "Swagginhaze28", t: "@jmica bancá, ya me hice amigo de tres en cinco minutos. Eso cuenta para el hype? {emote}" }
-        ] },
-        { id: "B3", lines: [
-            { u: "sacksuu", t: "@Yuuzito ya pasaron tres semanas, cuándo bailás la cumbia que le prometiste a {channel}? {emote}" },
-            { u: "Yuuzito", t: "@sacksuu está en el guion, posta. Esta semana cuando termine el turno lo grabo en el living." },
-            { u: "mearzys", t: "@Yuuzito eso lo dijiste la semana pasada. Yo ya bailé anoche en la guardia, con la camilla de partner. {combo}" },
-            { u: "Yuuzito", t: "@mearzys la camilla no cuenta, te estás riendo de mí. Cumbia el domingo, de verdad. {emote}" },
-            { u: "sacksuu", t: "@Yuuzito el domingo es el día con más chat, no hay excusas. Yo me corto el pelo si el server llega a 500, vos bailá." },
-            { u: "Yuuzito", t: "Dale, dale, ya conecté el parlante. Pero a {channel} le pido que me filme de frente, no de costado. {emote}" },
-            { u: "mearzys", t: "@Yuuzito si no bailás, te grabo yo en la próxima guardia y lo subo al canal. Sin excusas, guapo. {combo}" }
-        ] },
-        { id: "B4", lines: [
-            { u: "chungkingexpress", t: "Otra semana, otra tanda de subs de regalo. Como en Chungking Express, el amor llega cuando menos lo esperás. {emote}" },
-            { u: "Yuuzito", t: "@chungkingexpress y mi café de marzo sigue en el aire, eh. Ya es octubre, tengo el cortado frío esperándote." },
-            { u: "chungkingexpress", t: "@Yuuzito el lunes después del cine en Almagro te invito el cortado y una medialuna. Esta vez sí, te lo juro. {combo}" },
-            { u: "tomasinfr", t: "@chungkingexpress y yo acabo de tirar tres subs de regalo, cobré el freelance esta semana. Reparto para todos." },
-            { u: "Yuuzito", t: "@tomasinfr qué bien. Y el gato sigue sin nombre? Te lo pregunto cada semana, es un tema de Estado. {emote}" },
-            { u: "tomasinfr", t: "@Yuuzito sigue sin nombre, cada vez que lo nombro se pone a dormir. Sugerencias bienvenidas, menos Doña Rosa, que ya tiene dueña." },
-            { u: "chungkingexpress", t: "@tomasinfr ponele Godard, así te deja en paz y se duerme viendo películas. Yuuzito, el lunes sigue en pie. {emote}" }
-        ] },
-        { id: "B5", lines: [
-            { u: "aywidbi", t: "Te regalé un sub por perder la apuesta del clásico, sillazul. Vos me debés el café, no te olvides. {emote}" },
-            { u: "sillazul", t: "@aywidbi el sub lo acepto con el corazón, el café lo pago con el primer franco que tenga. Vaca Muerta te tiene a full?" },
-            { u: "aywidbi", t: "@sillazul tres semanas de turno y dos de descanso, o sea que el café lo tomás en enero, cuando baje del yacimiento." },
-            { u: "Agu_sanhueza", t: "@aywidbi tres semanas de pozo y dos libres, qué envidia. Mientras tanto Tango mordió otro cargador, ya van cuatro. {combo}" },
-            { u: "sillazul", t: "@Agu_sanhueza comprale a Tango un cargador de los que no se mastican. Y que Boca no te haga sufrir tanto. {emote}" },
-            { u: "aywidbi", t: "@sillazul el sub es regalo, el café es deuda. Así de simple. Traé la guita en enero y listo." }
-        ] },
-        { id: "B6", lines: [
-            { u: "marttpeepo", t: "Hoy me llamaron de una empresa para una entrevista, mañana sí, posta. Cata me trajo mate y eso ya es un buen día. {emote}" },
-            { u: "mearzys", t: "@marttpeepo qué buena noticia, de verdad. Tomate el mate y después contame cómo te fue en la entrevista, guapo." },
-            { u: "lukitaselglorp", t: "@marttpeepo sin presión, eh. Si no sale, el chat igual te banca. Y Cata es la mejor, le debo un mate también." },
-            { u: "marttpeepo", t: "Gracias, en serio. Hace un mes me echaron y a veces siento que no sirvo para nada. Igual mandé tres CV esta semana." },
-            { u: "mearzys", t: "@marttpeepo sirve un montón lo que hacés. Mandar CV con el mes que tuviste es ser valiente. Dormí bien hoy." },
-            { u: "lukitaselglorp", t: "@marttpeepo cuando salga algo avisanos y lo festejamos en el chat, con un asado de mentira. {combo}" },
-            { u: "marttpeepo", t: "Dale, aviso. Y que Newell's gane el sábado así tengo una buena noticia más encima. {emote}" }
-        ] },
-        { id: "C1", lines: [
-            { u: "Fqkeeh", t: "Chat, ¿alguien me confirma si el audio se escucha bajo? Si hay lag o la cámara borrosa, avisen acá. {emote}" },
-            { u: "Agu_sanhueza", t: "@Fqkeeh a mí se escucha bajito, creo que es mi router, se corta cada diez minutos desde ayer." },
-            { u: "jmica", t: "@Agu_sanhueza el audio de {channel} está bien en mi lado. Reiniciá el router y fijate si mejora. {combo}" },
-            { u: "Agu_sanhueza", t: "@jmica reinicié y nada, encima Tango ladró al cartero y se escucha todo de fondo. Perdón, posta." },
-            { u: "jmica", t: "@Fqkeeh confirmo, la cámara se ve borrosa y el chat va con lag. Yo también lo veo desde el celu." },
-            { u: "Fqkeeh", t: "@jmica dale, bajo el bitrate y reviso el encoder. @Agu_sanhueza que Tango ladre no es un problema técnico, eh. {combo}" }
-        ] },
-        { id: "C2", lines: [
-            { u: "pachudani", t: "Otra vez cuatro anuncios en una hora y el sub subió. Yo estaba en la beta, esto ya no es lo mismo. {emote}" },
-            { u: "MONKIWI", t: "@pachudani tranqui founder, cuando me llegue el malbec te pago la suscripción del año. {combo}" },
-            { u: "pachudani", t: "@MONKIWI tu malbec no existe, sos el único que lo cree. Mientras tanto me quejo, es mi derecho." },
-            { u: "Fqkeeh", t: "@pachudani regla nueva: las quejas de precio van al hilo de sugerencias, no al chat en vivo. Si se repite, la próxima se banea. {emote}" },
-            { u: "MONKIWI", t: "@Fqkeeh jaja, sí jefe, lo dejo pasar. La botella existe igual, aunque nadie la vea." },
-            { u: "pachudani", t: "Ok, cumplo. Pero no me voy, eh. Tengo turno de noche en el call center y acá me quedo hasta las seis." }
-        ] },
-        { id: "C3", lines: [
-            { u: "MONKIWI", t: "Gané el sorteo otra vez, ya sé que me van a cargar. El malbec existe, se los juro. {combo}" },
-            { u: "matiaz0800", t: "@MONKIWI el malbec no existe, lo dice todo el chat. Ganaste otra vez, sos la mascota del sorteo." },
-            { u: "ferldz", t: "@MONKIWI pasame una foto de la etiqueta, aunque sea. Doña Rosa ya se subió a la mesa a mirar. {emote}" },
-            { u: "MONKIWI", t: "@ferldz acá va la etiqueta: Maipú, 2019, la botella que todos dicen que no existe. {combo}" },
-            { u: "matiaz0800", t: "@MONKIWI una etiqueta puede ser de cualquier cosa, jaja. Igual, la foto está bastante prolija." },
-            { u: "ferldz", t: "@MONKIWI traela el jueves, matiaz hace milanesas. Si existe, nos la tomamos y listo." }
-        ] },
-        { id: "C4", lines: [
-            { u: "mearzys", t: "Salí de una guardia de 24 horas y estoy hecha pelota. Ya quiero dormir, pero acá sigo mirando. {emote}" },
-            { u: "Agu_sanhueza", t: "@mearzys yo con dos finales encima tampoco me acuerdo de mi nombre. Tip: 25 minutos de estudio y 5 de pausa. {combo}" },
-            { u: "mearzys", t: "@Agu_sanhueza eso me sirve para los pacientes, no para los parciales. Igual lo pruebo, aunque sea mañana." },
-            { u: "Agu_sanhueza", t: "@mearzys dale, y armá un resumen de una hoja. Tango se comió otro cargador, ya van tres, estudio con 4% de batería." },
-            { u: "mearzys", t: "Jaja pobre Tango. Justo me llamó mamá, me preguntó si comí y le dije que sí. Mentí, obvio. {combo}" },
-            { u: "Agu_sanhueza", t: "@mearzys mentirle a mamá es amor, eh. Ojalá te toque una noche tranquila antes de la próxima guardia." }
-        ] },
-        { id: "C5", lines: [
-            { u: "sacksuu", t: "@tintinMC cuántos jugadores tiene el server hoy? Si llegamos a 500 me corto el pelo, si no, bailo cumbia. {emote}" },
-            { u: "tintinMC", t: "@sacksuu 412 conectados anoche, te faltan casi cien, pibe. Andá buscando la tijera." },
-            { u: "Yuuzito", t: "@sacksuu mientras tanto yo sigo debiendo el video de cumbia a {channel}. Lo hago el sábado, posta." },
-            { u: "chungkingexpress", t: "@Yuuzito como dice Wong Kar-wai, el tiempo se va y el café no llega. Te lo debo desde marzo, lo juro. {combo}" },
-            { u: "sacksuu", t: "@chungkingexpress ni me hables de café, estoy comiendo fideos desde que me compré la Switch con el aguinaldo." },
-            { u: "tintinMC", t: "@sacksuu relajate, el viernes hay evento y el server sube. Si llegamos a 500, te corto el pelo yo mismo. {emote}" }
-        ] },
-        { id: "C6", lines: [
-            { u: "Swagginhaze28", t: "Hola a todos, primera vez en el chat. ¿Qué es la tanda de subs regalados? Vi que llovieron. {emote}" },
-            { u: "tomasinfr", t: "@Swagginhaze28 bienvenido. Regalo subs en tanda cuando me pagan, y me pagaron esta semana. {combo}" },
-            { u: "MONKIWI", t: "@tomasinfr y el gato, ¿cómo se llama ya? Te lo pregunto cada semana y siempre cambiás de tema." },
-            { u: "tomasinfr", t: "@MONKIWI sigue sin nombre, che. Se lo pongo cuando termine de cobrar todo el laburo freelance." },
-            { u: "Swagginhaze28", t: "@tomasinfr ¿y si lo llamás Hype Train? Así le explico a todos qué es, jaja. {emote}" },
-            { u: "MONKIWI", t: "@Swagginhaze28 jaja, eso suena a nombre de emote, no de gato. Después te explico bien el hype train." }
-        ] },
-        { id: "D1", lines: [
-            { u: "Fqkeeh", t: "Borré un mensaje con un link raro que decía sorteo gratis. Acá los links de sorteos no pasan, la regla es clara. {emote}" },
-            { u: "sacksuu", t: "@Fqkeeh y yo sigo anotado en el sorteo o me saqué? Lo vi recién cuando lo borraste." },
-            { u: "Fqkeeh", t: "@sacksuu seguís adentro, el sorteo es del canal y no de links. Si alguien te escribe por privado, no le das nada. {combo}" },
-            { u: "MONKIWI", t: "@sacksuu tranqui, si gano yo te doy la botella de malbec que nadie cree que tengo." },
-            { u: "sacksuu", t: "@MONKIWI ni en joda, esa botella no existe. Pero gracias por la oferta. {emote}" },
-            { u: "Fqkeeh", t: "@MONKIWI la próxima se banea, no hagamos bromas con links. Seguimos con el stream." }
-        ] },
-        { id: "D2", lines: [
-            { u: "Agu_sanhueza", t: "Re trucho el sorteo del sábado, salió el mismo nombre de siempre. Algo raro pasa {emote}" },
-            { u: "sacksuu", t: "@Agu_sanhueza ganaste vos el mes pasado, no te quejes. Tango ya se comió otro cargador?" },
-            { u: "Agu_sanhueza", t: "@sacksuu fueron tres cargadores, Tango es un traidor. Y el sorteo sí fue raro, posta. {combo}" },
-            { u: "jmica", t: "@Agu_sanhueza @sacksuu leé las reglas: el sorteo es random y se cierra. Hasta acá la discusión." },
-            { u: "sacksuu", t: "@jmica bueno jefe. Igual si Tango gana el sorteo me callo la boca." },
-            { u: "Agu_sanhueza", t: "@jmica dale, ok. Tango igual se queda con el cargador nuevo, eso no tiene sorteo. {emote}" }
-        ] },
-        { id: "D3", lines: [
-            { u: "Yuuzito", t: "@{channel} el video de cumbia lo hago el domingo, lo prometí. Después no me pidas más. {emote}" },
-            { u: "chungkingexpress", t: "@Yuuzito lo prometiste hace tres meses, y yo todavía te debo un café desde marzo." },
-            { u: "pachudani", t: "@Yuuzito no es justo, el equipo ganó y el que baila sos vos. Que {channel} también baile si no es justo. {combo}" },
-            { u: "Yuuzito", t: "@pachudani {channel} no baila, ya lo intenté. Bueno, dale, igual tengo que hacer el video. {emote}" },
-            { u: "chungkingexpress", t: "@Yuuzito propongo compromiso: vos bailás 30 segundos de cumbia y yo te pago el café de una vez." },
-            { u: "Yuuzito", t: "@chungkingexpress trato, pero el café lo pagás con un sub, no en efectivo. {combo}" }
-        ] },
-        { id: "D4", lines: [
-            { u: "Fqkeeh", t: "Hoy cumple años @tintinMC, lo sabemos porque lo dijo 40 veces en el server. Feliz cumple {emote}" },
-            { u: "sacksuu", t: "@tintinMC feliz cumple. Que el año que viene el server llegue a 500 y yo me corte el pelo, ahí sí." },
-            { u: "aywidbi", t: "Feliz cumple tintinMC, cantemos todos juntos. {combo}" },
-            { u: "MONKIWI", t: "Cumpleaños feliz, cumpleaños feliz. Chiste malo: qué le dijo el creeper al cumpleañero? Explotá de alegría." },
-            { u: "sacksuu", t: "@tintinMC te regalo un sub, no es el server pero es algo. Me lo guardo para cuando pierdas. {emote}" },
-            { u: "tintinMC", t: "@sacksuu gracias. El server ya tiene 430 jugadores, ese es mi regalo, no te preocupes por el pelo todavía." }
-        ] },
-        { id: "D5", lines: [
-            { u: "lukitaselglorp", t: "Chicos, la despedida de soltero es en noviembre, en Bahía Blanca. Jime ya eligió el lugar {emote}" },
-            { u: "ferldz", t: "@lukitaselglorp pueden quedarse en mi depto de La Plata si bajan a verme, tiene dos camas y una gata." },
-            { u: "matiaz0800", t: "@lukitaselglorp @ferldz yo pongo las milanesas el jueves, las hago yo. La gata que se busque las suyas. {combo}" },
-            { u: "mearzys", t: "@lukitaselglorp no llego en noviembre, tengo guardias de 24 horas esa semana. Mándenme audios de todo." },
-            { u: "lukitaselglorp", t: "@mearzys tranqui, te guardo una milanesa y te mando audios. Jime dice que sí a todo. {emote}" },
-            { u: "matiaz0800", t: "@mearzys dale, la milanesa va con tu nombre. Si cambia la guardia avisá, no seas loca. {combo}" }
-        ] },
-        { id: "D6", lines: [
-            { u: "noah4eva", t: "Me quedan 20 días para Madrid. Mi último turno de 3am del stream es el viernes, lloro en silencio. {emote}" },
-            { u: "tomasinfr", t: "@noah4eva qué vas a extrañar más, el mate o las 3 de la mañana con el chat?" },
-            { u: "noah4eva", t: "@tomasinfr el mate de mi vieja, y sí, las 3 de la mañana con este chat. Re loco. {combo}" },
-            { u: "Swagginhaze28", t: "@noah4eva qué tal es Madrid? Es como Buenos Aires pero con más frío? Perdón si es básico jaja" },
-            { u: "noah4eva", t: "@Swagginhaze28 tiene algo de Buenos Aires pero más tranquilo, y se cena tarde. Frío en invierno, eso sí. {emote}" },
-            { u: "tomasinfr", t: "@noah4eva mandame audio cuando llegues y te hago un stream de cuatro horas para despedirte." }
-        ] },
-        { id: "E1", lines: [
-            { u: "Yuuzito", t: "{channel} clutch de otro planeta, el chat explotó {emote}" },
-            { u: "aywidbi", t: "@Yuuzito Brutal" },
-            { u: "sillazul", t: "@aywidbi fue suerte, pura suerte, no le den tanto crédito a {channel} {combo}" },
-            { u: "MONKIWI", t: "@sillazul la suerte no existe, {channel} tiene la mano. Yo ya abrí el malbec para celebrar" },
-            { u: "sillazul", t: "@MONKIWI ese malbec no existe, ya lo sabemos todos {emote}" },
-            { u: "Yuuzito", t: "@sillazul dale, abrí vos la tuya a ver si existe jaja" }
-        ] },
-        { id: "E2", lines: [
-            { u: "sacksuu", t: "Perdimos en el último segundo, en serio {channel}?? {emote}" },
-            { u: "mearzys", t: "@sacksuu vengo de 24 horas de guardia y me puse a llorar, no es joda" },
-            { u: "matiaz0800", t: "@mearzys te mando milanesas 🍗🍗🍗 aunque sea por chat, comé algo" },
-            { u: "Fqkeeh", t: "@mearzys la próxima stream lo arreglamos, prometido. Hoy el reloj nos jugó en contra {combo}" },
-            { u: "mearzys", t: "@Fqkeeh prometido? Porque si no me vuelvo al office a llorar otra vez {emote}" },
-            { u: "matiaz0800", t: "@Fqkeeh jueves de milanesas y revancha, anotado" }
-        ] },
-        { id: "E3", lines: [
-            { u: "Swagginhaze28", t: "QUÉ PASÓ?? Llegó un raid de 800 personas desde otro canal {emote}" },
-            { u: "Agu_sanhueza", t: "@Swagginhaze28 un raid es cuando otro canal te manda a toda su gente de regalo, invasión amistosa" },
-            { u: "Swagginhaze28", t: "@Agu_sanhueza y eso es bueno? Es lo mismo que el hype train?" },
-            { u: "Agu_sanhueza", t: "@Swagginhaze28 bueno, mientras no nos coma el chat. Tango ladra de fondo como si entendiera el raid" },
-            { u: "jmica", t: "@Swagginhaze28 leé las reglas antes de spamear emotes, que ahora somos 800 más {combo}" },
-            { u: "Swagginhaze28", t: "@jmica ok jefe, primero el raid y después el hype train jaja {emote}" }
-        ] },
-        { id: "E4", lines: [
-            { u: "marttpeepo", t: "Mañana tengo entrevista en un depósito de Rosario, ojalá salga {emote}" },
-            { u: "lukitaselglorp", t: "@marttpeepo mucha suerte! Mañana me avisás cómo fue, te banco" },
-            { u: "sillazul", t: "@marttpeepo Central te desea suerte, pero que no vayas con la rojinegra puesta jaja {combo}" },
-            { u: "marttpeepo", t: "@sillazul Cata me hizo mate para la entrevista, dice que con mate no falla nadie" },
-            { u: "sillazul", t: "@marttpeepo con mate o sin mate, el clásico nunca se olvida. Igual, mucha suerte posta {emote}" },
-            { u: "aywidbi", t: "@marttpeepo suerte. Y decile a Cata que el mate es el secreto" }
-        ] },
-        { id: "E5", lines: [
-            { u: "pachudani", t: "Tres muertes seguidas y encima el anuncio me cortó en el peor momento {emote}" },
-            { u: "ferldz", t: "@pachudani la culpa es de Doña Rosa, me pisó el teclado justo cuando salté" },
-            { u: "tomasinfr", t: "@ferldz mi gato sin nombre lo hubiera hecho mejor, ni mira la pantalla {combo}" },
-            { u: "pachudani", t: "@ferldz no, el problema son los anuncios, cortan justo cuando tenés que reaccionar" },
-            { u: "ferldz", t: "@pachudani Doña Rosa estaba durmiendo sobre el teclado, admitilo {emote}" },
-            { u: "tomasinfr", t: "@ferldz dale, pero igual me gana. Alguien me dice cómo se llama el gato?" }
-        ] },
-        { id: "E6", lines: [
-            { u: "sacksuu", t: "Propongo Mario Kart, lo juego en la Switch y lo gano seguro {emote}" },
-            { u: "tintinMC", t: "@sacksuu ni en pedo, lo que vale es Minecraft, el server va en 470" },
-            { u: "MONKIWI", t: "@tintinMC ojo, si llega a 500 sacksuu se corta el pelo. Yo voto Stardew Valley, tranqui" },
-            { u: "Yuuzito", t: "@MONKIWI nada de Stardew, quiero un juego de autos, que lo digo como fan de la carrera {combo}" },
-            { u: "chungkingexpress", t: "@Yuuzito y si hacemos noche de cine? Wong Kar-wai y nadie discute más" },
-            { u: "noah4eva", t: "@chungkingexpress la peli me encanta pero con la diferencia de hora con Madrid, para mí ya es madrugada {emote}" },
-            { u: "MONKIWI", t: "@noah4eva entonces: Minecraft el sábado y la peli otro día, así no te perdés nada" },
-            { u: "tintinMC", t: "@MONKIWI dale, pero el server tiene que llegar a 500 primero {emote}" }
-        ] },
-        { id: "F1", lines: [
-            { u: "lukitaselglorp", t: "Ya tenemos fecha: 14 de marzo en Bahía Blanca. Jime quiere algo chiquito, yo quiero un asado para 300. {emote}" },
-            { u: "noah4eva", t: "@lukitaselglorp Felicitaciones, bro. Desde Córdoba te armo una playlist en español, la termino a las 3 de la mañana." },
-            { u: "lukitaselglorp", t: "@noah4eva Jime pide cuarenta personas como máximo, así que la playlist tiene que entrar en una sola tanda de fernet. {combo}" },
-            { u: "chungkingexpress", t: "@lukitaselglorp Para el primer baile: In the Mood for Love. Es lenta, triste y el vestido es lo mejor del mundo." },
-            { u: "lukitaselglorp", t: "@chungkingexpress Jime la vio tres veces y lloró las tres. Va a ser un desastre emocional, dale. {emote}" },
-            { u: "noah4eva", t: "@lukitaselglorp Te la mando desde Madrid si llego a tiempo con la mudanza en 20 días. Caetano va al final. {combo}" },
-            { u: "chungkingexpress", t: "@noah4eva Y yo pago en la boda el café que le debo a Yuuzito desde marzo, lo juro. Vos traé el tango." }
-        ] },
-        { id: "F2", lines: [
-            { u: "MONKIWI", t: "Chat, el malbec existe. Mañana lo fotografío con la etiqueta y no quiero escuchar más que es un mito. {emote}" },
-            { u: "ferldz", t: "@MONKIWI Doña Rosa lo tiró del estante anoche. Te queda la mancha en el piso, esa es tu foto." },
-            { u: "Swagginhaze28", t: "@MONKIWI es vino o jugo? Porque si es jugo, la mancha es de jugo y ahí sí te creo {emote}" },
-            { u: "MONKIWI", t: "@Swagginhaze28 Es malbec de Mendoza, tinto. El jugo lo toma ferldz cuando no le queda vino." },
-            { u: "ferldz", t: "@MONKIWI Jajaja, bueno, la mancha huele a bodega igual. Ahí tenés tu prueba de cata. {combo}" },
-            { u: "Swagginhaze28", t: "@ferldz entonces la foto es del piso? Qué tristeza, pero la bancamos." },
-            { u: "MONKIWI", t: "@ferldz Lo sabía. Mañana la prueba es la mancha, la fotografío como en las bodegas. Igual nadie me cree. {emote}" }
-        ] },
-        { id: "F3", lines: [
-            { u: "aywidbi", t: "Volví. Tres semanas de turno en Vaca Muerta y ahora dos de descanso. Hola a todos. {emote}" },
-            { u: "sillazul", t: "@aywidbi Bienvenido de vuelta! Gracias por el sub, y el café que te debo lo pago el viernes. {combo}" },
-            { u: "pachudani", t: "@sillazul Yo también quiero un café, eh, que con el precio del sub ya no me alcanza ni para el mate. {combo}" },
-            { u: "sillazul", t: "@pachudani Dale, la semana que viene. Pero dejá de quejarte del sub, que sos founder y ya lo pagaste." },
-            { u: "pachudani", t: "@aywidbi Bienvenido, posta. El chat estaba más callado sin vos. Ahora a aguantar el turno de noche. {emote}" }
-        ] },
-        { id: "F4", lines: [
-            { u: "tomasinfr", t: "Chat, mi gato sigue sin nombre y ya me preguntan todos. Propuestas? {emote}" },
-            { u: "matiaz0800", t: "@tomasinfr Milanesa. Un gato con nombre de milanesa se come lo que le den, ideal para el depto." },
-            { u: "ferldz", t: "@matiaz0800 Ni loco, Doña Rosa se ofende. Ella es la única reina del depto, no hay lugar para otra gata." },
-            { u: "matiaz0800", t: "@ferldz Doña Rosa pisa el teclado, no tiene voto. Yo digo Lobo, por Gimnasia, y lo discutimos después. {emote}" },
-            { u: "ferldz", t: "@tomasinfr Agu_sanhueza propone Tango, dice que su perro lo reclama. Eso no vale, pero lo pienso." },
-            { u: "tomasinfr", t: "@ferldz @matiaz0800 Tango suena bien. Decide el gato, que duerme arriba del teclado. {combo}" }
-        ] },
-        { id: "F5", lines: [
-            { u: "mearzys", t: "Estoy en el office, guardia de 24. Mi mamá quiere saber si como, alguien me manda un audio que diga que sí? {emote}" },
-            { u: "Fqkeeh", t: "@mearzys Comé algo aunque sean galletitas. Descansá cuando puedas, el chat no se va a ningún lado." },
-            { u: "jmica", t: "@mearzys Leé las reglas: primero comer, después mirar el stream. Y dormí un rato, el Decano no se va a ir." },
-            { u: "mearzys", t: "@jmica Ya comí una galleta de agua, mamá lo sabe, y ahora te mando el audio así no me creés. {emote}" },
-            { u: "Fqkeeh", t: "@mearzys matiaz0800 dice que cuando salgas te manda una milanesa por chat, así que aguantá. {combo}" }
-        ] },
-        { id: "F6", lines: [
-            { u: "ferldz", t: "Se cortó la luz en La Plata, en el depto de matiaz0800 también. Y el stream se traba cada dos minutos. {emote}" },
-            { u: "Agu_sanhueza", t: "@ferldz Acá en Córdoba no llueve pero tengo un sueño de mil. Tango se comió otro cable, así que me quedo con el celu." },
-            { u: "Yuuzito", t: "@Agu_sanhueza Acá en Buenos Aires también llueve, y con este frío no hay cumbia que me saque el abrigo. {combo}" },
-            { u: "ferldz", t: "@Yuuzito Y encima la cumbia prometida sigue pendiente. Con frío, bailá ahora que nadie te mira." },
-            { u: "Yuuzito", t: "@ferldz No me tientes, con este frío lo único que bailo es el mate. La promesa queda en pausa. {emote}" },
-            { u: "Agu_sanhueza", t: "@Yuuzito Hace meses que lo prometiste y el chat no se olvida. Con lluvia no hay excusa, posta. {combo}" },
-            { u: "ferldz", t: "Se va la luz otra vez. Me quedo con el celu, si vuelvo me acuerdo de bailar. {emote}" }
-        ] },
-        { id: "R1", lines: [
-            { u: "Agu_sanhueza", t: "che Yuuzito arrancaste con todo hoy" },
-            { u: "sacksuu", t: "posta, lleva 20 min y ya van 3 muertes jajaja {emote}" },
-            { u: "Yuuzito", t: "@sacksuu bancá que la próxima la rompo" },
-            { u: "mearzys", t: "@Yuuzito nooo esa fue re mala jugada" }
-        ] },
-        { id: "R2", lines: [
-            { u: "tintinMC", t: "alguien sabe si el lunes hay que ir presencial o es remoto?" },
-            { u: "aywidbi", t: "@tintinMC creo que es híbrido, preguntale a jmica" },
-            { u: "jmica", t: "@aywidbi es híbrido sí, dos días en oficina {emote}" },
-            { u: "chungkingexpress", t: "@jmica y la guita del viático cómo va?" },
-            { u: "ferldz", t: "@chungkingexpress jajaja no me hables de guita que estoy en cero {combo}" }
-        ] },
-        { id: "R3", lines: [
-            { u: "MONKIWI", t: "alguien pidió sushi o qué" },
-            { u: "noah4eva", t: "@MONKIWI yo pedí completo con palta, posta {emote}" },
-            { u: "pachudani", t: "@noah4eva ustedes siempre piden lo mismo kkkk" },
-            { u: "Swagginhaze28", t: "@pachudani kkkkk ya es tradición, no me jodas" },
-            { u: "sillazul", t: "@Swagginhaze28 bancá que yo lo pedí sin salsa jajaja" }
-        ] },
-        { id: "R4", lines: [
-            { u: "lukitaselglorp", t: "se cayó el server o soy yo" },
-            { u: "tomasinfr", t: "@lukitaselglorp no, va bien, tu ping está ok {combo}" },
-            { u: "matiaz0800", t: "@tomasinfr che el mío se quedó en 900ms, no es joda" },
-            { u: "Fqkeeh", t: "@matiaz0800 reiniciá el router y listo {emote}" }
-        ] },
-        { id: "R5", lines: [
-            { u: "marttpeepo", t: "cambiaron la música y quedó horrible jajaja" },
-            { u: "mearzys", t: "@marttpeepo a mí me gustó, el beat es re bueno" },
-            { u: "sacksuu", t: "@mearzys siempre defendés lo mismo kkkk {emote}" },
-            { u: "Agu_sanhueza", t: "@sacksuu y vos lo mismo con el mate, no?" },
-            { u: "Yuuzito", t: "@Agu_sanhueza ya la cambio, tranqui, bancá {combo}" }
-        ] },
-        { id: "M1", lines: [
-            { u: "Agu_sanhueza", t: "nooo no no, qué fue ese ruido?? me cagué" },
-            { u: "Yuuzito", t: "jajaja tranqui, es el enemigo que se ríe en el pasillo" },
-            { u: "mearzys", t: "@Yuuzito yo no vi nada y el corazón me explotó {emote}" },
-            { u: "sacksuu", t: "@mearzys bancá que todavía no apareció, mirá la esquina" },
-            { u: "Yuuzito", t: "@sacksuu ahí viene, ahí viene, no miren el chat" }
-        ] },
-        { id: "M2", lines: [
-            { u: "tomasinfr", t: "faltan dos puntos y yo ya tengo las manos heladas" },
-            { u: "Fqkeeh", t: "tranqui, ellos tienen menos aire que nosotros" },
-            { u: "ferldz", t: "@Fqkeeh no me hagas esto, si perdemos el último punto me desinstalo el juego" },
-            { u: "Yuuzito", t: "último punto, nadie se mueva que lo tengo {combo}" },
-            { u: "MONKIWI", t: "@Yuuzito juro que el chat completo dejó de respirar" }
-        ] },
-        { id: "M3", lines: [
-            { u: "pachudani", t: "se trabó el stream??" },
-            { u: "lukitaselglorp", t: "nooo se cortó justo en el clutch, qué horror" },
-            { u: "chungkingexpress", t: "@lukitaselglorp tengo miedo que se haya caído el internet del Yuuzito" },
-            { u: "aywidbi", t: "@chungkingexpress reinicia el router Yuuzito pls, en serio" },
-            { u: "sillazul", t: "@aywidbi ya volvió, ya volvió, qué susto {emote}" }
-        ] },
-        { id: "M4", lines: [
-            { u: "matiaz0800", t: "no miro, no miro, avisenme cuando pase el susto" },
-            { u: "jmica", t: "@matiaz0800 ya pasó, podés mirar tranqui" },
-            { u: "marttpeepo", t: "@jmica mentira, tapé una oreja y la otra la dejé escuchando {emote}" },
-            { u: "tintinMC", t: "@marttpeepo jajaja yo miro por el costado de los dedos, posta" },
-            { u: "Yuuzito", t: "@tintinMC te aviso cuando haga ruido, prometido" }
-        ] },
-        { id: "M5", lines: [
-            { u: "ferldz", t: "escuché un ruido en la cocina a las 3am mientras miraba, no me digan nada" },
-            { u: "Agu_sanhueza", t: "@ferldz jajaja fue el gato o el fantasma del Yuuzito {emote}" },
-            { u: "pachudani", t: "@Agu_sanhueza no me reí, prendí todas las luces de la casa" },
-            { u: "sacksuu", t: "@pachudani a mí también se me cortó la luz, qué miedo" },
-            { u: "Fqkeeh", t: "@sacksuu tranqui, seguro fue el gato" }
-        ] },
-        { id: "T1", lines: [
-            { u: "Yuuzito", t: "perdimos otra vez, no sé ni qué decir la verdad" },
-            { u: "sacksuu", t: "@Yuuzito bancá, se nos fue en el último round, pasa" },
-            { u: "Yuuzito", t: "es que le puse todo y no alcanzó, me duele re" },
-            { u: "tintinMC", t: "@Yuuzito se te nota que lo querías ganar, eso ya dice mucho" },
-            { u: "Yuuzito", t: "gracias che, de verdad. mañana arrancamos de nuevo {emote}" }
-        ] },
-        { id: "T2", lines: [
-            { u: "Fqkeeh", t: "me voy de viaje mañana, el stream de la semana que viene lo lleva jmica" },
-            { u: "mearzys", t: "@Fqkeeh ya te vamos a extrañar posta" },
-            { u: "ferldz", t: "che no digas eso, volvé con historias de allá" },
-            { u: "Fqkeeh", t: "vuelvo en dos semanas, no es para siempre" },
-            { u: "MONKIWI", t: "@Fqkeeh cuidate y mandá fotos del viaje {emote}" },
-            { u: "chungkingexpress", t: "el chat se va a sentir raro sin vos" }
-        ] },
-        { id: "T3", lines: [
-            { u: "pachudani", t: "se me cayó el celular al agua hoy, perdí todas las fotos" },
-            { u: "noah4eva", t: "uf @pachudani eso duele, tenías backup?" },
-            { u: "pachudani", t: "algunas nomás, las de mi viejo no las tengo" },
-            { u: "Swagginhaze28", t: "@pachudani lo siento mucho, las fotos pesan más que el aparato" },
-            { u: "pachudani", t: "gracias, hablarlo ya me saca un peso {emote}" }
-        ] },
-        { id: "T4", lines: [
-            { u: "sillazul", t: "hoy se nos fue el gato de mi vieja, ando re triste" },
-            { u: "jmica", t: "@sillazul lo siento mucho, ese bicho era parte de la casa" },
-            { u: "sillazul", t: "sí, dormía encima mío todas las noches" },
-            { u: "lukitaselglorp", t: "@sillazul abrazo grande, tomate el tiempo que necesites" },
-            { u: "sillazul", t: "gracias, ahora prefiero hablar de cualquier otra cosa" }
-        ] },
-        { id: "T5", lines: [
-            { u: "matiaz0800", t: "acordate cuando éramos como 20 en el chat, extraño eso" },
-            { u: "marttpeepo", t: "@matiaz0800 éramos menos pero se sentía más cercano" },
-            { u: "tomasinfr", t: "@marttpeepo el primer stream que vi era con 4 personas, lloré de risa" },
-            { u: "aywidbi", t: "@tomasinfr jajaja yo también estaba ahí {emote}" },
-            { u: "Yuuzito", t: "siempre digo que los que vinieron desde el principio son los que más valen" }
-        ] },
-        { id: "F1_2", lines: [
-            { u: "Agu_sanhueza", t: "me salió el laburo!!! entré a la entrevista el martes y hoy me llamaron {emote}" },
-            { u: "ferldz", t: "@Agu_sanhueza QUEEEE bancá, te lo merecías che" },
-            { u: "Agu_sanhueza", t: "@ferldz gracias gordo, todavía no lo caigo jajaja" },
-            { u: "MONKIWI", t: "@Agu_sanhueza posta, se nota que te preparaste un montón" },
-            { u: "Agu_sanhueza", t: "tengo que avisarle a mi vieja, va a llorar {combo}" }
-        ] },
-        { id: "F2_2", lines: [
-            { u: "noah4eva", t: "chicos le pedí matrimonio a mi pareja en la playa, dijo que sí" },
-            { u: "pachudani", t: "@noah4eva NOOO cómo que sí, felicitaciones wena!!" },
-            { u: "sillazul", t: "@noah4eva la foto quedó brígida, los felicito de corazón {combo}" },
-            { u: "noah4eva", t: "@sillazul gracias, todavía no me creo que me haya dicho que sí" },
-            { u: "Swagginhaze28", t: "@noah4eva ya sabés lo que viene, la despedida de soltero jaja {emote}" }
-        ] },
-        { id: "F3_2", lines: [
-            { u: "tintinMC", t: "llegamos a 500 subs?? mirá el contador" },
-            { u: "aywidbi", t: "@tintinMC sí, Yuuzito va a llorar en vivo" },
-            { u: "Yuuzito", t: "@aywidbi no lloro, pero casi. gracias de verdad chiquillos {emote}" },
-            { u: "sacksuu", t: "esta comunidad es lo más bacán de kick, en serio" },
-            { u: "chungkingexpress", t: "esto merece un hype train, ¿quién se suma?" },
-            { u: "Yuuzito", t: "@chungkingexpress bancá, vamos a 1000 posta" }
-        ] },
-        { id: "F4_2", lines: [
-            { u: "lukitaselglorp", t: "es mi primera vez en el chat, hola a todos" },
-            { u: "jmica", t: "@lukitaselglorp bienvenido che, pasá nomás, acá no mordemos {emote}" },
-            { u: "lukitaselglorp", t: "@jmica jaja gracias, me re sentí bienvenido" },
-            { u: "MONKIWI", t: "@lukitaselglorp decí hola al chat y ya te sentís de la casa" },
-            { u: "Fqkeeh", t: "@lukitaselglorp el que se queda a ver todo el stream es el mejor, bienvenido {combo}" }
-        ] },
-        { id: "F5_2", lines: [
-            { u: "mearzys", t: "mi hermana tuvo a la beba hoy a las 4am, pesó 3.2 kilos" },
-            { u: "sacksuu", t: "@mearzys FELICES!!! ¿cómo se llama?" },
-            { u: "mearzys", t: "@sacksuu Rosario, se parece a mi tía, pobrecita jaja" },
-            { u: "marttpeepo", t: "@mearzys abrazo enorme a toda la familia, mandá fotos cuando puedas {emote}" },
-            { u: "mearzys", t: "@marttpeepo gracias, ya le mandé la foto a todo el grupo" },
-            { u: "tomasinfr", t: "@mearzys que descanse la mami, y a vos también {combo}" }
-        ] },
-        { id: "G1", lines: [
-            { u: "Agu_sanhueza", t: "el boss del mapa 3 me está matando hace 40 min, bancá" },
-            { u: "mearzys", t: "@Agu_sanhueza yo llevo 12 muertes y ni le saqué la primera barra {emote}" },
-            { u: "sacksuu", t: "che el patrón del segundo cambio de fase es re injusto" },
-            { u: "Yuuzito", t: "@sacksuu hay que esquivar hacia la izquierda, no hacia atrás {emote}" },
-            { u: "Agu_sanhueza", t: "@Yuuzito lo probé y me pegó igual jaja" }
-        ] },
-        { id: "G2", lines: [
-            { u: "ferldz", t: "QUÉ FUE ESO, quedaban 2 segundos" },
-            { u: "MONKIWI", t: "@ferldz no lo puedo creer, lo dio vuelta con 5% de vida {emote}" },
-            { u: "pachudani", t: "el que dijo que el juego estaba perdido se la come" },
-            { u: "tomasinfr", t: "@pachudani posta, tiré el mando al sillón jajaja {combo}" },
-            { u: "Fqkeeh", t: "gg chat, sigamos que el próximo es más difícil" }
-        ] },
-        { id: "G3", lines: [
-            { u: "Swagginhaze28", t: "Yuuzito le dio al botón de soltar el item en vez de usarlo jajaja" },
-            { u: "noah4eva", t: "@Swagginhaze28 el que le puso nombre a los botones tiene algo contra él {emote}" },
-            { u: "sillazul", t: "@noah4eva pasó como 3 veces esta semana, ya es tradición" },
-            { u: "Yuuzito", t: "@sillazul no era eso, fue el dedo gordo que se me fue solo, bancá" },
-            { u: "chungkingexpress", t: "por eso yo dejo el inventario siempre en la misma tecla {emote}" }
-        ] },
-        { id: "G4", lines: [
-            { u: "lukitaselglorp", t: "salió el logro de terminar sin morir?? no lo puedo creer" },
-            { u: "aywidbi", t: "@lukitaselglorp eso es un bug del juego, el contador nunca se resetea {emote}" },
-            { u: "matiaz0800", t: "@aywidbi jaja no, el contador sí se reseteó, salió a la derecha en el último rato" },
-            { u: "tintinMC", t: "@matiaz0800 el bug es que el personaje se queda trabado en la pared y el juego no lo ve {combo}" },
-            { u: "jmica", t: "chicos, al que le pasó eso mandenlo al clip del día" }
-        ] },
-        { id: "G5", lines: [
-            { u: "marttpeepo", t: "el speedrun se cayó en la última sala, un crash a dos pasos del final" },
-            { u: "tomasinfr", t: "@marttpeepo justo ahí tenía el mejor tiempo de la semana {emote}" },
-            { u: "mearzys", t: "@tomasinfr bancá, quedó empatado con el récord igual, no es poco" },
-            { u: "Yuuzito", t: "@mearzys empatar el récord es mejor que nada, la próxima sale" },
-            { u: "MONKIWI", t: "@Yuuzito la próxima la sala es la misma, es ahí no más {combo}" }
-        ] },
-        { id: "D1_2", lines: [
-            { u: "sacksuu", t: "@Yuuzito si perdías el duelo hoy te ponías el gorro de Pachu en cámara, eh" },
-            { u: "Yuuzito", t: "@sacksuu yo no dije eso, lo inventaste vos {emote}" },
-            { u: "sacksuu", t: "@Yuuzito está en el VOD a las 2:14, bancá que lo busco" },
-            { u: "tintinMC", t: "jajaja @sacksuu el VOD marca 2:41, rendite che" },
-            { u: "Yuuzito", t: "bueno, mañana lo cumplo pero que conste que fue sin ganas" }
-        ] },
-        { id: "D2_2", lines: [
-            { u: "ferldz", t: "¿alguien sabe qué pasó con el pollo de la semana pasada? sigue vivo en el overlay" },
-            { u: "MONKIWI", t: "@ferldz el pollo se fue a vivir al Discord, no hay que preocuparse" },
-            { u: "ferldz", t: "@MONKIWI no me digas eso que hace dos semanas que lo estoy esperando" },
-            { u: "noah4eva", t: "@ferldz bancá, el pollo vuelve el viernes posta {emote}" },
-            { u: "MONKIWI", t: "@noah4eva ya dijiste lo mismo la semana pasada jajaja" }
-        ] },
-        { id: "D3_2", lines: [
-            { u: "jmica", t: "Nueva regla: no links sin permiso de mod. Lo aviso una sola vez." },
-            { u: "lukitaselglorp", t: "@jmica y los clips de Kick también cuentan como link?" },
-            { u: "jmica", t: "@lukitaselglorp los clips de Kick sí van, los de otros sitios no. Bancá el bot." },
-            { u: "Fqkeeh", t: "@lukitaselglorp el filtro ya lo tenemos, si lo ves avisá {emote}" },
-            { u: "matiaz0800", t: "posta, ayer me borró el mensaje y ni me enteré jaja" }
-        ] },
-        { id: "D4_2", lines: [
-            { u: "Swagginhaze28", t: "GGGGGGGGGG" },
-            { u: "aywidbi", t: "@Swagginhaze28 para de mandar lo mismo, nos rompiste el chat" },
-            { u: "Swagginhaze28", t: "@aywidbi es que el emote me vuelve loco jajaja" },
-            { u: "sillazul", t: "@Swagginhaze28 metele una pausa che, usá el modo lento" },
-            { u: "jmica", t: "@Swagginhaze28 te doy 2 minutos de timeout, a respirar {emote}" }
-        ] },
-        { id: "D5_2", lines: [
-            { u: "chungkingexpress", t: "@tomasinfr sigo enojado por lo que dijiste en el stream del martes" },
-            { u: "tomasinfr", t: "@chungkingexpress fue un chiste mal hecho, perdón de verdad" },
-            { u: "chungkingexpress", t: "bancá, no sé si te creo todavía {emote}" },
-            { u: "tomasinfr", t: "@chungkingexpress el sábado te invito al 1v1 y lo arreglamos, posta" },
-            { u: "chungkingexpress", t: "dale, pero el que pierde paga la ronda de mates" }
-        ] },
-        { id: "X1", lines: [
-            { u: "tintinMC", t: "@Yuuzito el audio está re bajo, no se escucha nada" },
-            { u: "Yuuzito", t: "bancá que lo subo, ¿ahora sí?" },
-            { u: "sacksuu", t: "@Yuuzito ahora se escucha, pero hay eco como en un baño" },
-            { u: "Yuuzito", t: "posta, el micro está cerca de la pared, lo muevo {emote}" },
-            { u: "jmica", t: "@Yuuzito listo, ya se oye bien" }
-        ] },
-        { id: "X2", lines: [
-            { u: "matiaz0800", t: "la cámara se ve re borrosa @Yuuzito" },
-            { u: "Yuuzito", t: "ufa, debe ser la luz, ya la acomodo" },
-            { u: "ferldz", t: "@Yuuzito se ve mejor, pero sigue medio pixelado {combo}" },
-            { u: "MONKIWI", t: "@ferldz es el bitrate, seguro la subida está floja" },
-            { u: "Fqkeeh", t: "@MONKIWI yo lo veo bien desde acá, debe ser tu red" }
-        ] },
-        { id: "X3", lines: [
-            { u: "pachudani", t: "se traba todo el stream, el video se congela" },
-            { u: "noah4eva", t: "@pachudani a mí también, cada diez segundos más o menos" },
-            { u: "Yuuzito", t: "uh, ya cierro el navegador que consume un montón de CPU" },
-            { u: "aywidbi", t: "@Yuuzito posta, se estaba trabando un montón, ahora anda {emote}" },
-            { u: "noah4eva", t: "@aywidbi se ve todo sin cortes, gracias" }
-        ] },
-        { id: "X4", lines: [
-            { u: "lukitaselglorp", t: "@Yuuzito se cortó la imagen, pantalla negra" },
-            { u: "Yuuzito", t: "se me cortó la luz un segundo, ya volví" },
-            { u: "sillazul", t: "jajaja se murió la luz en medio del directo" },
-            { u: "chungkingexpress", t: "@sillazul no es joda, pasa seguido en mi barrio {combo}" },
-            { u: "tomasinfr", t: "@Yuuzito avisá si se cae el stream así no nos quedamos mirando negro" }
-        ] },
-        { id: "X5", lines: [
-            { u: "marttpeepo", t: "@Yuuzito se viene un anuncio justo ahora?? qué mal timing" },
-            { u: "Yuuzito", t: "jaja sí, bancá que pasa en un rato" },
-            { u: "mearzys", t: "@Yuuzito ¿hay delay en el stream? el chat va re atrasado" },
-            { u: "Yuuzito", t: "sí, como quince segundos, por eso tardo en leer {emote}" },
-            { u: "Fqkeeh", t: "@mearzys es el delay de la plataforma, es normal" }
-        ] },
-        { id: "V1", lines: [
-            { u: "Agu_sanhueza", t: "el 60 llegó 40 min tarde otra vez, qué garca" },
-            { u: "sacksuu", t: "@Agu_sanhueza el mío también, ya ni miro los horarios {emote}" },
-            { u: "Agu_sanhueza", t: "bancá, al menos hoy no llovió" },
-            { u: "mearzys", t: "@Agu_sanhueza jaja che, eso ya es ganar" }
-        ] },
-        { id: "V2", lines: [
-            { u: "tintinMC", t: "alguien sabe si el mate se puede tomar con leche? me lo recomendó mi vieja" },
-            { u: "Fqkeeh", t: "@tintinMC no no no, eso es pecado {emote}" },
-            { u: "marttpeepo", t: "@Fqkeeh jaja la vieja de tintin no perdona" },
-            { u: "tintinMC", t: "@marttpeepo a mí me gustó, qué le voy a hacer" },
-            { u: "aywidbi", t: "@tintinMC probá con mate cocido, es más amigable" }
-        ] },
-        { id: "V3", lines: [
-            { u: "chungkingexpress", t: "mi gato sigue sin nombre, ya van 3 semanas" },
-            { u: "pachudani", t: "@chungkingexpress ponele Fideo, es re gordo {emote}" },
-            { u: "chungkingexpress", t: "@pachudani no es gordo, es esponjoso" },
-            { u: "noah4eva", t: "@chungkingexpress llamalo Nafta y listo" },
-            { u: "chungkingexpress", t: "@noah4eva Nafta suena bien, lo pienso" }
-        ] },
-        { id: "V4", lines: [
-            { u: "ferldz", t: "estoy en medio de una mudanza, las cajas me tienen harto" },
-            { u: "lukitaselglorp", t: "@ferldz la mía tiene más cajas que muebles, ni te cuento" },
-            { u: "MONKIWI", t: "@ferldz mi vieja me llamó tres veces mientras cargaba el sillón {emote}" },
-            { u: "ferldz", t: "@MONKIWI jaja tu vieja siempre llama en el peor momento" },
-            { u: "lukitaselglorp", t: "@ferldz bancá, después te traigo unas birras" }
-        ] },
-        { id: "V5", lines: [
-            { u: "sillazul", t: "son las 3am y sigo acá mirando, qué vicio" },
-            { u: "jmica", t: "@sillazul yo estoy desde la oficina en el break, shh" },
-            { u: "tomasinfr", t: "@jmica en la oficina mirando el stream? respeto" },
-            { u: "Yuuzito", t: "@tomasinfr jaja gracias por aguantar {emote}" },
-            { u: "sillazul", t: "@Yuuzito posta que te aguantamos, andá a dormir un rato" }
-        ] },
-        { id: "H1", lines: [
-            { u: "MONKIWI", t: "RAID!!! llegamos todos de golpe, bancá que somos un montón" },
-            { u: "Yuuzito", t: "@MONKIWI bienvenidos carajo, pónganse cómodos {emote}" },
-            { u: "noah4eva", t: "@Yuuzito recién llegamos, qué onda el stream?" },
-            { u: "pachudani", t: "@noah4eva está el hype train arriba, no te lo podés perder" },
-            { u: "Swagginhaze28", t: "@pachudani re buena la bienvenida, los del raid digan hola" }
-        ] },
-        { id: "H2", lines: [
-            { u: "tomasinfr", t: "alguien acaba de regalar 20 subs???" },
-            { u: "aywidbi", t: "@tomasinfr jajaja fue un anónimo, bancá" },
-            { u: "sillazul", t: "@aywidbi el capo que regaló es re generoso {combo}" },
-            { u: "matiaz0800", t: "y ahora el chat se llena de gracias pa todos" },
-            { u: "jmica", t: "gracias al anónimo, el chat está en llamas" }
-        ] },
-        { id: "H3", lines: [
-            { u: "chungkingexpress", t: "HYPE TRAIN, subí al tren ya!!" },
-            { u: "lukitaselglorp", t: "@chungkingexpress voy, cuánto falta pal nivel 2?" },
-            { u: "ferldz", t: "@lukitaselglorp faltan como 300 bits, a darle che" },
-            { u: "marttpeepo", t: "@ferldz ya le metí, posta que el nivel 2 lo sacamos {emote}" },
-            { u: "mearzys", t: "@marttpeepo si llegamos sale el emote nuevo, no paren" }
-        ] },
-        { id: "H4", lines: [
-            { u: "sacksuu", t: "faltan 5 min pal sorteo, nadie se me vaya" },
-            { u: "tintinMC", t: "@sacksuu 5 minutos, me pongo la alarma otra vez" },
-            { u: "Agu_sanhueza", t: "@tintinMC tranqui, ya tengo el café {emote}" },
-            { u: "Fqkeeh", t: "3 minutos, a preparar el chat" },
-            { u: "pachudani", t: "@Fqkeeh cuenta regresiva en el overlay??? {combo}" }
-        ] },
-        { id: "H5", lines: [
-            { u: "noah4eva", t: "qué significa el mensaje del sistema que dice Mes 12?" },
-            { u: "Swagginhaze28", t: "@noah4eva es que alguien subió de nivel de sub, mirá arriba" },
-            { u: "jmica", t: "@Swagginhaze28 son 12 meses del Agu, bancá que lo festejamos" },
-            { u: "Agu_sanhueza", t: "@jmica posta 12 meses, lo festejo {emote}" },
-            { u: "marttpeepo", t: "@Agu_sanhueza felicitaciones capo, 12 meses no es joda" }
-        ] },
-        { id: "Z1", lines: [
-            { u: "Agu_sanhueza", t: "buenas a todos, recién llego, ¿ya arrancó?" },
-            { u: "Fqkeeh", t: "@Agu_sanhueza todavía no, bancá que se está conectando {emote}" },
-            { u: "ferldz", t: "@Agu_sanhueza llegaste justo, estaba por ir a buscar algo para tomar" },
-            { u: "Agu_sanhueza", t: "jaja no, quedate che, aunque sea un ratito" }
-        ] },
-        { id: "Z2", lines: [
-            { u: "Yuuzito", t: "me voy al baño 2 min, aguanten" },
-            { u: "mearzys", t: "dale, mientras tanto pongo un tema" },
-            { u: "sacksuu", t: "@mearzys ponele algo tranqui, no el de ayer que me dolió la cabeza" },
-            { u: "Yuuzito", t: "@sacksuu jaja, anotado. ya vuelvo {emote}" },
-            { u: "tintinMC", t: "posta que pasó el tiempo y no volvió {combo}" }
-        ] },
-        { id: "Z3", lines: [
-            { u: "marttpeepo", t: "cambió el juego? pensé que seguía con el otro" },
-            { u: "matiaz0800", t: "@marttpeepo sí, cortó el de ayer y arrancó este, ahora sí que es laburo" },
-            { u: "aywidbi", t: "este es re difícil, ojo che" },
-            { u: "chungkingexpress", t: "@aywidbi jaja, nos vamos a reír un rato igual {emote}" },
-            { u: "Yuuzito", t: "a bancar, vamos!" }
-        ] },
-        { id: "Z4", lines: [
-            { u: "lukitaselglorp", t: "mañana hay directo? no me acuerdo" },
-            { u: "Fqkeeh", t: "@lukitaselglorp sí, mañana a las 21 hs, avisen a los amigos" },
-            { u: "noah4eva", t: "@Fqkeeh ya me puse la alarma, gracias" },
-            { u: "pachudani", t: "@noah4eva yo también, no me pierdo ni uno {emote}" },
-            { u: "MONKIWI", t: "posta, el de mañana prometía" }
-        ] },
-        { id: "Z5", lines: [
-            { u: "Yuuzito", t: "bueno, ya nos estamos yendo. gracias por venir, de verdad" },
-            { u: "Swagginhaze28", t: "gracias a vos Yuuzito, siempre la pasamos bien" },
-            { u: "sillazul", t: "@Swagginhaze28 el chat hoy estuvo buenísimo" },
-            { u: "jmica", t: "nos vemos mañana, cuídense che {combo}" },
-            { u: "tomasinfr", t: "@jmica nos vemos! no falten" }
-        ] }
+        {
+            id: "A1", lines: [
+                { u: "tintinMC", t: "@sacksuu 438 jugadores en el server a las 22:15. Te faltan 62 para el corte de pelo, jaja {emote}" },
+                { u: "sacksuu", t: "@tintinMC eso es un bot que puso un pibe en el lobby, no cuenta. No me voy a cortar nada todavía" },
+                { u: "tintinMC", t: "@sacksuu los 438 son reales, los conté con el /list. Que lo confirme {channel} si querés" },
+                { u: "Fqkeeh", t: "@tintinMC @sacksuu nadie mete bots al server, la próxima se banea sin vuelta. Ya lo dije {emote}" },
+                { u: "sacksuu", t: "@Fqkeeh dale, pero la apuesta es la apuesta. Si llego a 500 me corto el pelo en vivo, lo juro" },
+                { u: "tintinMC", t: "@sacksuu y si no llegás, a bailar cumbia en la cancha del server. Preparate, que ya perdiste dos veces {emote}" }
+            ]
+        },
+        {
+            id: "A2", lines: [
+                { u: "sillazul", t: "@marttpeepo el clásico fue 1 a 1 y el gol de Central llegó en el 90. Empate, no lo discutas más {emote}" },
+                { u: "marttpeepo", t: "@sillazul empate en el papel, pero ganó Newell's en la cabeza. Así lo tengo anotado y no lo cambio {emote}" },
+                { u: "sillazul", t: "@marttpeepo en la cabeza no vale puntos, amigo. Bancá que el próximo clásico lo ganamos nosotros" },
+                { u: "aywidbi", t: "@sillazul el café que me debés sigue en pie, eh. Lo de la apuesta del derby no se olvida {emote}" },
+                { u: "marttpeepo", t: "@aywidbi y encima sillazul tiene un sub regalado tuyo, qué suerte. Mañana sí te pago yo el café, posta" },
+                { u: "sillazul", t: "@marttpeepo tranqui, con el laburo vas a llegar. Cata te manda mate y yo hoy no te jodo más con el clásico {emote}" }
+            ]
+        },
+        {
+            id: "A3", lines: [
+                { u: "lukitaselglorp", t: "Me comprometí la semana pasada con Jime, acá en Bahía Blanca. Ella dijo que sí y yo todavía no me lo creo {emote}" },
+                { u: "chungkingexpress", t: "@lukitaselglorp felicitaciones, posta! Que Jime te haga ver Casablanca un jueves y ya tenés el sí de la familia" },
+                { u: "noah4eva", t: "@lukitaselglorp qué hermoso, che. La despedida de solter@ es en noviembre? Tiren pa Mendoza que hay bodegas de sobra {emote}" },
+                { u: "lukitaselglorp", t: "@noah4eva noviembre en Bahía Blanca. Cada uno pone guita y el que no viene paga el fernet, eso es ley" },
+                { u: "noah4eva", t: "@lukitaselglorp me despierto a las 3 para votar la despedida, eh. Mandame el link y pongo lo que pueda {emote}" },
+                { u: "chungkingexpress", t: "@noah4eva ojo que para noviembre ya estás en Madrid, así que hacé el asado vos desde allá y lo mandamos por chat" }
+            ]
+        },
+        {
+            id: "A4", lines: [
+                { u: "mearzys", t: "Llevo 14 horas de guardia y me quedan 10. Desde el office miro el stream, estoy agotada {emote}" },
+                { u: "jmica", t: "@mearzys tomá agua y comé algo, enfermera. Acá no te piden nada más que aparecer {emote}" },
+                { u: "mearzys", t: "@jmica gracias, jefe. Mi mamá me llama el domingo a la noche y se alarga una hora. Alguien me manda un audio que diga 'estoy en guardia, mami'?" },
+                { u: "Fqkeeh", t: "@mearzys mandalo vos misma, y si hace falta te lo grabo yo el domingo. Pero nada de datos del hospital en el audio, eh" },
+                { u: "jmica", t: "@mearzys me sumo: si tu mamá insiste, mandale un audio de Atlético perdiendo, así corta seguro {emote}" },
+                { u: "mearzys", t: "@jmica no, Atlético perdiendo es lo que la pone peor. Mejor un audio de 'llegó el café'. Gracias chat, los quiero" }
+            ]
+        },
+        {
+            id: "A5", lines: [
+                { u: "Agu_sanhueza", t: "Tango se comió otro cable del cargador. Ya van tres cargadores, me quedé sin celular a las 3 de la tarde en pleno final {emote}" },
+                { u: "pachudani", t: "@Agu_sanhueza te entiendo, yo ya cambié tres auriculares por el perro de mi vecino. Tango es un crack, no un perro" },
+                { u: "tintinMC", t: "@Agu_sanhueza comprate un cargador de cable blindado, de los que vienen con kevlar. Tango no pasa esa {emote}" },
+                { u: "Agu_sanhueza", t: "@tintinMC ya lo intenté, el blindado también lo mastica. El último me salió 18 mil pesos y mi viejo me miró feo" },
+                { u: "pachudani", t: "@Agu_sanhueza ojo con los 18 mil, eh. Mirá que la suscripción también la pago yo y no me quejo tanto {emote}" },
+                { u: "Agu_sanhueza", t: "@pachudani dale, ustedes hacen fuerza que yo tengo el segundo final de Cálculo II la semana que viene. Tango, sos un problema" }
+            ]
+        },
+        {
+            id: "A6", lines: [
+                { u: "matiaz0800", t: "Perdí el celular en el colectivo la semana pasada, el que hace ruido cuando lo llamás. Lo busco en la comisaría {emote}" },
+                { u: "ferldz", t: "@matiaz0800 llamalo desde el fijo de casa a ver si aparece. Y Doña Rosa pisó el teclado en directo otra vez {emote}" },
+                { u: "tomasinfr", t: "@ferldz Doña Rosa tiene más seguidores que mi gato, que todavía no tiene nombre. La respeto por eso" },
+                { u: "matiaz0800", t: "@ferldz no, el celular no aparece. Pero el jueves hago milanesas igual, vengan los que quieran, hay para seis {emote}" },
+                { u: "ferldz", t: "@matiaz0800 llego tarde, como siempre. Yo llevo la ensalada, pero la gata se la come si la dejo en la mesa" },
+                { u: "tomasinfr", t: "@matiaz0800 yo llego después de cobrar y traigo fernet. Bancá que el gato no sabe el nombre pero sabe las milanesas {emote}" }
+            ]
+        },
+        {
+            id: "B1", lines: [
+                { u: "ferldz", t: "Doña Rosa se subió al teclado otra vez y mandó como diez letras al chat. Pido disculpas por ella {emote}" },
+                { u: "matiaz0800", t: "@ferldz sos el único que llega tarde a sus propias milanesas. El jueves cocino, así que hacé lugar en la mesa. {combo}" },
+                { u: "ferldz", t: "@matiaz0800 llego a las 22 si el colectivo no se muere. Doña Rosa ya se tomó el pan rallado de la mesada." },
+                { u: "noah4eva", t: "Me voy a Madrid en 20 días. Escribirlo a las 3 de la mañana da más pena, pero vine a despedirme igual. {emote}" },
+                { u: "matiaz0800", t: "@noah4eva yo perdí el celu en el colectivo la semana pasada, pero el jueves te mando la foto de la milanesa igual." },
+                { u: "ferldz", t: "@noah4eva mandá foto de Madrid, y no te olvides de las milanesas. En España el pan rallado es un misterio. {combo}" },
+                { u: "noah4eva", t: "@ferldz @matiaz0800 gracias, en serio. Me despiertan a las 3 y encima me dan de comer. Nos vemos desde el otro lado." }
+            ]
+        },
+        {
+            id: "B2", lines: [
+                { u: "Swagginhaze28", t: "Hola a todos, recién llego de Tucumán. Qué es el hype train? Lo vi escrito en el chat y no entendí nada {emote}" },
+                { u: "jmica", t: "@Swagginhaze28 Hype train: cuando el chat junta subs y la barra sube de nivel. Bienvenido, leé las reglas en el panel." },
+                { u: "Swagginhaze28", t: "@jmica ok, y los emotes raros que mandan todos, de dónde salen? Pregunté antes y nadie contestó, solo mandaban emotes. {combo}" },
+                { u: "MONKIWI", t: "@Swagginhaze28 Son de 7TV, instalás la extensión y listo. Y sí, gané el sorteo otra vez, no me miren así. La botella de malbec existe, lo juro." },
+                { u: "jmica", t: "@Swagginhaze28 Regla uno: nada de spam de emotes. Regla dos: nada de spoilers. Lo demás lo vas viendo solo." },
+                { u: "Swagginhaze28", t: "@jmica bancá, ya me hice amigo de tres en cinco minutos. Eso cuenta para el hype? {emote}" }
+            ]
+        },
+        {
+            id: "B3", lines: [
+                { u: "sacksuu", t: "@Yuuzito ya pasaron tres semanas, cuándo bailás la cumbia que le prometiste a {channel}? {emote}" },
+                { u: "Yuuzito", t: "@sacksuu está en el guion, posta. Esta semana cuando termine el turno lo grabo en el living." },
+                { u: "mearzys", t: "@Yuuzito eso lo dijiste la semana pasada. Yo ya bailé anoche en la guardia, con la camilla de partner. {combo}" },
+                { u: "Yuuzito", t: "@mearzys la camilla no cuenta, te estás riendo de mí. Cumbia el domingo, de verdad. {emote}" },
+                { u: "sacksuu", t: "@Yuuzito el domingo es el día con más chat, no hay excusas. Yo me corto el pelo si el server llega a 500, vos bailá." },
+                { u: "Yuuzito", t: "Dale, dale, ya conecté el parlante. Pero a {channel} le pido que me filme de frente, no de costado. {emote}" },
+                { u: "mearzys", t: "@Yuuzito si no bailás, te grabo yo en la próxima guardia y lo subo al canal. Sin excusas, guapo. {combo}" }
+            ]
+        },
+        {
+            id: "B4", lines: [
+                { u: "chungkingexpress", t: "Otra semana, otra tanda de subs de regalo. Como en Chungking Express, el amor llega cuando menos lo esperás. {emote}" },
+                { u: "Yuuzito", t: "@chungkingexpress y mi café de marzo sigue en el aire, eh. Ya es octubre, tengo el cortado frío esperándote." },
+                { u: "chungkingexpress", t: "@Yuuzito el lunes después del cine en Almagro te invito el cortado y una medialuna. Esta vez sí, te lo juro. {combo}" },
+                { u: "tomasinfr", t: "@chungkingexpress y yo acabo de tirar tres subs de regalo, cobré el freelance esta semana. Reparto para todos." },
+                { u: "Yuuzito", t: "@tomasinfr qué bien. Y el gato sigue sin nombre? Te lo pregunto cada semana, es un tema de Estado. {emote}" },
+                { u: "tomasinfr", t: "@Yuuzito sigue sin nombre, cada vez que lo nombro se pone a dormir. Sugerencias bienvenidas, menos Doña Rosa, que ya tiene dueña." },
+                { u: "chungkingexpress", t: "@tomasinfr ponele Godard, así te deja en paz y se duerme viendo películas. Yuuzito, el lunes sigue en pie. {emote}" }
+            ]
+        },
+        {
+            id: "B5", lines: [
+                { u: "aywidbi", t: "Te regalé un sub por perder la apuesta del clásico, sillazul. Vos me debés el café, no te olvides. {emote}" },
+                { u: "sillazul", t: "@aywidbi el sub lo acepto con el corazón, el café lo pago con el primer franco que tenga. Vaca Muerta te tiene a full?" },
+                { u: "aywidbi", t: "@sillazul tres semanas de turno y dos de descanso, o sea que el café lo tomás en enero, cuando baje del yacimiento." },
+                { u: "Agu_sanhueza", t: "@aywidbi tres semanas de pozo y dos libres, qué envidia. Mientras tanto Tango mordió otro cargador, ya van cuatro. {combo}" },
+                { u: "sillazul", t: "@Agu_sanhueza comprale a Tango un cargador de los que no se mastican. Y que Boca no te haga sufrir tanto. {emote}" },
+                { u: "aywidbi", t: "@sillazul el sub es regalo, el café es deuda. Así de simple. Traé la guita en enero y listo." }
+            ]
+        },
+        {
+            id: "B6", lines: [
+                { u: "marttpeepo", t: "Hoy me llamaron de una empresa para una entrevista, mañana sí, posta. Cata me trajo mate y eso ya es un buen día. {emote}" },
+                { u: "mearzys", t: "@marttpeepo qué buena noticia, de verdad. Tomate el mate y después contame cómo te fue en la entrevista, guapo." },
+                { u: "lukitaselglorp", t: "@marttpeepo sin presión, eh. Si no sale, el chat igual te banca. Y Cata es la mejor, le debo un mate también." },
+                { u: "marttpeepo", t: "Gracias, en serio. Hace un mes me echaron y a veces siento que no sirvo para nada. Igual mandé tres CV esta semana." },
+                { u: "mearzys", t: "@marttpeepo sirve un montón lo que hacés. Mandar CV con el mes que tuviste es ser valiente. Dormí bien hoy." },
+                { u: "lukitaselglorp", t: "@marttpeepo cuando salga algo avisanos y lo festejamos en el chat, con un asado de mentira. {combo}" },
+                { u: "marttpeepo", t: "Dale, aviso. Y que Newell's gane el sábado así tengo una buena noticia más encima. {emote}" }
+            ]
+        },
+        {
+            id: "C1", lines: [
+                { u: "Fqkeeh", t: "Chat, ¿alguien me confirma si el audio se escucha bajo? Si hay lag o la cámara borrosa, avisen acá. {emote}" },
+                { u: "Agu_sanhueza", t: "@Fqkeeh a mí se escucha bajito, creo que es mi router, se corta cada diez minutos desde ayer." },
+                { u: "jmica", t: "@Agu_sanhueza el audio de {channel} está bien en mi lado. Reiniciá el router y fijate si mejora. {combo}" },
+                { u: "Agu_sanhueza", t: "@jmica reinicié y nada, encima Tango ladró al cartero y se escucha todo de fondo. Perdón, posta." },
+                { u: "jmica", t: "@Fqkeeh confirmo, la cámara se ve borrosa y el chat va con lag. Yo también lo veo desde el celu." },
+                { u: "Fqkeeh", t: "@jmica dale, bajo el bitrate y reviso el encoder. @Agu_sanhueza que Tango ladre no es un problema técnico, eh. {combo}" }
+            ]
+        },
+        {
+            id: "C2", lines: [
+                { u: "pachudani", t: "Otra vez cuatro anuncios en una hora y el sub subió. Yo estaba en la beta, esto ya no es lo mismo. {emote}" },
+                { u: "MONKIWI", t: "@pachudani tranqui founder, cuando me llegue el malbec te pago la suscripción del año. {combo}" },
+                { u: "pachudani", t: "@MONKIWI tu malbec no existe, sos el único que lo cree. Mientras tanto me quejo, es mi derecho." },
+                { u: "Fqkeeh", t: "@pachudani regla nueva: las quejas de precio van al hilo de sugerencias, no al chat en vivo. Si se repite, la próxima se banea. {emote}" },
+                { u: "MONKIWI", t: "@Fqkeeh jaja, sí jefe, lo dejo pasar. La botella existe igual, aunque nadie la vea." },
+                { u: "pachudani", t: "Ok, cumplo. Pero no me voy, eh. Tengo turno de noche en el call center y acá me quedo hasta las seis." }
+            ]
+        },
+        {
+            id: "C3", lines: [
+                { u: "MONKIWI", t: "Gané el sorteo otra vez, ya sé que me van a cargar. El malbec existe, se los juro. {combo}" },
+                { u: "matiaz0800", t: "@MONKIWI el malbec no existe, lo dice todo el chat. Ganaste otra vez, sos la mascota del sorteo." },
+                { u: "ferldz", t: "@MONKIWI pasame una foto de la etiqueta, aunque sea. Doña Rosa ya se subió a la mesa a mirar. {emote}" },
+                { u: "MONKIWI", t: "@ferldz acá va la etiqueta: Maipú, 2019, la botella que todos dicen que no existe. {combo}" },
+                { u: "matiaz0800", t: "@MONKIWI una etiqueta puede ser de cualquier cosa, jaja. Igual, la foto está bastante prolija." },
+                { u: "ferldz", t: "@MONKIWI traela el jueves, matiaz hace milanesas. Si existe, nos la tomamos y listo." }
+            ]
+        },
+        {
+            id: "C4", lines: [
+                { u: "mearzys", t: "Salí de una guardia de 24 horas y estoy hecha pelota. Ya quiero dormir, pero acá sigo mirando. {emote}" },
+                { u: "Agu_sanhueza", t: "@mearzys yo con dos finales encima tampoco me acuerdo de mi nombre. Tip: 25 minutos de estudio y 5 de pausa. {combo}" },
+                { u: "mearzys", t: "@Agu_sanhueza eso me sirve para los pacientes, no para los parciales. Igual lo pruebo, aunque sea mañana." },
+                { u: "Agu_sanhueza", t: "@mearzys dale, y armá un resumen de una hoja. Tango se comió otro cargador, ya van tres, estudio con 4% de batería." },
+                { u: "mearzys", t: "Jaja pobre Tango. Justo me llamó mamá, me preguntó si comí y le dije que sí. Mentí, obvio. {combo}" },
+                { u: "Agu_sanhueza", t: "@mearzys mentirle a mamá es amor, eh. Ojalá te toque una noche tranquila antes de la próxima guardia." }
+            ]
+        },
+        {
+            id: "C5", lines: [
+                { u: "sacksuu", t: "@tintinMC cuántos jugadores tiene el server hoy? Si llegamos a 500 me corto el pelo, si no, bailo cumbia. {emote}" },
+                { u: "tintinMC", t: "@sacksuu 412 conectados anoche, te faltan casi cien, pibe. Andá buscando la tijera." },
+                { u: "Yuuzito", t: "@sacksuu mientras tanto yo sigo debiendo el video de cumbia a {channel}. Lo hago el sábado, posta." },
+                { u: "chungkingexpress", t: "@Yuuzito como dice Wong Kar-wai, el tiempo se va y el café no llega. Te lo debo desde marzo, lo juro. {combo}" },
+                { u: "sacksuu", t: "@chungkingexpress ni me hables de café, estoy comiendo fideos desde que me compré la Switch con el aguinaldo." },
+                { u: "tintinMC", t: "@sacksuu relajate, el viernes hay evento y el server sube. Si llegamos a 500, te corto el pelo yo mismo. {emote}" }
+            ]
+        },
+        {
+            id: "C6", lines: [
+                { u: "Swagginhaze28", t: "Hola a todos, primera vez en el chat. ¿Qué es la tanda de subs regalados? Vi que llovieron. {emote}" },
+                { u: "tomasinfr", t: "@Swagginhaze28 bienvenido. Regalo subs en tanda cuando me pagan, y me pagaron esta semana. {combo}" },
+                { u: "MONKIWI", t: "@tomasinfr y el gato, ¿cómo se llama ya? Te lo pregunto cada semana y siempre cambiás de tema." },
+                { u: "tomasinfr", t: "@MONKIWI sigue sin nombre, che. Se lo pongo cuando termine de cobrar todo el laburo freelance." },
+                { u: "Swagginhaze28", t: "@tomasinfr ¿y si lo llamás Hype Train? Así le explico a todos qué es, jaja. {emote}" },
+                { u: "MONKIWI", t: "@Swagginhaze28 jaja, eso suena a nombre de emote, no de gato. Después te explico bien el hype train." }
+            ]
+        },
+        {
+            id: "D1", lines: [
+                { u: "Fqkeeh", t: "Borré un mensaje con un link raro que decía sorteo gratis. Acá los links de sorteos no pasan, la regla es clara. {emote}" },
+                { u: "sacksuu", t: "@Fqkeeh y yo sigo anotado en el sorteo o me saqué? Lo vi recién cuando lo borraste." },
+                { u: "Fqkeeh", t: "@sacksuu seguís adentro, el sorteo es del canal y no de links. Si alguien te escribe por privado, no le das nada. {combo}" },
+                { u: "MONKIWI", t: "@sacksuu tranqui, si gano yo te doy la botella de malbec que nadie cree que tengo." },
+                { u: "sacksuu", t: "@MONKIWI ni en joda, esa botella no existe. Pero gracias por la oferta. {emote}" },
+                { u: "Fqkeeh", t: "@MONKIWI la próxima se banea, no hagamos bromas con links. Seguimos con el stream." }
+            ]
+        },
+        {
+            id: "D2", lines: [
+                { u: "Agu_sanhueza", t: "Re trucho el sorteo del sábado, salió el mismo nombre de siempre. Algo raro pasa {emote}" },
+                { u: "sacksuu", t: "@Agu_sanhueza ganaste vos el mes pasado, no te quejes. Tango ya se comió otro cargador?" },
+                { u: "Agu_sanhueza", t: "@sacksuu fueron tres cargadores, Tango es un traidor. Y el sorteo sí fue raro, posta. {combo}" },
+                { u: "jmica", t: "@Agu_sanhueza @sacksuu leé las reglas: el sorteo es random y se cierra. Hasta acá la discusión." },
+                { u: "sacksuu", t: "@jmica bueno jefe. Igual si Tango gana el sorteo me callo la boca." },
+                { u: "Agu_sanhueza", t: "@jmica dale, ok. Tango igual se queda con el cargador nuevo, eso no tiene sorteo. {emote}" }
+            ]
+        },
+        {
+            id: "D3", lines: [
+                { u: "Yuuzito", t: "@{channel} el video de cumbia lo hago el domingo, lo prometí. Después no me pidas más. {emote}" },
+                { u: "chungkingexpress", t: "@Yuuzito lo prometiste hace tres meses, y yo todavía te debo un café desde marzo." },
+                { u: "pachudani", t: "@Yuuzito no es justo, el equipo ganó y el que baila sos vos. Que {channel} también baile si no es justo. {combo}" },
+                { u: "Yuuzito", t: "@pachudani {channel} no baila, ya lo intenté. Bueno, dale, igual tengo que hacer el video. {emote}" },
+                { u: "chungkingexpress", t: "@Yuuzito propongo compromiso: vos bailás 30 segundos de cumbia y yo te pago el café de una vez." },
+                { u: "Yuuzito", t: "@chungkingexpress trato, pero el café lo pagás con un sub, no en efectivo. {combo}" }
+            ]
+        },
+        {
+            id: "D4", lines: [
+                { u: "Fqkeeh", t: "Hoy cumple años @tintinMC, lo sabemos porque lo dijo 40 veces en el server. Feliz cumple {emote}" },
+                { u: "sacksuu", t: "@tintinMC feliz cumple. Que el año que viene el server llegue a 500 y yo me corte el pelo, ahí sí." },
+                { u: "aywidbi", t: "Feliz cumple tintinMC, cantemos todos juntos. {combo}" },
+                { u: "MONKIWI", t: "Cumpleaños feliz, cumpleaños feliz. Chiste malo: qué le dijo el creeper al cumpleañero? Explotá de alegría." },
+                { u: "sacksuu", t: "@tintinMC te regalo un sub, no es el server pero es algo. Me lo guardo para cuando pierdas. {emote}" },
+                { u: "tintinMC", t: "@sacksuu gracias. El server ya tiene 430 jugadores, ese es mi regalo, no te preocupes por el pelo todavía." }
+            ]
+        },
+        {
+            id: "D5", lines: [
+                { u: "lukitaselglorp", t: "Chicos, la despedida de soltero es en noviembre, en Bahía Blanca. Jime ya eligió el lugar {emote}" },
+                { u: "ferldz", t: "@lukitaselglorp pueden quedarse en mi depto de La Plata si bajan a verme, tiene dos camas y una gata." },
+                { u: "matiaz0800", t: "@lukitaselglorp @ferldz yo pongo las milanesas el jueves, las hago yo. La gata que se busque las suyas. {combo}" },
+                { u: "mearzys", t: "@lukitaselglorp no llego en noviembre, tengo guardias de 24 horas esa semana. Mándenme audios de todo." },
+                { u: "lukitaselglorp", t: "@mearzys tranqui, te guardo una milanesa y te mando audios. Jime dice que sí a todo. {emote}" },
+                { u: "matiaz0800", t: "@mearzys dale, la milanesa va con tu nombre. Si cambia la guardia avisá, no seas loca. {combo}" }
+            ]
+        },
+        {
+            id: "D6", lines: [
+                { u: "noah4eva", t: "Me quedan 20 días para Madrid. Mi último turno de 3am del stream es el viernes, lloro en silencio. {emote}" },
+                { u: "tomasinfr", t: "@noah4eva qué vas a extrañar más, el mate o las 3 de la mañana con el chat?" },
+                { u: "noah4eva", t: "@tomasinfr el mate de mi vieja, y sí, las 3 de la mañana con este chat. Re loco. {combo}" },
+                { u: "Swagginhaze28", t: "@noah4eva qué tal es Madrid? Es como Buenos Aires pero con más frío? Perdón si es básico jaja" },
+                { u: "noah4eva", t: "@Swagginhaze28 tiene algo de Buenos Aires pero más tranquilo, y se cena tarde. Frío en invierno, eso sí. {emote}" },
+                { u: "tomasinfr", t: "@noah4eva mandame audio cuando llegues y te hago un stream de cuatro horas para despedirte." }
+            ]
+        },
+        {
+            id: "E1", lines: [
+                { u: "Yuuzito", t: "{channel} clutch de otro planeta, el chat explotó {emote}" },
+                { u: "aywidbi", t: "@Yuuzito Brutal" },
+                { u: "sillazul", t: "@aywidbi fue suerte, pura suerte, no le den tanto crédito a {channel} {combo}" },
+                { u: "MONKIWI", t: "@sillazul la suerte no existe, {channel} tiene la mano. Yo ya abrí el malbec para celebrar" },
+                { u: "sillazul", t: "@MONKIWI ese malbec no existe, ya lo sabemos todos {emote}" },
+                { u: "Yuuzito", t: "@sillazul dale, abrí vos la tuya a ver si existe jaja" }
+            ]
+        },
+        {
+            id: "E2", lines: [
+                { u: "sacksuu", t: "Perdimos en el último segundo, en serio {channel}?? {emote}" },
+                { u: "mearzys", t: "@sacksuu vengo de 24 horas de guardia y me puse a llorar, no es joda" },
+                { u: "matiaz0800", t: "@mearzys te mando milanesas 🍗🍗🍗 aunque sea por chat, comé algo" },
+                { u: "Fqkeeh", t: "@mearzys la próxima stream lo arreglamos, prometido. Hoy el reloj nos jugó en contra {combo}" },
+                { u: "mearzys", t: "@Fqkeeh prometido? Porque si no me vuelvo al office a llorar otra vez {emote}" },
+                { u: "matiaz0800", t: "@Fqkeeh jueves de milanesas y revancha, anotado" }
+            ]
+        },
+        {
+            id: "E3", lines: [
+                { u: "Swagginhaze28", t: "QUÉ PASÓ?? Llegó un raid de 800 personas desde otro canal {emote}" },
+                { u: "Agu_sanhueza", t: "@Swagginhaze28 un raid es cuando otro canal te manda a toda su gente de regalo, invasión amistosa" },
+                { u: "Swagginhaze28", t: "@Agu_sanhueza y eso es bueno? Es lo mismo que el hype train?" },
+                { u: "Agu_sanhueza", t: "@Swagginhaze28 bueno, mientras no nos coma el chat. Tango ladra de fondo como si entendiera el raid" },
+                { u: "jmica", t: "@Swagginhaze28 leé las reglas antes de spamear emotes, que ahora somos 800 más {combo}" },
+                { u: "Swagginhaze28", t: "@jmica ok jefe, primero el raid y después el hype train jaja {emote}" }
+            ]
+        },
+        {
+            id: "E4", lines: [
+                { u: "marttpeepo", t: "Mañana tengo entrevista en un depósito de Rosario, ojalá salga {emote}" },
+                { u: "lukitaselglorp", t: "@marttpeepo mucha suerte! Mañana me avisás cómo fue, te banco" },
+                { u: "sillazul", t: "@marttpeepo Central te desea suerte, pero que no vayas con la rojinegra puesta jaja {combo}" },
+                { u: "marttpeepo", t: "@sillazul Cata me hizo mate para la entrevista, dice que con mate no falla nadie" },
+                { u: "sillazul", t: "@marttpeepo con mate o sin mate, el clásico nunca se olvida. Igual, mucha suerte posta {emote}" },
+                { u: "aywidbi", t: "@marttpeepo suerte. Y decile a Cata que el mate es el secreto" }
+            ]
+        },
+        {
+            id: "E5", lines: [
+                { u: "pachudani", t: "Tres muertes seguidas y encima el anuncio me cortó en el peor momento {emote}" },
+                { u: "ferldz", t: "@pachudani la culpa es de Doña Rosa, me pisó el teclado justo cuando salté" },
+                { u: "tomasinfr", t: "@ferldz mi gato sin nombre lo hubiera hecho mejor, ni mira la pantalla {combo}" },
+                { u: "pachudani", t: "@ferldz no, el problema son los anuncios, cortan justo cuando tenés que reaccionar" },
+                { u: "ferldz", t: "@pachudani Doña Rosa estaba durmiendo sobre el teclado, admitilo {emote}" },
+                { u: "tomasinfr", t: "@ferldz dale, pero igual me gana. Alguien me dice cómo se llama el gato?" }
+            ]
+        },
+        {
+            id: "E6", lines: [
+                { u: "sacksuu", t: "Propongo Mario Kart, lo juego en la Switch y lo gano seguro {emote}" },
+                { u: "tintinMC", t: "@sacksuu ni en pedo, lo que vale es Minecraft, el server va en 470" },
+                { u: "MONKIWI", t: "@tintinMC ojo, si llega a 500 sacksuu se corta el pelo. Yo voto Stardew Valley, tranqui" },
+                { u: "Yuuzito", t: "@MONKIWI nada de Stardew, quiero un juego de autos, que lo digo como fan de la carrera {combo}" },
+                { u: "chungkingexpress", t: "@Yuuzito y si hacemos noche de cine? Wong Kar-wai y nadie discute más" },
+                { u: "noah4eva", t: "@chungkingexpress la peli me encanta pero con la diferencia de hora con Madrid, para mí ya es madrugada {emote}" },
+                { u: "MONKIWI", t: "@noah4eva entonces: Minecraft el sábado y la peli otro día, así no te perdés nada" },
+                { u: "tintinMC", t: "@MONKIWI dale, pero el server tiene que llegar a 500 primero {emote}" }
+            ]
+        },
+        {
+            id: "F1", lines: [
+                { u: "lukitaselglorp", t: "Ya tenemos fecha: 14 de marzo en Bahía Blanca. Jime quiere algo chiquito, yo quiero un asado para 300. {emote}" },
+                { u: "noah4eva", t: "@lukitaselglorp Felicitaciones, bro. Desde Córdoba te armo una playlist en español, la termino a las 3 de la mañana." },
+                { u: "lukitaselglorp", t: "@noah4eva Jime pide cuarenta personas como máximo, así que la playlist tiene que entrar en una sola tanda de fernet. {combo}" },
+                { u: "chungkingexpress", t: "@lukitaselglorp Para el primer baile: In the Mood for Love. Es lenta, triste y el vestido es lo mejor del mundo." },
+                { u: "lukitaselglorp", t: "@chungkingexpress Jime la vio tres veces y lloró las tres. Va a ser un desastre emocional, dale. {emote}" },
+                { u: "noah4eva", t: "@lukitaselglorp Te la mando desde Madrid si llego a tiempo con la mudanza en 20 días. Caetano va al final. {combo}" },
+                { u: "chungkingexpress", t: "@noah4eva Y yo pago en la boda el café que le debo a Yuuzito desde marzo, lo juro. Vos traé el tango." }
+            ]
+        },
+        {
+            id: "F2", lines: [
+                { u: "MONKIWI", t: "Chat, el malbec existe. Mañana lo fotografío con la etiqueta y no quiero escuchar más que es un mito. {emote}" },
+                { u: "ferldz", t: "@MONKIWI Doña Rosa lo tiró del estante anoche. Te queda la mancha en el piso, esa es tu foto." },
+                { u: "Swagginhaze28", t: "@MONKIWI es vino o jugo? Porque si es jugo, la mancha es de jugo y ahí sí te creo {emote}" },
+                { u: "MONKIWI", t: "@Swagginhaze28 Es malbec de Mendoza, tinto. El jugo lo toma ferldz cuando no le queda vino." },
+                { u: "ferldz", t: "@MONKIWI Jajaja, bueno, la mancha huele a bodega igual. Ahí tenés tu prueba de cata. {combo}" },
+                { u: "Swagginhaze28", t: "@ferldz entonces la foto es del piso? Qué tristeza, pero la bancamos." },
+                { u: "MONKIWI", t: "@ferldz Lo sabía. Mañana la prueba es la mancha, la fotografío como en las bodegas. Igual nadie me cree. {emote}" }
+            ]
+        },
+        {
+            id: "F3", lines: [
+                { u: "aywidbi", t: "Volví. Tres semanas de turno en Vaca Muerta y ahora dos de descanso. Hola a todos. {emote}" },
+                { u: "sillazul", t: "@aywidbi Bienvenido de vuelta! Gracias por el sub, y el café que te debo lo pago el viernes. {combo}" },
+                { u: "pachudani", t: "@sillazul Yo también quiero un café, eh, que con el precio del sub ya no me alcanza ni para el mate. {combo}" },
+                { u: "sillazul", t: "@pachudani Dale, la semana que viene. Pero dejá de quejarte del sub, que sos founder y ya lo pagaste." },
+                { u: "pachudani", t: "@aywidbi Bienvenido, posta. El chat estaba más callado sin vos. Ahora a aguantar el turno de noche. {emote}" }
+            ]
+        },
+        {
+            id: "F4", lines: [
+                { u: "tomasinfr", t: "Chat, mi gato sigue sin nombre y ya me preguntan todos. Propuestas? {emote}" },
+                { u: "matiaz0800", t: "@tomasinfr Milanesa. Un gato con nombre de milanesa se come lo que le den, ideal para el depto." },
+                { u: "ferldz", t: "@matiaz0800 Ni loco, Doña Rosa se ofende. Ella es la única reina del depto, no hay lugar para otra gata." },
+                { u: "matiaz0800", t: "@ferldz Doña Rosa pisa el teclado, no tiene voto. Yo digo Lobo, por Gimnasia, y lo discutimos después. {emote}" },
+                { u: "ferldz", t: "@tomasinfr Agu_sanhueza propone Tango, dice que su perro lo reclama. Eso no vale, pero lo pienso." },
+                { u: "tomasinfr", t: "@ferldz @matiaz0800 Tango suena bien. Decide el gato, que duerme arriba del teclado. {combo}" }
+            ]
+        },
+        {
+            id: "F5", lines: [
+                { u: "mearzys", t: "Estoy en el office, guardia de 24. Mi mamá quiere saber si como, alguien me manda un audio que diga que sí? {emote}" },
+                { u: "Fqkeeh", t: "@mearzys Comé algo aunque sean galletitas. Descansá cuando puedas, el chat no se va a ningún lado." },
+                { u: "jmica", t: "@mearzys Leé las reglas: primero comer, después mirar el stream. Y dormí un rato, el Decano no se va a ir." },
+                { u: "mearzys", t: "@jmica Ya comí una galleta de agua, mamá lo sabe, y ahora te mando el audio así no me creés. {emote}" },
+                { u: "Fqkeeh", t: "@mearzys matiaz0800 dice que cuando salgas te manda una milanesa por chat, así que aguantá. {combo}" }
+            ]
+        },
+        {
+            id: "F6", lines: [
+                { u: "ferldz", t: "Se cortó la luz en La Plata, en el depto de matiaz0800 también. Y el stream se traba cada dos minutos. {emote}" },
+                { u: "Agu_sanhueza", t: "@ferldz Acá en Córdoba no llueve pero tengo un sueño de mil. Tango se comió otro cable, así que me quedo con el celu." },
+                { u: "Yuuzito", t: "@Agu_sanhueza Acá en Buenos Aires también llueve, y con este frío no hay cumbia que me saque el abrigo. {combo}" },
+                { u: "ferldz", t: "@Yuuzito Y encima la cumbia prometida sigue pendiente. Con frío, bailá ahora que nadie te mira." },
+                { u: "Yuuzito", t: "@ferldz No me tientes, con este frío lo único que bailo es el mate. La promesa queda en pausa. {emote}" },
+                { u: "Agu_sanhueza", t: "@Yuuzito Hace meses que lo prometiste y el chat no se olvida. Con lluvia no hay excusa, posta. {combo}" },
+                { u: "ferldz", t: "Se va la luz otra vez. Me quedo con el celu, si vuelvo me acuerdo de bailar. {emote}" }
+            ]
+        },
+        {
+            id: "R1", lines: [
+                { u: "Agu_sanhueza", t: "che Yuuzito arrancaste con todo hoy" },
+                { u: "sacksuu", t: "posta, lleva 20 min y ya van 3 muertes jajaja {emote}" },
+                { u: "Yuuzito", t: "@sacksuu bancá que la próxima la rompo" },
+                { u: "mearzys", t: "@Yuuzito nooo esa fue re mala jugada" }
+            ]
+        },
+        {
+            id: "R2", lines: [
+                { u: "tintinMC", t: "alguien sabe si el lunes hay que ir presencial o es remoto?" },
+                { u: "aywidbi", t: "@tintinMC creo que es híbrido, preguntale a jmica" },
+                { u: "jmica", t: "@aywidbi es híbrido sí, dos días en oficina {emote}" },
+                { u: "chungkingexpress", t: "@jmica y la guita del viático cómo va?" },
+                { u: "ferldz", t: "@chungkingexpress jajaja no me hables de guita que estoy en cero {combo}" }
+            ]
+        },
+        {
+            id: "R3", lines: [
+                { u: "MONKIWI", t: "alguien pidió sushi o qué" },
+                { u: "noah4eva", t: "@MONKIWI yo pedí completo con palta, posta {emote}" },
+                { u: "pachudani", t: "@noah4eva ustedes siempre piden lo mismo kkkk" },
+                { u: "Swagginhaze28", t: "@pachudani kkkkk ya es tradición, no me jodas" },
+                { u: "sillazul", t: "@Swagginhaze28 bancá que yo lo pedí sin salsa jajaja" }
+            ]
+        },
+        {
+            id: "R4", lines: [
+                { u: "lukitaselglorp", t: "se cayó el server o soy yo" },
+                { u: "tomasinfr", t: "@lukitaselglorp no, va bien, tu ping está ok {combo}" },
+                { u: "matiaz0800", t: "@tomasinfr che el mío se quedó en 900ms, no es joda" },
+                { u: "Fqkeeh", t: "@matiaz0800 reiniciá el router y listo {emote}" }
+            ]
+        },
+        {
+            id: "R5", lines: [
+                { u: "marttpeepo", t: "cambiaron la música y quedó horrible jajaja" },
+                { u: "mearzys", t: "@marttpeepo a mí me gustó, el beat es re bueno" },
+                { u: "sacksuu", t: "@mearzys siempre defendés lo mismo kkkk {emote}" },
+                { u: "Agu_sanhueza", t: "@sacksuu y vos lo mismo con el mate, no?" },
+                { u: "Yuuzito", t: "@Agu_sanhueza ya la cambio, tranqui, bancá {combo}" }
+            ]
+        },
+        {
+            id: "M1", lines: [
+                { u: "Agu_sanhueza", t: "nooo no no, qué fue ese ruido?? me cagué" },
+                { u: "Yuuzito", t: "jajaja tranqui, es el enemigo que se ríe en el pasillo" },
+                { u: "mearzys", t: "@Yuuzito yo no vi nada y el corazón me explotó {emote}" },
+                { u: "sacksuu", t: "@mearzys bancá que todavía no apareció, mirá la esquina" },
+                { u: "Yuuzito", t: "@sacksuu ahí viene, ahí viene, no miren el chat" }
+            ]
+        },
+        {
+            id: "M2", lines: [
+                { u: "tomasinfr", t: "faltan dos puntos y yo ya tengo las manos heladas" },
+                { u: "Fqkeeh", t: "tranqui, ellos tienen menos aire que nosotros" },
+                { u: "ferldz", t: "@Fqkeeh no me hagas esto, si perdemos el último punto me desinstalo el juego" },
+                { u: "Yuuzito", t: "último punto, nadie se mueva que lo tengo {combo}" },
+                { u: "MONKIWI", t: "@Yuuzito juro que el chat completo dejó de respirar" }
+            ]
+        },
+        {
+            id: "M3", lines: [
+                { u: "pachudani", t: "se trabó el stream??" },
+                { u: "lukitaselglorp", t: "nooo se cortó justo en el clutch, qué horror" },
+                { u: "chungkingexpress", t: "@lukitaselglorp tengo miedo que se haya caído el internet del Yuuzito" },
+                { u: "aywidbi", t: "@chungkingexpress reinicia el router Yuuzito pls, en serio" },
+                { u: "sillazul", t: "@aywidbi ya volvió, ya volvió, qué susto {emote}" }
+            ]
+        },
+        {
+            id: "M4", lines: [
+                { u: "matiaz0800", t: "no miro, no miro, avisenme cuando pase el susto" },
+                { u: "jmica", t: "@matiaz0800 ya pasó, podés mirar tranqui" },
+                { u: "marttpeepo", t: "@jmica mentira, tapé una oreja y la otra la dejé escuchando {emote}" },
+                { u: "tintinMC", t: "@marttpeepo jajaja yo miro por el costado de los dedos, posta" },
+                { u: "Yuuzito", t: "@tintinMC te aviso cuando haga ruido, prometido" }
+            ]
+        },
+        {
+            id: "M5", lines: [
+                { u: "ferldz", t: "escuché un ruido en la cocina a las 3am mientras miraba, no me digan nada" },
+                { u: "Agu_sanhueza", t: "@ferldz jajaja fue el gato o el fantasma del Yuuzito {emote}" },
+                { u: "pachudani", t: "@Agu_sanhueza no me reí, prendí todas las luces de la casa" },
+                { u: "sacksuu", t: "@pachudani a mí también se me cortó la luz, qué miedo" },
+                { u: "Fqkeeh", t: "@sacksuu tranqui, seguro fue el gato" }
+            ]
+        },
+        {
+            id: "T1", lines: [
+                { u: "Yuuzito", t: "perdimos otra vez, no sé ni qué decir la verdad" },
+                { u: "sacksuu", t: "@Yuuzito bancá, se nos fue en el último round, pasa" },
+                { u: "Yuuzito", t: "es que le puse todo y no alcanzó, me duele re" },
+                { u: "tintinMC", t: "@Yuuzito se te nota que lo querías ganar, eso ya dice mucho" },
+                { u: "Yuuzito", t: "gracias che, de verdad. mañana arrancamos de nuevo {emote}" }
+            ]
+        },
+        {
+            id: "T2", lines: [
+                { u: "Fqkeeh", t: "me voy de viaje mañana, el stream de la semana que viene lo lleva jmica" },
+                { u: "mearzys", t: "@Fqkeeh ya te vamos a extrañar posta" },
+                { u: "ferldz", t: "che no digas eso, volvé con historias de allá" },
+                { u: "Fqkeeh", t: "vuelvo en dos semanas, no es para siempre" },
+                { u: "MONKIWI", t: "@Fqkeeh cuidate y mandá fotos del viaje {emote}" },
+                { u: "chungkingexpress", t: "el chat se va a sentir raro sin vos" }
+            ]
+        },
+        {
+            id: "T3", lines: [
+                { u: "pachudani", t: "se me cayó el celular al agua hoy, perdí todas las fotos" },
+                { u: "noah4eva", t: "uf @pachudani eso duele, tenías backup?" },
+                { u: "pachudani", t: "algunas nomás, las de mi viejo no las tengo" },
+                { u: "Swagginhaze28", t: "@pachudani lo siento mucho, las fotos pesan más que el aparato" },
+                { u: "pachudani", t: "gracias, hablarlo ya me saca un peso {emote}" }
+            ]
+        },
+        {
+            id: "T4", lines: [
+                { u: "sillazul", t: "hoy se nos fue el gato de mi vieja, ando re triste" },
+                { u: "jmica", t: "@sillazul lo siento mucho, ese bicho era parte de la casa" },
+                { u: "sillazul", t: "sí, dormía encima mío todas las noches" },
+                { u: "lukitaselglorp", t: "@sillazul abrazo grande, tomate el tiempo que necesites" },
+                { u: "sillazul", t: "gracias, ahora prefiero hablar de cualquier otra cosa" }
+            ]
+        },
+        {
+            id: "T5", lines: [
+                { u: "matiaz0800", t: "acordate cuando éramos como 20 en el chat, extraño eso" },
+                { u: "marttpeepo", t: "@matiaz0800 éramos menos pero se sentía más cercano" },
+                { u: "tomasinfr", t: "@marttpeepo el primer stream que vi era con 4 personas, lloré de risa" },
+                { u: "aywidbi", t: "@tomasinfr jajaja yo también estaba ahí {emote}" },
+                { u: "Yuuzito", t: "siempre digo que los que vinieron desde el principio son los que más valen" }
+            ]
+        },
+        {
+            id: "F1_2", lines: [
+                { u: "Agu_sanhueza", t: "me salió el laburo!!! entré a la entrevista el martes y hoy me llamaron {emote}" },
+                { u: "ferldz", t: "@Agu_sanhueza QUEEEE bancá, te lo merecías che" },
+                { u: "Agu_sanhueza", t: "@ferldz gracias gordo, todavía no lo caigo jajaja" },
+                { u: "MONKIWI", t: "@Agu_sanhueza posta, se nota que te preparaste un montón" },
+                { u: "Agu_sanhueza", t: "tengo que avisarle a mi vieja, va a llorar {combo}" }
+            ]
+        },
+        {
+            id: "F2_2", lines: [
+                { u: "noah4eva", t: "chicos le pedí matrimonio a mi pareja en la playa, dijo que sí" },
+                { u: "pachudani", t: "@noah4eva NOOO cómo que sí, felicitaciones wena!!" },
+                { u: "sillazul", t: "@noah4eva la foto quedó brígida, los felicito de corazón {combo}" },
+                { u: "noah4eva", t: "@sillazul gracias, todavía no me creo que me haya dicho que sí" },
+                { u: "Swagginhaze28", t: "@noah4eva ya sabés lo que viene, la despedida de soltero jaja {emote}" }
+            ]
+        },
+        {
+            id: "F3_2", lines: [
+                { u: "tintinMC", t: "llegamos a 500 subs?? mirá el contador" },
+                { u: "aywidbi", t: "@tintinMC sí, Yuuzito va a llorar en vivo" },
+                { u: "Yuuzito", t: "@aywidbi no lloro, pero casi. gracias de verdad chiquillos {emote}" },
+                { u: "sacksuu", t: "esta comunidad es lo más bacán de kick, en serio" },
+                { u: "chungkingexpress", t: "esto merece un hype train, ¿quién se suma?" },
+                { u: "Yuuzito", t: "@chungkingexpress bancá, vamos a 1000 posta" }
+            ]
+        },
+        {
+            id: "F4_2", lines: [
+                { u: "lukitaselglorp", t: "es mi primera vez en el chat, hola a todos" },
+                { u: "jmica", t: "@lukitaselglorp bienvenido che, pasá nomás, acá no mordemos {emote}" },
+                { u: "lukitaselglorp", t: "@jmica jaja gracias, me re sentí bienvenido" },
+                { u: "MONKIWI", t: "@lukitaselglorp decí hola al chat y ya te sentís de la casa" },
+                { u: "Fqkeeh", t: "@lukitaselglorp el que se queda a ver todo el stream es el mejor, bienvenido {combo}" }
+            ]
+        },
+        {
+            id: "F5_2", lines: [
+                { u: "mearzys", t: "mi hermana tuvo a la beba hoy a las 4am, pesó 3.2 kilos" },
+                { u: "sacksuu", t: "@mearzys FELICES!!! ¿cómo se llama?" },
+                { u: "mearzys", t: "@sacksuu Rosario, se parece a mi tía, pobrecita jaja" },
+                { u: "marttpeepo", t: "@mearzys abrazo enorme a toda la familia, mandá fotos cuando puedas {emote}" },
+                { u: "mearzys", t: "@marttpeepo gracias, ya le mandé la foto a todo el grupo" },
+                { u: "tomasinfr", t: "@mearzys que descanse la mami, y a vos también {combo}" }
+            ]
+        },
+        {
+            id: "G1", lines: [
+                { u: "Agu_sanhueza", t: "el boss del mapa 3 me está matando hace 40 min, bancá" },
+                { u: "mearzys", t: "@Agu_sanhueza yo llevo 12 muertes y ni le saqué la primera barra {emote}" },
+                { u: "sacksuu", t: "che el patrón del segundo cambio de fase es re injusto" },
+                { u: "Yuuzito", t: "@sacksuu hay que esquivar hacia la izquierda, no hacia atrás {emote}" },
+                { u: "Agu_sanhueza", t: "@Yuuzito lo probé y me pegó igual jaja" }
+            ]
+        },
+        {
+            id: "G2", lines: [
+                { u: "ferldz", t: "QUÉ FUE ESO, quedaban 2 segundos" },
+                { u: "MONKIWI", t: "@ferldz no lo puedo creer, lo dio vuelta con 5% de vida {emote}" },
+                { u: "pachudani", t: "el que dijo que el juego estaba perdido se la come" },
+                { u: "tomasinfr", t: "@pachudani posta, tiré el mando al sillón jajaja {combo}" },
+                { u: "Fqkeeh", t: "gg chat, sigamos que el próximo es más difícil" }
+            ]
+        },
+        {
+            id: "G3", lines: [
+                { u: "Swagginhaze28", t: "Yuuzito le dio al botón de soltar el item en vez de usarlo jajaja" },
+                { u: "noah4eva", t: "@Swagginhaze28 el que le puso nombre a los botones tiene algo contra él {emote}" },
+                { u: "sillazul", t: "@noah4eva pasó como 3 veces esta semana, ya es tradición" },
+                { u: "Yuuzito", t: "@sillazul no era eso, fue el dedo gordo que se me fue solo, bancá" },
+                { u: "chungkingexpress", t: "por eso yo dejo el inventario siempre en la misma tecla {emote}" }
+            ]
+        },
+        {
+            id: "G4", lines: [
+                { u: "lukitaselglorp", t: "salió el logro de terminar sin morir?? no lo puedo creer" },
+                { u: "aywidbi", t: "@lukitaselglorp eso es un bug del juego, el contador nunca se resetea {emote}" },
+                { u: "matiaz0800", t: "@aywidbi jaja no, el contador sí se reseteó, salió a la derecha en el último rato" },
+                { u: "tintinMC", t: "@matiaz0800 el bug es que el personaje se queda trabado en la pared y el juego no lo ve {combo}" },
+                { u: "jmica", t: "chicos, al que le pasó eso mandenlo al clip del día" }
+            ]
+        },
+        {
+            id: "G5", lines: [
+                { u: "marttpeepo", t: "el speedrun se cayó en la última sala, un crash a dos pasos del final" },
+                { u: "tomasinfr", t: "@marttpeepo justo ahí tenía el mejor tiempo de la semana {emote}" },
+                { u: "mearzys", t: "@tomasinfr bancá, quedó empatado con el récord igual, no es poco" },
+                { u: "Yuuzito", t: "@mearzys empatar el récord es mejor que nada, la próxima sale" },
+                { u: "MONKIWI", t: "@Yuuzito la próxima la sala es la misma, es ahí no más {combo}" }
+            ]
+        },
+        {
+            id: "D1_2", lines: [
+                { u: "sacksuu", t: "@Yuuzito si perdías el duelo hoy te ponías el gorro de Pachu en cámara, eh" },
+                { u: "Yuuzito", t: "@sacksuu yo no dije eso, lo inventaste vos {emote}" },
+                { u: "sacksuu", t: "@Yuuzito está en el VOD a las 2:14, bancá que lo busco" },
+                { u: "tintinMC", t: "jajaja @sacksuu el VOD marca 2:41, rendite che" },
+                { u: "Yuuzito", t: "bueno, mañana lo cumplo pero que conste que fue sin ganas" }
+            ]
+        },
+        {
+            id: "D2_2", lines: [
+                { u: "ferldz", t: "¿alguien sabe qué pasó con el pollo de la semana pasada? sigue vivo en el overlay" },
+                { u: "MONKIWI", t: "@ferldz el pollo se fue a vivir al Discord, no hay que preocuparse" },
+                { u: "ferldz", t: "@MONKIWI no me digas eso que hace dos semanas que lo estoy esperando" },
+                { u: "noah4eva", t: "@ferldz bancá, el pollo vuelve el viernes posta {emote}" },
+                { u: "MONKIWI", t: "@noah4eva ya dijiste lo mismo la semana pasada jajaja" }
+            ]
+        },
+        {
+            id: "D3_2", lines: [
+                { u: "jmica", t: "Nueva regla: no links sin permiso de mod. Lo aviso una sola vez." },
+                { u: "lukitaselglorp", t: "@jmica y los clips de Kick también cuentan como link?" },
+                { u: "jmica", t: "@lukitaselglorp los clips de Kick sí van, los de otros sitios no. Bancá el bot." },
+                { u: "Fqkeeh", t: "@lukitaselglorp el filtro ya lo tenemos, si lo ves avisá {emote}" },
+                { u: "matiaz0800", t: "posta, ayer me borró el mensaje y ni me enteré jaja" }
+            ]
+        },
+        {
+            id: "D4_2", lines: [
+                { u: "Swagginhaze28", t: "GGGGGGGGGG" },
+                { u: "aywidbi", t: "@Swagginhaze28 para de mandar lo mismo, nos rompiste el chat" },
+                { u: "Swagginhaze28", t: "@aywidbi es que el emote me vuelve loco jajaja" },
+                { u: "sillazul", t: "@Swagginhaze28 metele una pausa che, usá el modo lento" },
+                { u: "jmica", t: "@Swagginhaze28 te doy 2 minutos de timeout, a respirar {emote}" }
+            ]
+        },
+        {
+            id: "D5_2", lines: [
+                { u: "chungkingexpress", t: "@tomasinfr sigo enojado por lo que dijiste en el stream del martes" },
+                { u: "tomasinfr", t: "@chungkingexpress fue un chiste mal hecho, perdón de verdad" },
+                { u: "chungkingexpress", t: "bancá, no sé si te creo todavía {emote}" },
+                { u: "tomasinfr", t: "@chungkingexpress el sábado te invito al 1v1 y lo arreglamos, posta" },
+                { u: "chungkingexpress", t: "dale, pero el que pierde paga la ronda de mates" }
+            ]
+        },
+        {
+            id: "X1", lines: [
+                { u: "tintinMC", t: "@Yuuzito el audio está re bajo, no se escucha nada" },
+                { u: "Yuuzito", t: "bancá que lo subo, ¿ahora sí?" },
+                { u: "sacksuu", t: "@Yuuzito ahora se escucha, pero hay eco como en un baño" },
+                { u: "Yuuzito", t: "posta, el micro está cerca de la pared, lo muevo {emote}" },
+                { u: "jmica", t: "@Yuuzito listo, ya se oye bien" }
+            ]
+        },
+        {
+            id: "X2", lines: [
+                { u: "matiaz0800", t: "la cámara se ve re borrosa @Yuuzito" },
+                { u: "Yuuzito", t: "ufa, debe ser la luz, ya la acomodo" },
+                { u: "ferldz", t: "@Yuuzito se ve mejor, pero sigue medio pixelado {combo}" },
+                { u: "MONKIWI", t: "@ferldz es el bitrate, seguro la subida está floja" },
+                { u: "Fqkeeh", t: "@MONKIWI yo lo veo bien desde acá, debe ser tu red" }
+            ]
+        },
+        {
+            id: "X3", lines: [
+                { u: "pachudani", t: "se traba todo el stream, el video se congela" },
+                { u: "noah4eva", t: "@pachudani a mí también, cada diez segundos más o menos" },
+                { u: "Yuuzito", t: "uh, ya cierro el navegador que consume un montón de CPU" },
+                { u: "aywidbi", t: "@Yuuzito posta, se estaba trabando un montón, ahora anda {emote}" },
+                { u: "noah4eva", t: "@aywidbi se ve todo sin cortes, gracias" }
+            ]
+        },
+        {
+            id: "X4", lines: [
+                { u: "lukitaselglorp", t: "@Yuuzito se cortó la imagen, pantalla negra" },
+                { u: "Yuuzito", t: "se me cortó la luz un segundo, ya volví" },
+                { u: "sillazul", t: "jajaja se murió la luz en medio del directo" },
+                { u: "chungkingexpress", t: "@sillazul no es joda, pasa seguido en mi barrio {combo}" },
+                { u: "tomasinfr", t: "@Yuuzito avisá si se cae el stream así no nos quedamos mirando negro" }
+            ]
+        },
+        {
+            id: "X5", lines: [
+                { u: "marttpeepo", t: "@Yuuzito se viene un anuncio justo ahora?? qué mal timing" },
+                { u: "Yuuzito", t: "jaja sí, bancá que pasa en un rato" },
+                { u: "mearzys", t: "@Yuuzito ¿hay delay en el stream? el chat va re atrasado" },
+                { u: "Yuuzito", t: "sí, como quince segundos, por eso tardo en leer {emote}" },
+                { u: "Fqkeeh", t: "@mearzys es el delay de la plataforma, es normal" }
+            ]
+        },
+        {
+            id: "V1", lines: [
+                { u: "Agu_sanhueza", t: "el 60 llegó 40 min tarde otra vez, qué garca" },
+                { u: "sacksuu", t: "@Agu_sanhueza el mío también, ya ni miro los horarios {emote}" },
+                { u: "Agu_sanhueza", t: "bancá, al menos hoy no llovió" },
+                { u: "mearzys", t: "@Agu_sanhueza jaja che, eso ya es ganar" }
+            ]
+        },
+        {
+            id: "V2", lines: [
+                { u: "tintinMC", t: "alguien sabe si el mate se puede tomar con leche? me lo recomendó mi vieja" },
+                { u: "Fqkeeh", t: "@tintinMC no no no, eso es pecado {emote}" },
+                { u: "marttpeepo", t: "@Fqkeeh jaja la vieja de tintin no perdona" },
+                { u: "tintinMC", t: "@marttpeepo a mí me gustó, qué le voy a hacer" },
+                { u: "aywidbi", t: "@tintinMC probá con mate cocido, es más amigable" }
+            ]
+        },
+        {
+            id: "V3", lines: [
+                { u: "chungkingexpress", t: "mi gato sigue sin nombre, ya van 3 semanas" },
+                { u: "pachudani", t: "@chungkingexpress ponele Fideo, es re gordo {emote}" },
+                { u: "chungkingexpress", t: "@pachudani no es gordo, es esponjoso" },
+                { u: "noah4eva", t: "@chungkingexpress llamalo Nafta y listo" },
+                { u: "chungkingexpress", t: "@noah4eva Nafta suena bien, lo pienso" }
+            ]
+        },
+        {
+            id: "V4", lines: [
+                { u: "ferldz", t: "estoy en medio de una mudanza, las cajas me tienen harto" },
+                { u: "lukitaselglorp", t: "@ferldz la mía tiene más cajas que muebles, ni te cuento" },
+                { u: "MONKIWI", t: "@ferldz mi vieja me llamó tres veces mientras cargaba el sillón {emote}" },
+                { u: "ferldz", t: "@MONKIWI jaja tu vieja siempre llama en el peor momento" },
+                { u: "lukitaselglorp", t: "@ferldz bancá, después te traigo unas birras" }
+            ]
+        },
+        {
+            id: "V5", lines: [
+                { u: "sillazul", t: "son las 3am y sigo acá mirando, qué vicio" },
+                { u: "jmica", t: "@sillazul yo estoy desde la oficina en el break, shh" },
+                { u: "tomasinfr", t: "@jmica en la oficina mirando el stream? respeto" },
+                { u: "Yuuzito", t: "@tomasinfr jaja gracias por aguantar {emote}" },
+                { u: "sillazul", t: "@Yuuzito posta que te aguantamos, andá a dormir un rato" }
+            ]
+        },
+        {
+            id: "H1", lines: [
+                { u: "MONKIWI", t: "RAID!!! llegamos todos de golpe, bancá que somos un montón" },
+                { u: "Yuuzito", t: "@MONKIWI bienvenidos carajo, pónganse cómodos {emote}" },
+                { u: "noah4eva", t: "@Yuuzito recién llegamos, qué onda el stream?" },
+                { u: "pachudani", t: "@noah4eva está el hype train arriba, no te lo podés perder" },
+                { u: "Swagginhaze28", t: "@pachudani re buena la bienvenida, los del raid digan hola" }
+            ]
+        },
+        {
+            id: "H2", lines: [
+                { u: "tomasinfr", t: "alguien acaba de regalar 20 subs???" },
+                { u: "aywidbi", t: "@tomasinfr jajaja fue un anónimo, bancá" },
+                { u: "sillazul", t: "@aywidbi el capo que regaló es re generoso {combo}" },
+                { u: "matiaz0800", t: "y ahora el chat se llena de gracias pa todos" },
+                { u: "jmica", t: "gracias al anónimo, el chat está en llamas" }
+            ]
+        },
+        {
+            id: "H3", lines: [
+                { u: "chungkingexpress", t: "HYPE TRAIN, subí al tren ya!!" },
+                { u: "lukitaselglorp", t: "@chungkingexpress voy, cuánto falta pal nivel 2?" },
+                { u: "ferldz", t: "@lukitaselglorp faltan como 300 bits, a darle che" },
+                { u: "marttpeepo", t: "@ferldz ya le metí, posta que el nivel 2 lo sacamos {emote}" },
+                { u: "mearzys", t: "@marttpeepo si llegamos sale el emote nuevo, no paren" }
+            ]
+        },
+        {
+            id: "H4", lines: [
+                { u: "sacksuu", t: "faltan 5 min pal sorteo, nadie se me vaya" },
+                { u: "tintinMC", t: "@sacksuu 5 minutos, me pongo la alarma otra vez" },
+                { u: "Agu_sanhueza", t: "@tintinMC tranqui, ya tengo el café {emote}" },
+                { u: "Fqkeeh", t: "3 minutos, a preparar el chat" },
+                { u: "pachudani", t: "@Fqkeeh cuenta regresiva en el overlay??? {combo}" }
+            ]
+        },
+        {
+            id: "H5", lines: [
+                { u: "noah4eva", t: "qué significa el mensaje del sistema que dice Mes 12?" },
+                { u: "Swagginhaze28", t: "@noah4eva es que alguien subió de nivel de sub, mirá arriba" },
+                { u: "jmica", t: "@Swagginhaze28 son 12 meses del Agu, bancá que lo festejamos" },
+                { u: "Agu_sanhueza", t: "@jmica posta 12 meses, lo festejo {emote}" },
+                { u: "marttpeepo", t: "@Agu_sanhueza felicitaciones capo, 12 meses no es joda" }
+            ]
+        },
+        {
+            id: "Z1", lines: [
+                { u: "Agu_sanhueza", t: "buenas a todos, recién llego, ¿ya arrancó?" },
+                { u: "Fqkeeh", t: "@Agu_sanhueza todavía no, bancá que se está conectando {emote}" },
+                { u: "ferldz", t: "@Agu_sanhueza llegaste justo, estaba por ir a buscar algo para tomar" },
+                { u: "Agu_sanhueza", t: "jaja no, quedate che, aunque sea un ratito" }
+            ]
+        },
+        {
+            id: "Z2", lines: [
+                { u: "Yuuzito", t: "me voy al baño 2 min, aguanten" },
+                { u: "mearzys", t: "dale, mientras tanto pongo un tema" },
+                { u: "sacksuu", t: "@mearzys ponele algo tranqui, no el de ayer que me dolió la cabeza" },
+                { u: "Yuuzito", t: "@sacksuu jaja, anotado. ya vuelvo {emote}" },
+                { u: "tintinMC", t: "posta que pasó el tiempo y no volvió {combo}" }
+            ]
+        },
+        {
+            id: "Z3", lines: [
+                { u: "marttpeepo", t: "cambió el juego? pensé que seguía con el otro" },
+                { u: "matiaz0800", t: "@marttpeepo sí, cortó el de ayer y arrancó este, ahora sí que es laburo" },
+                { u: "aywidbi", t: "este es re difícil, ojo che" },
+                { u: "chungkingexpress", t: "@aywidbi jaja, nos vamos a reír un rato igual {emote}" },
+                { u: "Yuuzito", t: "a bancar, vamos!" }
+            ]
+        },
+        {
+            id: "Z4", lines: [
+                { u: "lukitaselglorp", t: "mañana hay directo? no me acuerdo" },
+                { u: "Fqkeeh", t: "@lukitaselglorp sí, mañana a las 21 hs, avisen a los amigos" },
+                { u: "noah4eva", t: "@Fqkeeh ya me puse la alarma, gracias" },
+                { u: "pachudani", t: "@noah4eva yo también, no me pierdo ni uno {emote}" },
+                { u: "MONKIWI", t: "posta, el de mañana prometía" }
+            ]
+        },
+        {
+            id: "Z5", lines: [
+                { u: "Yuuzito", t: "bueno, ya nos estamos yendo. gracias por venir, de verdad" },
+                { u: "Swagginhaze28", t: "gracias a vos Yuuzito, siempre la pasamos bien" },
+                { u: "sillazul", t: "@Swagginhaze28 el chat hoy estuvo buenísimo" },
+                { u: "jmica", t: "nos vemos mañana, cuídense che {combo}" },
+                { u: "tomasinfr", t: "@jmica nos vemos! no falten" }
+            ]
+        }
     ];
 
     // {emote} becomes an emote of the channel's 7TV pack, {channel} the channel name,
@@ -2608,13 +2781,14 @@
         const paint = style.paint;
         if (!paint) return;
 
-        // 2) Sombra y filtros de paint
+        // 2) Sombra y filtros de paint (se guardan en variable CSS para combinarse con el borde del overlay)
         if (paint.filter) {
-            authorSpan.style.filter = paint.filter;
+            authorSpan.style.setProperty('--seventv-filter', paint.filter);
         }
 
         // 3) Aplicación de Paint (URL/Imagen o Gradiente)
         if (paint.function === 'URL' && paint.image_url) {
+            authorSpan.classList.add('chat-author-paint');
             // Paint de imagen (ej: el paint de Pascua de noah4eva)
             // Precargar la imagen para asegurar que el texto nunca quede transparente/invisible si tarda o falla
             const img = new Image();
@@ -2631,6 +2805,7 @@
             img.src = paint.image_url;
         } else if (paint.background) {
             // Paint de gradiente CSS
+            authorSpan.classList.add('chat-author-paint');
             authorSpan.style.backgroundImage = paint.background;
             authorSpan.style.backgroundRepeat = 'repeat';
             authorSpan.style.backgroundPosition = 'center';

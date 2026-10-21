@@ -526,35 +526,106 @@ html.mode-overlay body:has(.theme-light) {
     background-color: #f7f7f8 !important;
 }
 
-/* Text Shadows (applied to chat-text only to never conflict with 7TV paints) */
-.shadow-0 .chat-text {
+/* Text Outline / Border (solo borde negro puro sin difuminado, compatible con nombres 7TV, Kick y texto) */
+.shadow-0 { --author-paint-stroke: 0px; }
+.shadow-1 { --author-paint-stroke: max(0.8px, 0.025em); }
+.shadow-2 { --author-paint-stroke: max(1.1px, 0.035em); }
+.shadow-3 { --author-paint-stroke: max(1.5px, 0.045em); }
+.shadow-4 { --author-paint-stroke: max(2.0px, 0.055em); }
+.shadow-5 { --author-paint-stroke: max(2.6px, 0.070em); }
+.shadow-6 { --author-paint-stroke: max(3.4px, 0.090em); }
+
+.shadow-0 .chat-text,
+.shadow-0 .chat-author,
+.shadow-0 .colon,
+.shadow-0 .chat-time,
+.shadow-0 .chat-event-action {
     text-shadow: none !important;
+    -webkit-text-stroke: 0 transparent !important;
+    paint-order: normal !important;
 }
 
-.shadow-1 .chat-text {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+.shadow-1 .chat-text,
+.shadow-1 .chat-author,
+.shadow-1 .colon,
+.shadow-1 .chat-time,
+.shadow-1 .chat-event-action {
+    text-shadow: none !important;
+    -webkit-text-stroke: max(1.5px, 0.05em) #000 !important;
+    paint-order: stroke fill !important;
 }
 
-.shadow-2 .chat-text {
-    text-shadow: 0 1px 2px #000, 0 0 3px rgba(0, 0, 0, 0.8) !important;
+.shadow-2 .chat-text,
+.shadow-2 .chat-author,
+.shadow-2 .colon,
+.shadow-2 .chat-time,
+.shadow-2 .chat-event-action {
+    text-shadow: none !important;
+    -webkit-text-stroke: max(2.2px, 0.07em) #000 !important;
+    paint-order: stroke fill !important;
 }
 
-.shadow-3 .chat-text {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95), 0 0 1px #000 !important;
+.shadow-3 .chat-text,
+.shadow-3 .chat-author,
+.shadow-3 .colon,
+.shadow-3 .chat-time,
+.shadow-3 .chat-event-action {
+    text-shadow: none !important;
+    -webkit-text-stroke: max(3.2px, 0.09em) #000 !important;
+    paint-order: stroke fill !important;
 }
 
-.shadow-4 .chat-text {
-    text-shadow: 0 0 2px #000, 0 0 4px #000, 0 2px 4px #000 !important;
+.shadow-4 .chat-text,
+.shadow-4 .chat-author,
+.shadow-4 .colon,
+.shadow-4 .chat-time,
+.shadow-4 .chat-event-action {
+    text-shadow: none !important;
+    -webkit-text-stroke: max(4.2px, 0.11em) #000 !important;
+    paint-order: stroke fill !important;
 }
 
-.shadow-5 .chat-text {
-    text-shadow: 0 0 4px #000, 0 0 8px #000, 0 2px 4px rgba(0,0,0,0.9) !important;
+.shadow-5 .chat-text,
+.shadow-5 .chat-author,
+.shadow-5 .colon,
+.shadow-5 .chat-time,
+.shadow-5 .chat-event-action {
+    text-shadow: none !important;
+    -webkit-text-stroke: max(5.4px, 0.14em) #000 !important;
+    paint-order: stroke fill !important;
 }
 
-/* 6: a thick black outline around every letter */
-.shadow-6 .chat-text {
-    text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 2px 2px 0 #000, -2px -2px 0 #000,
-        2px -2px 0 #000, -2px 2px 0 #000, 0 0 6px #000 !important;
+.shadow-6 .chat-text,
+.shadow-6 .chat-author,
+.shadow-6 .colon,
+.shadow-6 .chat-time,
+.shadow-6 .chat-event-action {
+    text-shadow: none !important;
+    -webkit-text-stroke: max(7px, 0.18em) #000 !important;
+    paint-order: stroke fill !important;
+}
+
+/* Nombres con cosméticos 7TV (gradientes o imágenes): usamos drop-shadow fino hacia afuera
+   para que el borde negro no invada el interior de las letras y tenga el mismo grosor que los nombres normales */
+.shadow-0 .chat-author.chat-author-paint {
+    -webkit-text-stroke: 0 transparent !important;
+    paint-order: normal !important;
+    filter: var(--seventv-filter, none) !important;
+}
+
+.shadow-1 .chat-author.chat-author-paint,
+.shadow-2 .chat-author.chat-author-paint,
+.shadow-3 .chat-author.chat-author-paint,
+.shadow-4 .chat-author.chat-author-paint,
+.shadow-5 .chat-author.chat-author-paint,
+.shadow-6 .chat-author.chat-author-paint {
+    -webkit-text-stroke: 0 transparent !important;
+    paint-order: normal !important;
+    filter: drop-shadow(var(--author-paint-stroke, 1.5px) 0 0 #000)
+            drop-shadow(calc(-1 * var(--author-paint-stroke, 1.5px)) 0 0 #000)
+            drop-shadow(0 var(--author-paint-stroke, 1.5px) 0 #000)
+            drop-shadow(0 calc(-1 * var(--author-paint-stroke, 1.5px)) 0 #000)
+            var(--seventv-filter, ) !important;
 }
 
 /* Animations */
