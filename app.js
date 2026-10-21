@@ -412,7 +412,7 @@
     const PRESETS = [
         {
             id: 'rageylo', name: 'Rageylo', desc: 'El diseño por defecto',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 5, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 0, deletedMessages: 'hide' }
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 4, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 0, deletedMessages: 'hide' }
         },
         {
             id: 'game', name: 'Juego', desc: 'Sobre el juego: transparente, sombra fuerte, cada mensaje dura 1 minuto',
