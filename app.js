@@ -2870,6 +2870,104 @@
     }
 
     /**
+     * Resets 7TV paint and inline cosmetics back to base author style
+     */
+    function resetSevenTVNameStyle(authorSpan, fallbackColor) {
+        authorSpan.classList.remove('chat-author-paint');
+        authorSpan.style.backgroundImage = '';
+        authorSpan.style.backgroundRepeat = '';
+        authorSpan.style.backgroundPosition = '';
+        authorSpan.style.backgroundSize = '';
+        authorSpan.style.webkitBackgroundClip = '';
+        authorSpan.style.backgroundClip = '';
+        authorSpan.style.webkitTextFillColor = '';
+        authorSpan.style.removeProperty('--seventv-filter');
+        authorSpan.style.color = fallbackColor || '#53fc18';
+    }
+
+    /**
+     * Compares two 7TV styles to check if visual appearance actually changed
+     */
+    function areSevenTVStylesEqual(a, b) {
+        if (a === b) return true;
+        if (!a || !b) return false;
+        if (a.color !== b.color) return false;
+
+        const b1 = a.badge, b2 = b.badge;
+        if (Boolean(b1) !== Boolean(b2)) return false;
+        if (b1 && b2 && (b1.imageUrl !== b2.imageUrl || b1.text !== b2.text)) return false;
+
+        const p1 = a.paint, p2 = b.paint;
+        if (Boolean(p1) !== Boolean(p2)) return false;
+        if (p1 && p2) {
+            if (p1.background !== p2.background ||
+                p1.color !== p2.color ||
+                p1.filter !== p2.filter ||
+                p1.function !== p2.function ||
+                p1.image_url !== p2.image_url) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Reactively updates all active message rows for a user when their 7TV cosmetics refresh
+     */
+    function updateUserSevenTVStyle(kickUserId, newStyle) {
+        if (!kickUserId) return;
+        const rows = chatMessagesEl.querySelectorAll('.chatterino-line');
+        rows.forEach(row => {
+            const msg = row._msg;
+            if (!msg || !msg.sender || String(msg.sender.id) !== String(kickUserId)) return;
+
+            const oldStyle = msg._sevenTvStyle !== undefined ? msg._sevenTvStyle : (msg.sevenTv || null);
+            if (areSevenTVStylesEqual(oldStyle, newStyle)) {
+                msg._sevenTvStyle = newStyle || null;
+                return;
+            }
+
+            msg._sevenTvStyle = newStyle || null;
+            msg.sevenTv = newStyle || null;
+
+            if (newStyle && newStyle.color) {
+                row.style.setProperty('--uc', newStyle.color);
+            } else {
+                row.style.setProperty('--uc', msg.sender?.color || '#53fc18');
+            }
+
+            const authorSpan = row.querySelector('.chat-author');
+            if (authorSpan) {
+                resetSevenTVNameStyle(authorSpan, msg.sender?.color);
+                if (newStyle && config.sevenTVCosmetics) {
+                    applySevenTVNameStyle(authorSpan, newStyle);
+                }
+            }
+
+            let badgesEl = row.querySelector('.chat-badges');
+            if (badgesEl) {
+                badgesEl.querySelectorAll('.badge-7tv').forEach(b => b.remove());
+                if (newStyle && newStyle.badge && config.sevenTVCosmetics && config.badges) {
+                    badgesEl.prepend(createBadgeImg(newStyle.badge));
+                }
+            } else if (newStyle && newStyle.badge && config.sevenTVCosmetics && config.badges) {
+                const head = row.querySelector('.chat-head');
+                const authorEl = row.querySelector('.chat-author');
+                if (head && authorEl) {
+                    badgesEl = document.createElement('span');
+                    badgesEl.className = 'chat-badges';
+                    badgesEl.appendChild(createBadgeImg(newStyle.badge));
+                    head.insertBefore(badgesEl, authorEl);
+                }
+            }
+        });
+    }
+
+    window.addEventListener('seventv_style_updated', (e) => {
+        if (e.detail && e.detail.kickUserId) {
+            updateUserSevenTVStyle(e.detail.kickUserId, e.detail.style);
+        }
+    });
+
+    /**
      * Formats timestamp in Chatterino format: HH:MM
      */
     function formatTime(isoString) {

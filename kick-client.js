@@ -149,8 +149,8 @@ class SevenTVCosmetics {
     static BATCH_DELAY_MS = 100;
     static MAX_CONCURRENT = 2;
     static MAX_RETRIES = 3;
-    static STYLE_TTL = 6 * 60 * 60 * 1000;
-    static NONE_TTL = 60 * 60 * 1000;
+    static STYLE_TTL = 10 * 60 * 1000;
+    static NONE_TTL = 5 * 60 * 1000;
     // After its TTL an entry is still shown while it refreshes, so a 7TV outage doesn't strip cosmetics
     static STALE_MAX = 7 * 24 * 60 * 60 * 1000;
     static FIELDS = 'id style { color badge { tooltip host { url files { name } } } paint { function color angle shape image_url repeat stops { at color } shadows { x_offset y_offset radius color } } }';
@@ -171,7 +171,10 @@ class SevenTVCosmetics {
         const oldest = Date.now() - this.STALE_MAX;
         if (Array.isArray(stored)) {
             stored.forEach(([id, e]) => {
-                if (id && e && e.exp > oldest) this.entries.set(id, e);
+                // Keep last known style for instant rendering, but mark exp as expired (0)
+                // so the first time each chatter speaks after OBS load/reload, a background
+                // check fetches their latest 7TV cosmetics without delaying their message.
+                if (id && e && e.exp > oldest) this.entries.set(id, { v: e.v, exp: 0 });
             });
         }
     }
@@ -307,9 +310,15 @@ class SevenTVCosmetics {
 
     static settle(id, value) {
         const p = this.pending.get(id);
-        if (!p) return;
-        this.pending.delete(id);
-        p.resolve(value);
+        if (p) {
+            this.pending.delete(id);
+            p.resolve(value);
+        }
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('seventv_style_updated', {
+                detail: { kickUserId: id, style: value }
+            }));
+        }
     }
 
     static parseUser(user) {
