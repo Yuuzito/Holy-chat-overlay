@@ -194,7 +194,7 @@
         showPin: params.get('showPinEnabled') !== null ? (params.get('showPinEnabled') === 'true') : (cachedConfig ? cachedConfig.showPin === true : false),
         textBg: params.get('textBackgroundEnabled') !== null ? (params.get('textBackgroundEnabled') === 'true') : (cachedConfig ? cachedConfig.textBg === true : false),
         textBgWidth: (params.get('textBackgroundWidth') || (cachedConfig && cachedConfig.textBgWidth) || 'min').toLowerCase(),
-        mentionHighlight: params.get('mentionHighlightEnabled') !== null ? (params.get('mentionHighlightEnabled') === 'false') : (cachedConfig ? cachedConfig.mentionHighlight !== false : false),
+        mentionHighlight: params.get('mentionHighlightEnabled') !== null ? (params.get('mentionHighlightEnabled') === 'true') : (cachedConfig ? cachedConfig.mentionHighlight === true : false),
         hideBots: params.get('hideBots') !== null ? (params.get('hideBots') === 'true') : (cachedConfig ? cachedConfig.hideBots === true : false),
         bots: botList(params.get('bots') !== null ? params.get('bots') : (cachedConfig && typeof cachedConfig.bots === 'string' ? cachedConfig.bots : DEFAULT_BOTS)),
         hideCommands: params.get('hideCommands') !== null ? (params.get('hideCommands') === 'true') : (cachedConfig ? cachedConfig.hideCommands === true : false),
@@ -624,7 +624,7 @@
         config.fontWeight = cfgFontWeight ? stepValue(cfgFontWeight) : 700;
         config.showPin = cfgPinnedBanner ? cfgPinnedBanner.checked : false;
         config.textBg = cfgTextBg ? cfgTextBg.checked : false;
-        config.mentionHighlight = cfgMentionHighlight ? cfgMentionHighlight.checked : true;
+        config.mentionHighlight = cfgMentionHighlight ? cfgMentionHighlight.checked : config.mentionHighlight;
         config.hideBots = cfgHideBots ? cfgHideBots.checked : false;
         config.bots = cfgBots ? botList(cfgBots.value) : DEFAULT_BOTS;
         config.hideCommands = cfgHideCommands ? cfgHideCommands.checked : false;
