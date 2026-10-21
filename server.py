@@ -11,6 +11,7 @@ import sys
 
 PORT = 8000
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+STATIC_TYPES = ('.png', '.webp', '.svg', '.gif', '.jpg', '.jpeg', '.ico', '.woff', '.woff2', '.mp3', '.ogg', '.wav')
 
 class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -19,7 +20,14 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        # Images and fonts barely change: OBS keeps them for a day instead of downloading them on
+        # every scene load. Code and pages are revalidated each time (a 304 when unchanged), so edits
+        # still show at once
+        path = self.path.split('?', 1)[0].lower()
+        if path.endswith(STATIC_TYPES):
+            self.send_header('Cache-Control', 'public, max-age=86400')
+        else:
+            self.send_header('Cache-Control', 'no-cache')
         super().end_headers()
 
 def main():

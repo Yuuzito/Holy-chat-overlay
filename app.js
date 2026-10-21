@@ -27,7 +27,11 @@
     }
 
     if (typeof window !== 'undefined' && window.KickCache) {
-        window.KickCache.prune();
+        // Pruning parses every stored entry (emote packs included), so it waits until the page is
+        // idle instead of delaying the first messages; get() already ignores expired entries
+        const prune = () => window.KickCache.prune();
+        if (typeof requestIdleCallback === 'function') requestIdleCallback(prune, { timeout: 10000 });
+        else setTimeout(prune, 3000);
         window.KickCache.startAutoPrune();
     }
     preloadBadges();
@@ -2270,12 +2274,20 @@
     let feedPhaseEndsAt = 0;
     let spamPool = null;
 
+    // Worked out once per pack (the name list object is cached per pack too)
+    const categoriesCache = new WeakMap();
+
     // Categories with at least two emotes in the channel's pack
     function emoteCategories() {
-        const names = packEmoteNames();
-        return EMOTE_CATEGORIES
-            .map(c => ({ name: c.name, emotes: names.filter(n => c.pattern.test(n)) }))
-            .filter(c => c.emotes.length >= 2);
+        const names = packEmoteNameSet();
+        let cats = categoriesCache.get(names);
+        if (!cats) {
+            cats = EMOTE_CATEGORIES
+                .map(c => ({ name: c.name, emotes: names.list.filter(n => c.pattern.test(n)) }))
+                .filter(c => c.emotes.length >= 2);
+            categoriesCache.set(names, cats);
+        }
+        return cats;
     }
 
     // Several chatters each send 1 to 4 emotes of the same category, a few hundred ms apart
@@ -2359,6 +2371,18 @@
         clearTimeout(templateTimer);
         templateTimer = null;
     }
+
+    // A settings tab left in the background builds no test messages nobody sees; the feed
+    // picks up again when the tab is shown
+    document.addEventListener('visibilitychange', () => {
+        if (!feedRunning) return;
+        if (document.hidden) {
+            clearTimeout(templateTimer);
+            templateTimer = null;
+        } else {
+            scheduleFeedTick(600);
+        }
+    });
 
     function setTestSpeed(speed) {
         testSpeed = speed;
