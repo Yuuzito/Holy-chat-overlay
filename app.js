@@ -148,7 +148,7 @@
     const TICKER_QUEUE_MAX = 6;
 
     // Seconds a message stays before fading out; 0 keeps it forever (∞)
-    const FADE_TIMES = [1, 3, 5, 10, 15, 30, 60, 120, 300, 0];
+    const FADE_TIMES = [1, 3, 5, 10, 15, 20, 30, 60, 120, 300, 0];
 
     // Older links can carry any number of seconds: use the closest step
     function fadeStep(seconds) {
@@ -209,7 +209,7 @@
         fontWeight: fontWeight(params.get('fontWeight') || (cachedConfig && cachedConfig.fontWeight)),
         altRows: params.get('alt') !== null ? params.get('alt') !== 'false' : (cachedConfig ? cachedConfig.altRows !== false : true),
         badges: params.get('badges') !== null ? params.get('badges') !== 'false' : (cachedConfig ? cachedConfig.badges !== false : true),
-        fadeTime: fadeStep(params.get('fade') !== null ? parseInt(params.get('fade'), 10) : (cachedConfig && cachedConfig.fadeTime !== undefined ? cachedConfig.fadeTime : 10)),
+        fadeTime: fadeStep(params.get('fade') !== null ? parseInt(params.get('fade'), 10) : (cachedConfig && cachedConfig.fadeTime !== undefined ? cachedConfig.fadeTime : 20)),
         limit: parseInt(params.get('limit'), 10) || (cachedConfig && cachedConfig.limit) || 80,
 
         // Botrix-style options (features/options.js): estilo, dirección, color de fondo,
@@ -312,7 +312,7 @@
         msgShadow: { values: [0, 1, 2, 3, 4, 5], labels: ['Nada', '1', '2', '3', '4', '5'] },
         textBgWidth: { values: ['min', 'max'], labels: ['Mínimo', 'Máximo'] },
         deletedMessages: { values: DELETED_MODES, labels: ['Ocultar', 'Tachar', 'Aviso'] },
-        fadeTime: { values: FADE_TIMES, labels: ['1 s', '3 s', '5 s', '10 s', '15 s', '30 s', '1 min', '2 min', '5 min', '∞'] },
+        fadeTime: { values: FADE_TIMES, labels: ['1 s', '3 s', '5 s', '10 s', '15 s', '20 s', '30 s', '1 min', '2 min', '5 min', '∞'] },
         // x100 is roughly 40 messages a second, a huge stream's chat
         testSpeed: { values: [0, 0.5, 1, 2, 5, 10, 25, 50, 100], labels: ['Pausa', 'x0.5', 'x1', 'x2', 'x5', 'x10', 'x25', 'x50', 'x100'] },
         fontWeight: { values: FONT_WEIGHTS, labels: ['Normal', 'Media', 'Semi', 'Negrita', 'Extra'] }
@@ -422,8 +422,8 @@
     // mentions, Filtros or the pinned banner)
     const PRESETS = [
         {
-            id: 'rageylo', name: 'Rageylo', desc: 'El diseño por defecto, los mensajes duran 10 segundos',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 0, msgShadow: 2, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 10, deletedMessages: 'hide' }
+            id: 'rageylo', name: 'Rageylo', desc: 'El diseño por defecto, los mensajes duran 20 segundos',
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 0, msgShadow: 2, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 20, deletedMessages: 'hide' }
         },
         {
             id: 'game', name: 'Juego', desc: 'Sobre el juego: transparente, sombra moderada, cada mensaje dura 1 minuto',

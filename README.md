@@ -76,7 +76,7 @@ Puedes configurar el overlay directamente mediante parámetros en la URL:
 | `bots` | nombres separados por comas | `botrix, kicklet, kickbot, streamelements, nightbot, sery_bot` | Bots que oculta `hideBots` |
 | `hideCommands` | `true` / `false` | `false` | Oculta los mensajes que empiezan con `!` |
 | `deletedMessages` | `hide`, `strike`, `notice` | `notice` | Mensajes borrados: se ocultan, se tachan o se reemplazan por `<mensaje borrado>` |
-| `fade` | `0`, `1`, `3`, `5`, `10`, `15`, `30`, `60`, `120`, `300` | `0` | Segundos hasta que un mensaje desaparece (`0` = nunca) |
+| `fade` | `0`, `1`, `3`, `5`, `10`, `15`, `20`, `30`, `60`, `120`, `300` | `20` | Segundos hasta que un mensaje desaparece (`0` = nunca) |
 | `design` | `chatterino`, `default`, `aurora`, `bubbles`, `cake`, `carbon`, `glass`, `minimal`, `platform-accent`, `side`, `streamline`, `transparent`, `white`, `hacker`, `neon`, `neoncards`, `pastelpop`, `pixelquest`, `rounded`, `sky`, `sunset`, `windowglass`, `whatschat`, `retro`, `velvet`, `winxp`, `frutigeraero`, `liquidglass` | `chatterino` | Estilo de cada mensaje (tarjetas, burbujas, ventana, terminal…). Ver `features/catalog.js` |
 | `direction` | `bottom`, `top` | `bottom` | Dónde aparecen los mensajes nuevos en la columna |
 | `background` | `#rrggbbaa` | sin fondo | Color de fondo del chat con opacidad; reemplaza el del tema |
