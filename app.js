@@ -209,7 +209,7 @@
         fontWeight: fontWeight(params.get('fontWeight') || (cachedConfig && cachedConfig.fontWeight)),
         altRows: params.get('alt') !== null ? params.get('alt') !== 'false' : (cachedConfig ? cachedConfig.altRows !== false : true),
         badges: params.get('badges') !== null ? params.get('badges') !== 'false' : (cachedConfig ? cachedConfig.badges !== false : true),
-        fadeTime: fadeStep(params.get('fade') !== null ? parseInt(params.get('fade'), 10) : (cachedConfig && cachedConfig.fadeTime)),
+        fadeTime: fadeStep(params.get('fade') !== null ? parseInt(params.get('fade'), 10) : (cachedConfig && cachedConfig.fadeTime !== undefined ? cachedConfig.fadeTime : 10)),
         limit: parseInt(params.get('limit'), 10) || (cachedConfig && cachedConfig.limit) || 80,
 
         // Botrix-style options (features/options.js): estilo, dirección, color de fondo,
@@ -422,20 +422,20 @@
     // mentions, Filtros or the pinned banner)
     const PRESETS = [
         {
-            id: 'rageylo', name: 'Rageylo', desc: 'El diseño por defecto',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 0, msgShadow: 1, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 0, deletedMessages: 'hide' }
+            id: 'rageylo', name: 'Rageylo', desc: 'El diseño por defecto, los mensajes duran 10 segundos',
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 0, msgShadow: 1, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 10, deletedMessages: 'hide' }
         },
         {
-            id: 'game', name: 'Juego', desc: 'Sobre el juego: transparente, sombra fuerte, cada mensaje dura 1 minuto',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 800, fontSize: 16, emoteSize: 32, badgeSize: 20, shadow: 5, msgShadow: 2, animation: 'slide', textBg: false, textBgWidth: 'min', fadeTime: 60 }
+            id: 'game', name: 'Juego', desc: 'Sobre el juego: transparente, sombra moderada, cada mensaje dura 1 minuto',
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 800, fontSize: 16, emoteSize: 32, badgeSize: 20, shadow: 2, msgShadow: 1, animation: 'slide', textBg: false, textBgWidth: 'min', fadeTime: 60 }
         },
         {
             id: 'ticker', name: 'Cinta', desc: 'Cinta horizontal para la parte de abajo de la pantalla',
-            settings: { design: 'chatterino', layout: 'horizontal', theme: 'transparent', font: 'rubik', fontWeight: 700, fontSize: 18, emoteSize: 36, badgeSize: 22, shadow: 3, msgShadow: 0, animation: 'fade', textBg: true, textBgWidth: 'min', fadeTime: 0 }
+            settings: { design: 'chatterino', layout: 'horizontal', theme: 'transparent', font: 'rubik', fontWeight: 700, fontSize: 18, emoteSize: 36, badgeSize: 22, shadow: 2, msgShadow: 0, animation: 'fade', textBg: true, textBgWidth: 'min', fadeTime: 0 }
         },
         {
             id: 'floating', name: 'Flotante', desc: 'Mensajes en lugares al azar que aparecen y se van a los 10 segundos',
-            settings: { design: 'chatterino', layout: 'scatter', theme: 'transparent', font: 'fredoka', fontWeight: 600, fontSize: 18, emoteSize: 40, badgeSize: 22, shadow: 0, msgShadow: 0, animation: 'slide', textBg: false, textBgWidth: 'min', fadeTime: 10 }
+            settings: { design: 'chatterino', layout: 'scatter', theme: 'transparent', font: 'fredoka', fontWeight: 600, fontSize: 18, emoteSize: 40, badgeSize: 22, shadow: 0, msgShadow: 0, animation: 'fade', textBg: false, textBgWidth: 'min', fadeTime: 10 }
         },
         {
             id: 'boxes', name: 'Cajitas', desc: 'Cada mensaje en su caja, se desvanecen a los 30 segundos',
@@ -443,7 +443,7 @@
         },
         {
             id: 'big', name: 'Grande', desc: 'Letra y emotes grandes con fondo, se lee de lejos; duran 2 minutos',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'nunito', fontWeight: 800, fontSize: 20, emoteSize: 40, badgeSize: 24, shadow: 3, msgShadow: 0, animation: 'slide', textBg: true, textBgWidth: 'max', fadeTime: 120 }
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'nunito', fontWeight: 800, fontSize: 20, emoteSize: 40, badgeSize: 24, shadow: 2, msgShadow: 0, animation: 'slide', textBg: true, textBgWidth: 'max', fadeTime: 120 }
         },
         {
             id: 'light', name: 'Claro', desc: 'Fondo blanco y alto contraste',
@@ -454,16 +454,16 @@
             settings: { design: 'chatterino', layout: 'vertical', theme: 'dark', font: 'jetbrains-mono', fontWeight: 500, fontSize: 13, emoteSize: 24, badgeSize: 16, shadow: 0, msgShadow: 0, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 0 }
         },
         {
-            id: 'bubbles', name: 'Burbujas', desc: 'Burbujas con el nombre en una etiqueta, aparecen con un pop y duran 1 minuto',
-            settings: { design: 'bubbles', layout: 'vertical', theme: 'transparent', font: 'poppins', fontWeight: 600, fontSize: 16, emoteSize: 30, badgeSize: 18, shadow: 0, msgShadow: 0, animation: 'pop', textBg: false, textBgWidth: 'min', fadeTime: 60 }
+            id: 'bubbles', name: 'Burbujas', desc: 'Burbujas con el nombre en una etiqueta, duran 1 minuto',
+            settings: { design: 'bubbles', layout: 'vertical', theme: 'transparent', font: 'poppins', fontWeight: 600, fontSize: 16, emoteSize: 30, badgeSize: 18, shadow: 0, msgShadow: 0, animation: 'fade', textBg: false, textBgWidth: 'min', fadeTime: 60 }
         },
         {
             id: 'neon', name: 'Neón', desc: 'Tarjetas negras con borde y texto del color de cada usuario',
-            settings: { design: 'neon', layout: 'vertical', theme: 'transparent', font: 'rubik', fontWeight: 700, fontSize: 16, emoteSize: 30, badgeSize: 18, shadow: 0, msgShadow: 0, animation: 'zoom', textBg: false, textBgWidth: 'min', fadeTime: 0 }
+            settings: { design: 'neon', layout: 'vertical', theme: 'transparent', font: 'rubik', fontWeight: 700, fontSize: 16, emoteSize: 30, badgeSize: 18, shadow: 0, msgShadow: 0, animation: 'fade', textBg: false, textBgWidth: 'min', fadeTime: 0 }
         },
         {
-            id: 'hacker', name: 'Hacker', desc: 'Terminal verde con líneas de escaneo, rebotan al entrar',
-            settings: { design: 'hacker', layout: 'vertical', theme: 'transparent', font: 'inconsolata', fontWeight: 600, fontSize: 16, emoteSize: 28, badgeSize: 18, shadow: 0, msgShadow: 0, animation: 'bounce', textBg: false, textBgWidth: 'min', fadeTime: 0 }
+            id: 'hacker', name: 'Hacker', desc: 'Terminal verde con líneas de escaneo',
+            settings: { design: 'hacker', layout: 'vertical', theme: 'transparent', font: 'inconsolata', fontWeight: 600, fontSize: 16, emoteSize: 28, badgeSize: 18, shadow: 0, msgShadow: 0, animation: 'fade', textBg: false, textBgWidth: 'min', fadeTime: 0 }
         }
     ];
     const presetGrid = document.getElementById('presetGrid');

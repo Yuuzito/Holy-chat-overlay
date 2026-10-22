@@ -48,18 +48,11 @@
         events: 'donaciones ni recompensas'
     };
 
-    // Entry animations. The first three keep the ids older links use.
+    // Entry animations: solo opciones ultra ligeras para evitar lag en OBS / juegos
     const ANIMATIONS = [
         { id: 'none', name: 'Ninguna' },
-        { id: 'slide', name: 'Deslizar' },
         { id: 'fade', name: 'Desvanecer' },
-        { id: 'pop', name: 'Aparecer' },
-        { id: 'bounce', name: 'Rebote' },
-        { id: 'zoom', name: 'Zoom' },
-        { id: 'flip', name: 'Voltear' },
-        { id: 'rotate', name: 'Girar' },
-        { id: 'swing', name: 'Columpio' },
-        { id: 'roll', name: 'Rodar' }
+        { id: 'slide', name: 'Deslizar' }
     ];
 
     // Fonts added to the project's FONTS (same shape). `weights` lists only the weights each

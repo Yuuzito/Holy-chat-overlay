@@ -40,24 +40,15 @@
     background-repeat: repeat;
     background-size: 600px 640px;
     --aero-rise: -640px;
-    animation: aeroBubblesRise 30s linear infinite;
-    /* Own compositor layer: the bubbles slide without repainting the wallpaper or the messages */
-    will-change: transform;
+    animation: none;
 }
 
 .design-frutigeraero.theme-dark .chatterino-chat-area::after,
 .design-frutigeraero.theme-light .chatterino-chat-area::after {
     background-position: 190px 0;
     background-size: 390px 416px;
-    --aero-rise: -416px;
     opacity: 0.6;
-    animation-duration: 21s;
-    animation-delay: -9s;
-}
-
-@keyframes aeroBubblesRise {
-    from { transform: translateY(0); }
-    to { transform: translateY(var(--aero-rise)); }
+    animation: none;
 }
 
 /* The messages ride above the bubbles */
@@ -92,23 +83,7 @@
 
 /* The shine that sweeps across every new card, once */
 .design-frutigeraero .chatterino-line::after {
-    content: '';
-    position: absolute;
-    top: -40%;
-    left: -60%;
-    width: 45%;
-    height: 180%;
-    pointer-events: none;
-    transform: skewX(-22deg);
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.05) 30%, rgba(255, 255, 255, 0.75) 50%, rgba(255, 255, 255, 0.05) 70%, transparent 100%);
-    animation: aeroShine 1.4s cubic-bezier(0.3, 0, 0.2, 1) 0.2s 1 both;
-}
-
-/* Moved with transform, not left, so the sweep never re-lays out the card: 200% of the card
-   is about 444% of the shine's own 45% width */
-@keyframes aeroShine {
-    from { transform: skewX(-22deg) translateX(0); }
-    to { transform: skewX(-22deg) translateX(444%); }
+    display: none;
 }
 
 /* The name sits in a chrome pill: white glass with the same hard specular cut */
@@ -132,8 +107,7 @@
     display: none;
 }
 
-/* The breathing glossy orb before the name, Vista's start button: one orb of the CC0 pack, cut
-   out into its own file without the pack's white background */
+/* Static glossy orb before the name without continuous drop-shadow breathing */
 .design-frutigeraero .chat-head::before {
     content: '';
     flex: none;
@@ -142,18 +116,7 @@
     height: 1em;
     margin-right: 2px;
     background: var(--aero-orb) center / contain no-repeat;
-    filter: drop-shadow(0 1px 1px rgba(0, 60, 20, 0.45)) drop-shadow(0 0 3px var(--aero-orb-glow));
-}
-
-/* Only the newest rows breathe: a filter animation repaints every frame, and on every row of a
-   full chat it kept the overlay repainting non-stop */
-.design-frutigeraero .chatterino-line:nth-last-child(-n+3) .chat-head::before {
-    animation: aeroOrbBreathe 2.6s ease-in-out infinite;
-}
-
-@keyframes aeroOrbBreathe {
-    0%, 100% { filter: drop-shadow(0 1px 1px rgba(0, 60, 20, 0.45)) drop-shadow(0 0 2px var(--aero-orb-glow)); }
-    50% { filter: drop-shadow(0 1px 1px rgba(0, 60, 20, 0.45)) drop-shadow(0 0 7px var(--aero-orb-glow)); }
+    filter: drop-shadow(0 1px 1px rgba(0, 60, 20, 0.45));
 }
 
 /* The name glows white around its own color; the clock reads like a sidebar gadget */

@@ -206,6 +206,7 @@ body {
     min-width: var(--emote-size, 28px);
     object-fit: contain;
     margin: -2px 1px;
+    filter: none !important; /* Optimización clave: previene que sombras de texto o contenedor recalculen filtros Gaussian Blur en emotes animados */
 }
 
 /* Action Messages (/me in Chatterino) */
@@ -540,7 +541,6 @@ html.mode-overlay body:has(.theme-light) {
 .shadow-0 .colon,
 .shadow-0 .chat-time,
 .shadow-0 .chat-event-action {
-    text-shadow: none !important;
     -webkit-text-stroke: 0 transparent !important;
     paint-order: normal !important;
 }
@@ -550,7 +550,6 @@ html.mode-overlay body:has(.theme-light) {
 .shadow-1 .colon,
 .shadow-1 .chat-time,
 .shadow-1 .chat-event-action {
-    text-shadow: none !important;
     -webkit-text-stroke: max(1.5px, 0.05em) #000 !important;
     paint-order: stroke fill !important;
 }
@@ -560,7 +559,6 @@ html.mode-overlay body:has(.theme-light) {
 .shadow-2 .colon,
 .shadow-2 .chat-time,
 .shadow-2 .chat-event-action {
-    text-shadow: none !important;
     -webkit-text-stroke: max(2.2px, 0.07em) #000 !important;
     paint-order: stroke fill !important;
 }
@@ -570,7 +568,6 @@ html.mode-overlay body:has(.theme-light) {
 .shadow-3 .colon,
 .shadow-3 .chat-time,
 .shadow-3 .chat-event-action {
-    text-shadow: none !important;
     -webkit-text-stroke: max(3.2px, 0.09em) #000 !important;
     paint-order: stroke fill !important;
 }
@@ -580,7 +577,6 @@ html.mode-overlay body:has(.theme-light) {
 .shadow-4 .colon,
 .shadow-4 .chat-time,
 .shadow-4 .chat-event-action {
-    text-shadow: none !important;
     -webkit-text-stroke: max(4.2px, 0.11em) #000 !important;
     paint-order: stroke fill !important;
 }
@@ -590,7 +586,6 @@ html.mode-overlay body:has(.theme-light) {
 .shadow-5 .colon,
 .shadow-5 .chat-time,
 .shadow-5 .chat-event-action {
-    text-shadow: none !important;
     -webkit-text-stroke: max(5.4px, 0.14em) #000 !important;
     paint-order: stroke fill !important;
 }
@@ -600,7 +595,6 @@ html.mode-overlay body:has(.theme-light) {
 .shadow-6 .colon,
 .shadow-6 .chat-time,
 .shadow-6 .chat-event-action {
-    text-shadow: none !important;
     -webkit-text-stroke: max(7px, 0.18em) #000 !important;
     paint-order: stroke fill !important;
 }
@@ -628,35 +622,72 @@ html.mode-overlay body:has(.theme-light) {
             var(--seventv-filter, ) !important;
 }
 
-/* Message Drop Shadows (Sombra de mensajes) */
-.msg-shadow-0 .chatterino-line {
-    filter: none;
+/* Sombra de texto (msgShadow):
+   Se aplica text-shadow directamente al texto (.chat-text, .chat-author, .colon, .chat-time).
+   Esto restaura la sombra negra nítida y legible del texto SIN tocar los emotes, garantizando
+   que la GPU no tenga que recalcular filtros Gaussian Blur pesados en cada fotograma de los emotes. */
+.msg-shadow-0 .chat-text,
+.msg-shadow-0 .chat-author:not(.chat-author-paint),
+.msg-shadow-0 .colon,
+.msg-shadow-0 .chat-time,
+.msg-shadow-0 .chat-event-action {
+    text-shadow: none !important;
 }
-.msg-shadow-1 .chatterino-line {
-    filter: drop-shadow(0 1.5px 2px #000) drop-shadow(0 1px 1px #000);
+
+.msg-shadow-1 .chat-text,
+.msg-shadow-1 .chat-author:not(.chat-author-paint),
+.msg-shadow-1 .colon,
+.msg-shadow-1 .chat-time,
+.msg-shadow-1 .chat-event-action {
+    text-shadow: 0 1.5px 2px #000, 0 1px 1px #000 !important;
 }
-.msg-shadow-2 .chatterino-line {
-    filter: drop-shadow(0 2px 4px #000) drop-shadow(0 1px 2px #000) drop-shadow(0 0 2px #000);
+
+.msg-shadow-2 .chat-text,
+.msg-shadow-2 .chat-author:not(.chat-author-paint),
+.msg-shadow-2 .colon,
+.msg-shadow-2 .chat-time,
+.msg-shadow-2 .chat-event-action {
+    text-shadow: 0 2px 4px #000, 0 1px 2px #000, 0 0 2px #000 !important;
 }
-.msg-shadow-3 .chatterino-line {
-    filter: drop-shadow(0 3px 6px #000) drop-shadow(0 2px 3px #000) drop-shadow(0 0 3px #000);
+
+.msg-shadow-3 .chat-text,
+.msg-shadow-3 .chat-author:not(.chat-author-paint),
+.msg-shadow-3 .colon,
+.msg-shadow-3 .chat-time,
+.msg-shadow-3 .chat-event-action {
+    text-shadow: 0 3px 6px #000, 0 2px 3px #000, 0 0 3px #000 !important;
 }
-.msg-shadow-4 .chatterino-line {
-    filter: drop-shadow(0 4px 8px #000) drop-shadow(0 3px 5px #000) drop-shadow(0 1px 2px #000);
+
+.msg-shadow-4 .chat-text,
+.msg-shadow-4 .chat-author:not(.chat-author-paint),
+.msg-shadow-4 .colon,
+.msg-shadow-4 .chat-time,
+.msg-shadow-4 .chat-event-action {
+    text-shadow: 0 4px 8px #000, 0 3px 5px #000, 0 1px 2px #000 !important;
 }
-.msg-shadow-5 .chatterino-line {
-    filter: drop-shadow(0 5px 10px #000) drop-shadow(0 3px 6px #000) drop-shadow(0 1px 3px #000) drop-shadow(0 0 4px #000);
+
+.msg-shadow-5 .chat-text,
+.msg-shadow-5 .chat-author:not(.chat-author-paint),
+.msg-shadow-5 .colon,
+.msg-shadow-5 .chat-time,
+.msg-shadow-5 .chat-event-action {
+    text-shadow: 0 5px 10px #000, 0 3px 6px #000, 0 1px 3px #000, 0 0 4px #000 !important;
+}
+
+/* La fila completa queda libre de drop-shadow para evitar lag en emotes */
+.chatterino-line {
+    filter: none !important;
 }
 
 /* Animations */
 @keyframes msgSlideIn {
     from {
         opacity: 0;
-        transform: translateY(14px);
+        transform: translate3d(0, 8px, 0);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translate3d(0, 0, 0);
     }
 }
 
@@ -670,11 +701,11 @@ html.mode-overlay body:has(.theme-light) {
 }
 
 .chatterino-line.anim-slide {
-    animation: msgSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: msgSlideIn 0.18s ease-out;
 }
 
 .chatterino-line.anim-fade {
-    animation: msgFadeIn 0.3s ease-out;
+    animation: msgFadeIn 0.18s ease-out;
 }
 
 /* ---------- Layouts (Diseño > Disposición) ---------- */
@@ -759,7 +790,7 @@ html.mode-overlay body:has(.theme-light) {
 @keyframes msgSlideOut {
     to {
         opacity: 0;
-        transform: translateY(-14px);
+        transform: translate3d(0, -8px, 0);
     }
 }
 
@@ -769,24 +800,17 @@ html.mode-overlay body:has(.theme-light) {
     }
 }
 
-@keyframes msgPopOut {
-    to {
-        opacity: 0;
-        transform: scale(0.85);
-    }
-}
-
 .chatterino-line.leave-slide {
-    animation: msgSlideOut 0.25s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+    animation: msgSlideOut 0.18s ease-in forwards;
 }
 
 .chatterino-line.leave-fade {
-    animation: msgFadeOut 0.3s ease-in forwards;
+    animation: msgFadeOut 0.18s ease-in forwards;
 }
 
 .layout-scatter .chatterino-line.leave-slide,
 .layout-scatter .chatterino-line.leave-fade {
-    animation: msgPopOut 0.2s ease-in forwards;
+    animation: msgFadeOut 0.18s ease-in forwards;
 }
 
 /* The ticker moves rows with transform and turns animations off, so they only fade */
