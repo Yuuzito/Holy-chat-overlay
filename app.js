@@ -423,7 +423,7 @@
     const PRESETS = [
         {
             id: 'rageylo', name: 'Rageylo', desc: 'El diseño por defecto, los mensajes duran 10 segundos',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 0, msgShadow: 1, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 10, deletedMessages: 'hide' }
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 0, msgShadow: 2, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 10, deletedMessages: 'hide' }
         },
         {
             id: 'game', name: 'Juego', desc: 'Sobre el juego: transparente, sombra moderada, cada mensaje dura 1 minuto',
