@@ -3055,16 +3055,28 @@
         if (config.sevenTVCosmetics) {
             const style = msg.sevenTv || msg._sevenTvStyle;
             if (style) {
-                if (badgesEl && style.badge && config.badges) badgesEl.appendChild(createBadgeImg(style.badge));
+                if (badgesEl && style.badge && config.badges && !badgesEl.querySelector('.badge-7tv')) {
+                    badgesEl.appendChild(createBadgeImg(style.badge));
+                }
                 applySevenTVNameStyle(authorSpan, style);
             } else if (msg._sevenTvStyle === undefined && client && msg.sender?.id) {
                 msg._sevenTvStyle = null;
                 client.get7TVStyle(msg.sender.id).then(resolved => {
                     msg._sevenTvStyle = resolved || null;
                     if (!resolved || !config.sevenTVCosmetics || row._msg !== msg) return;
-                    const currentBadges = row.querySelector('.chat-badges');
+                    let currentBadges = row.querySelector('.chat-badges');
                     const currentAuthor = row.querySelector('.chat-author');
-                    if (currentBadges && resolved.badge && config.badges) currentBadges.appendChild(createBadgeImg(resolved.badge));
+                    if (!currentBadges && resolved.badge && config.badges && currentAuthor) {
+                        const head = row.querySelector('.chat-head');
+                        if (head) {
+                            currentBadges = document.createElement('span');
+                            currentBadges.className = 'chat-badges';
+                            head.insertBefore(currentBadges, currentAuthor);
+                        }
+                    }
+                    if (currentBadges && resolved.badge && config.badges && !currentBadges.querySelector('.badge-7tv')) {
+                        currentBadges.appendChild(createBadgeImg(resolved.badge));
+                    }
                     if (currentAuthor) applySevenTVNameStyle(currentAuthor, resolved);
                 });
             }

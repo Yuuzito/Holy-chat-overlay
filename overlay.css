@@ -139,6 +139,11 @@ body {
     vertical-align: middle;
 }
 
+.chat-badges:empty {
+    display: none;
+    margin-right: 0;
+}
+
 /* Set from the "Badges" slider (badgeSize in the URL) */
 .badge-img {
     width: var(--badge-size, 18px);
