@@ -94,7 +94,7 @@
         // The rest of Botrix's catalog (features/catalog.js)
         ...window.HolyCatalog.EXTRA_FONTS
     };
-    const FONT_FALLBACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+    const FONT_FALLBACK = '"Twemoji Country Flags", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
     const FONT_WEIGHTS = [400, 500, 600, 700, 800];
 
     function fontKey(key) {
@@ -1774,9 +1774,10 @@
     // {user} another chatter of the test chat
     const TEMPLATE_LINES = [
         // Greetings
-        'buenas buenas {emote}', 'wena wena chat', 'llegué tarde, qué me perdí?', 'holaaa {channel} {emote}',
-        'primera vez por acá, saludos desde Valpo', 'saludos desde Concepción {emote}', 'buenas noches a todos menos a {user}',
-        'volví del almuerzo, sigue el stream?', 'wena {user} {emote}', '@{channel} saludos desde Santiago {emote}',
+        'buenas buenas {emote}', 'wena wena chat 🇨🇱', 'llegué tarde, qué me perdí?', 'holaaa {channel} {emote}',
+        'primera vez por acá, saludos desde Valpo 🇨🇱', 'saludos desde Concepción 🇨🇱 {emote}', 'buenas noches a todos menos a {user}',
+        'volví del almuerzo, sigue el stream?', 'wena {user} {emote}', '@{channel} saludos desde Santiago 🇨🇱 {emote}',
+        'saludos desde México 🇲🇽 {emote}', 'aguante la comunidad de España 🇪🇸 {emote}', 'saludos desde Colombia 🇨🇴 {emote}', 'saludos desde Uruguay 🇺🇾 {emote}',
         // Reactions
         '{emote}', '{emote}', 'GG', 'GG WP', 'JAJAJAJAJA', 'nooo casi {emote}', 'esa jugada estuvo limpia',
         'ese clip fue increíble jajaja {emote}', 'clipeen eso altiro', 'nooo por qué hiciste eso {emote}',
@@ -1803,8 +1804,8 @@
         // Argentine chat: rioplatense slang, cities and football, with emote combos
         'vamoooo {emote} ahí vamos',
         'jajaja no puede ser {combo}',
-        'buenas tardes desde Córdoba {emote}',
-        'saludos desde Rosario, qué onda el stream {emote}',
+        'buenas tardes desde Córdoba 🇦🇷 {emote}',
+        'saludos desde Rosario 🇦🇷, qué onda el stream {emote}',
         '{user} mirá vos lo que hizo jajaja {emote}',
         'la rompiste {combo} tremendo',
         'bancá que ya llegó el mate {emote}',
@@ -1813,7 +1814,8 @@
         're bien jugado, posta {combo}',
         'kkkkkk {emote}',
         '{channel} tenés que jugar eso otra vez',
-        'Mar del Plata presente {emote}',
+        'Mar del Plata presente 🇦🇷 {emote}',
+        'vamos Argentina 🇦🇷 {combo}',
         'ni en pedo ganás con esa jugada {user} jajaja',
         'dale que vamos, tranqui {emote}',
         'cuánto tiempo más aguantás despierto? {emote}',
@@ -2723,7 +2725,7 @@
         const key = config.font === 'auto' ? (window.HolyCatalog.design(config.design).font || 'inter') : config.font;
         const f = FONTS[key];
         loadFont(key);
-        const family = key === 'system' ? FONT_FALLBACK : `"${f.name}", ${FONT_FALLBACK}`;
+        const family = key === 'system' ? FONT_FALLBACK : `"Twemoji Country Flags", "${f.name}", ${FONT_FALLBACK}`;
         overlayContainer.style.setProperty('--chatterino-font', family);
         overlayContainer.style.setProperty('--font-weight', String(config.fontWeight));
         // The picker shows the chosen font in that font

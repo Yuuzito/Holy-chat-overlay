@@ -3,6 +3,15 @@
    Matching Chatterino 2 Desktop Client UI & Dark Theme
    ========================================================================== */
 
+/* Twemoji Country Flags WebFont for Windows / OBS (where flags normally render as two-letter codes) */
+@font-face {
+    font-family: "Twemoji Country Flags";
+    font-display: swap;
+    unicode-range: U+1F1E6-1F1FF, U+1F3F4, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
+    src: url('assets/fonts/TwemojiCountryFlags.woff2') format('woff2'),
+         url('https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1/dist/TwemojiCountryFlags.woff2') format('woff2');
+}
+
 :root {
     --chatterino-bg: transparent;
     --chatterino-bg-alt: transparent;
@@ -10,7 +19,7 @@
     --chatterino-timestamp: #a1a1aa;
     --chatterino-highlight-bg: rgba(239, 68, 68, 0.3);
     --chatterino-highlight-border: #ef4444;
-    --chatterino-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    --chatterino-font: "Twemoji Country Flags", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     --font-weight: 700;
     --font-size: 14px;
     --line-height: 1.38;
@@ -883,7 +892,7 @@ html.mode-overlay body:has(.theme-light) {
     /* Comic Sans for the "Holy Chat" title. It comes with Windows and macOS, not with Google Fonts,
        so Comic Neue (its look-alike, loaded in index.html) covers phones and Linux */
     --hc-font-display: "Comic Sans MS", "Comic Sans", "Comic Neue", cursive;
-    --hc-font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --hc-font-body: "Twemoji Country Flags", "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
     --hc-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
