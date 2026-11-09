@@ -2948,7 +2948,7 @@
             if (badgesEl) {
                 badgesEl.querySelectorAll('.badge-7tv').forEach(b => b.remove());
                 if (newStyle && newStyle.badge && config.sevenTVCosmetics && config.badges) {
-                    badgesEl.prepend(createBadgeImg(newStyle.badge));
+                    badgesEl.appendChild(createBadgeImg(newStyle.badge));
                 }
             } else if (newStyle && newStyle.badge && config.sevenTVCosmetics && config.badges) {
                 const head = row.querySelector('.chat-head');
@@ -3038,7 +3038,7 @@
             head.appendChild(icon);
         }
 
-        // Badges element (Kick native; 7TV badge is prepended when style resolves)
+        // Badges element (Kick native; 7TV badge is appended at the end when style resolves)
         const badgesEl = renderBadgesElement(msg.sender?.badges);
         if (badgesEl) {
             head.appendChild(badgesEl);
@@ -3055,7 +3055,7 @@
         if (config.sevenTVCosmetics) {
             const style = msg.sevenTv || msg._sevenTvStyle;
             if (style) {
-                if (badgesEl && style.badge && config.badges) badgesEl.prepend(createBadgeImg(style.badge));
+                if (badgesEl && style.badge && config.badges) badgesEl.appendChild(createBadgeImg(style.badge));
                 applySevenTVNameStyle(authorSpan, style);
             } else if (msg._sevenTvStyle === undefined && client && msg.sender?.id) {
                 msg._sevenTvStyle = null;
@@ -3064,7 +3064,7 @@
                     if (!resolved || !config.sevenTVCosmetics || row._msg !== msg) return;
                     const currentBadges = row.querySelector('.chat-badges');
                     const currentAuthor = row.querySelector('.chat-author');
-                    if (currentBadges && resolved.badge && config.badges) currentBadges.prepend(createBadgeImg(resolved.badge));
+                    if (currentBadges && resolved.badge && config.badges) currentBadges.appendChild(createBadgeImg(resolved.badge));
                     if (currentAuthor) applySevenTVNameStyle(currentAuthor, resolved);
                 });
             }
