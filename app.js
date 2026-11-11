@@ -214,7 +214,10 @@
 
         // Botrix-style options (features/options.js): estilo, dirección, color de fondo,
         // usuarios ignorados, sonido, donaciones, recompensas, icono de Kick y hora
-        ...window.HolyOptions.parse(params, cachedConfig)
+        ...window.HolyOptions.parse(params, cachedConfig),
+
+        // Pinned message cartelito overlay (features/pinned.js)
+        ...window.HolyPinned.parse(params, cachedConfig)
     };
 
     // Emote height in px (the settings slider's range)
@@ -273,10 +276,13 @@
     const urlFallback = document.getElementById('urlFallback');
     const copyError = document.getElementById('copyError');
     const obsHelp = document.getElementById('obsHelp');
+    const tabChat = document.getElementById('tabChat');
+    const tabPinned = document.getElementById('tabPinned');
 
     // Test chat panel
     const testComposer = document.getElementById('testComposer');
     const cfgPreviewInput = document.getElementById('cfgPreviewInput');
+    const btnTestSend = document.getElementById('btnTestSend');
 
     // Overlay feed elements
     const chatArea = document.getElementById('chatArea');
@@ -290,6 +296,8 @@
     let client = null;
     let messageCounter = 0;
     let hideStatusTimer = null;
+    let activeWidget = config.widget === 'pinned' ? 'pinned' : 'chat';
+    let pinPreviewShownOnce = false;
 
     function isMenuMode() {
         return root.classList.contains('mode-menu');
@@ -298,6 +306,31 @@
     function setMode(mode) {
         root.classList.toggle('mode-menu', mode === 'menu');
         root.classList.toggle('mode-overlay', mode === 'overlay');
+    }
+
+    function copyButtonLabel() {
+        return activeWidget === 'pinned' ? 'Copiar URL del cartelito para OBS' : 'Copiar URL para OBS';
+    }
+
+    function setWidgetTab(tab) {
+        activeWidget = tab === 'pinned' ? 'pinned' : 'chat';
+        const isPinned = activeWidget === 'pinned';
+        root.classList.toggle('widget-pinned', isPinned);
+        if (tabChat) tabChat.setAttribute('aria-selected', String(!isPinned));
+        if (tabPinned) tabPinned.setAttribute('aria-selected', String(isPinned));
+        if (btnCopyLabel) btnCopyLabel.textContent = copyButtonLabel();
+        if (btnTestSend) btnTestSend.textContent = isPinned ? 'Fijar prueba' : 'Enviar';
+        if (cfgPreviewInput) {
+            cfgPreviewInput.placeholder = isPinned
+                ? 'Escribe un mensaje fijado de prueba...'
+                : 'Escribe un mensaje de prueba...';
+        }
+        if (urlFallback) urlFallback.classList.add('hidden');
+        if (copyError) copyError.classList.add('hidden');
+        if (isPinned && isMenuMode() && !pinPreviewShownOnce) {
+            pinPreviewShownOnce = true;
+            window.HolyPinned.showSample(config);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -317,10 +350,11 @@
         testSpeed: { values: [0, 0.5, 1, 2, 5, 10, 25, 50, 100], labels: ['Pausa', 'x0.5', 'x1', 'x2', 'x5', 'x10', 'x25', 'x50', 'x100'] },
         fontWeight: { values: FONT_WEIGHTS, labels: ['Normal', 'Media', 'Semi', 'Negrita', 'Extra'] }
     };
-    Object.assign(STEPS, window.HolyOptions.STEPS);
+    Object.assign(STEPS, window.HolyOptions.STEPS, window.HolyPinned.STEPS);
     const SIZE_TICKS = [10, 14, 20, 30, 45, 60];
     const sliders = [cfgLayout, cfgTheme, cfgFontWeight, cfgTextSize, cfgEmoteSize, cfgBadgeSize, cfgTextShadow, cfgMsgShadow, cfgTextBgWidth, cfgDeletedMessages, cfgTestSpeed, cfgFadeTime,
-        document.getElementById('cfgDirection'), document.getElementById('cfgBgAlpha'), document.getElementById('cfgSoundVolume')].filter(Boolean);
+        document.getElementById('cfgDirection'), document.getElementById('cfgBgAlpha'), document.getElementById('cfgSoundVolume'),
+        document.getElementById('cfgPinDuration'), document.getElementById('cfgPinPosition'), document.getElementById('cfgPinSize')].filter(Boolean);
 
     if (cfgAnimation) {
         window.HolyCatalog.ANIMATIONS.forEach(a => cfgAnimation.add(new Option(a.name, a.id)));
@@ -592,6 +626,7 @@
         if (cfgDeletedMessages) setStep(cfgDeletedMessages, config.deletedMessages);
         if (cfgFadeTime) setStep(cfgFadeTime, config.fadeTime);
         window.HolyOptions.populate(config);
+        window.HolyPinned.populate(config);
         sliders.forEach(syncSlider);
         if (fieldTextBgWidth) fieldTextBgWidth.classList.toggle('is-off', !config.textBg);
         if (fieldBots) fieldBots.classList.toggle('is-off', !config.hideBots);
@@ -631,9 +666,13 @@
         config.deletedMessages = cfgDeletedMessages ? stepValue(cfgDeletedMessages) : 'notice';
         config.fadeTime = cfgFadeTime ? stepValue(cfgFadeTime) : 0;
         window.HolyOptions.read(config);
+        window.HolyPinned.read(config);
     }
 
     function buildGeneratedUrl(forObs = true) {
+        if (activeWidget === 'pinned') {
+            return window.HolyPinned.buildUrl(config, forObs);
+        }
         const q = new URLSearchParams();
         q.set('channel', config.channel);
         q.set('sevenTVCosmeticsEnabled', String(config.sevenTVCosmetics));
@@ -670,7 +709,12 @@
     function onMenuChange(e) {
         if (e && e.target && e.target.classList && e.target.classList.contains('hc-slider')) syncSlider(e.target);
 
-        const prev = { channel: config.channel, emotes: config.sevenTVEmotes, cosmetics: config.sevenTVCosmetics, mentionHighlight: config.mentionHighlight, layout: config.layout, fadeTime: config.fadeTime, design: config.design, timestamps: config.timestamps, platformIcon: config.platformIcon };
+        const prev = {
+            channel: config.channel, emotes: config.sevenTVEmotes, cosmetics: config.sevenTVCosmetics,
+            mentionHighlight: config.mentionHighlight, layout: config.layout, fadeTime: config.fadeTime,
+            design: config.design, timestamps: config.timestamps, platformIcon: config.platformIcon,
+            pinDuration: config.pinDuration, pinPermanent: config.pinPermanent
+        };
         readMenuIntoConfig();
         // Cinta simple and Terciopelo run in the ticker: picking one of them switches Disposición
         // to it, and picking another style afterwards brings the column back
@@ -694,16 +738,21 @@
         if (prev.channel !== config.channel) {
             loadMenuChannelPackDebounced();
             rerenderMessages();
+            window.HolyPinned.rerender(config);
         }
         if (prev.emotes !== config.sevenTVEmotes || prev.cosmetics !== config.sevenTVCosmetics) {
             if (config.sevenTVEmotes) loadMenuChannelPack();
             rerenderMessages();
+            window.HolyPinned.rerender(config);
         }
         if (prev.mentionHighlight !== config.mentionHighlight) rerenderMessages();
         // The style decides whether rows show the time and the Kick icon
         if (prev.design !== config.design || prev.timestamps !== config.timestamps || prev.platformIcon !== config.platformIcon) rerenderMessages();
         if (prev.layout !== config.layout) relayoutRows();
         if (prev.layout !== config.layout || prev.fadeTime !== config.fadeTime) rescheduleFades();
+        if (prev.pinDuration !== config.pinDuration || prev.pinPermanent !== config.pinPermanent) {
+            window.HolyPinned.rescheduleTimer(config);
+        }
 
         saveSettingsDebounced();
     }
@@ -735,7 +784,8 @@
                 hideCommands: config.hideCommands,
                 deletedMessages: config.deletedMessages,
                 fadeTime: config.fadeTime,
-                ...window.HolyOptions.toCache(config)
+                ...window.HolyOptions.toCache(config),
+                ...window.HolyPinned.toCache(config)
             }, 30 * 24 * 60 * 60 * 1000);
         }
     }
@@ -754,11 +804,13 @@
 
     function launchOverlayFromMenu() {
         isOverlayActive = true;
+        config.widget = activeWidget;
         readMenuIntoConfig();
         saveSettingsDebounced.flush();
         applyStyles();
         stopTemplateFeed();
         chatMessagesEl.textContent = '';
+        if (activeWidget === 'pinned') window.HolyPinned.hide(true, config);
         setMode('overlay');
         startClient();
 
@@ -780,6 +832,7 @@
         }
         chatMessagesEl.textContent = '';
         setMode('menu');
+        setWidgetTab(activeWidget);
         startTemplateFeed();
     }
 
@@ -796,7 +849,7 @@
             if (copyError) copyError.classList.add('hidden');
             if (btnCopyLabel) {
                 btnCopyLabel.textContent = 'URL copiada';
-                setTimeout(() => { btnCopyLabel.textContent = 'Copiar URL para OBS'; }, 2000);
+                setTimeout(() => { btnCopyLabel.textContent = copyButtonLabel(); }, 2000);
             }
         };
         // Clipboard refused: show the link only now, selected, so it can be copied by hand
@@ -2614,9 +2667,36 @@
         });
     }
 
+    function buildSamplePinMessage(rawText) {
+        const user = pickTestUser();
+        const msg = {
+            id: `pin-test-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+            chatroomId: (client && client.chatroomId) || 18761973,
+            content: rawText,
+            _template: rawText,
+            createdAt: new Date().toISOString(),
+            ...testSender(user),
+            _sevenTvStyle: (user.paint || user.seventvBadge) ? null : undefined
+        };
+        if (user.paint || user.seventvBadge) {
+            msg._sevenTvStyle = msg.sevenTv;
+        } else {
+            msg._sevenTvStyle = null;
+        }
+        resolveTemplate(msg);
+        return msg;
+    }
+
     function sendTestChatMessage() {
         const rawText = cfgPreviewInput ? cfgPreviewInput.value.trim() : '';
         if (!rawText) return;
+
+        if (activeWidget === 'pinned') {
+            window.HolyPinned.showSample(config, rawText);
+            cfgPreviewInput.value = '';
+            cfgPreviewInput.focus();
+            return;
+        }
 
         const user = pickTestUser();
 
@@ -2636,6 +2716,8 @@
     }
 
     // Settings listeners
+    if (tabChat) tabChat.addEventListener('click', () => setWidgetTab('chat'));
+    if (tabPinned) tabPinned.addEventListener('click', () => setWidgetTab('pinned'));
     if (initialMenu) {
         initialMenu.addEventListener('input', onMenuChange);
         initialMenu.addEventListener('change', onMenuChange);
@@ -2674,6 +2756,7 @@
             if (row._msg) row._msg._parsed = null;
         });
         rerenderMessages();
+        window.HolyPinned.rerender(config);
     });
 
     window.addEventListener('global_emotes_loaded', () => {
@@ -2682,6 +2765,7 @@
             if (row._msg) row._msg._parsed = null;
         });
         rerenderMessages();
+        window.HolyPinned.rerender(config);
     });
 
     if (menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
@@ -2730,6 +2814,7 @@
         overlayContainer.style.setProperty('--font-weight', String(config.fontWeight));
         // The picker shows the chosen font in that font
         if (cfgFont) cfgFont.style.fontFamily = family;
+        return family;
     }
 
     function applyStyles() {
@@ -2737,7 +2822,7 @@
         overlayContainer.style.setProperty('--font-size', `${config.fontSize}px`);
         overlayContainer.style.setProperty('--emote-size', `${config.emoteSize}px`);
         overlayContainer.style.setProperty('--badge-size', `${config.badgeSize}px`);
-        applyFont();
+        const fontFamily = applyFont();
 
         // Theme
         overlayContainer.classList.remove('theme-dark', 'theme-light', 'theme-transparent');
@@ -2759,11 +2844,12 @@
 
         // Style, direction and background color
         window.HolyOptions.apply(config, overlayContainer, chatArea);
+        window.HolyPinned.applyStyles(config, fontFamily);
 
         // Pinned Banner
         if (pinnedBanner) {
             pinnedBanner.classList.toggle('hidden', !config.showPin);
-            if (pinnedBannerText) {
+            if (pinnedBannerText && !pinnedBannerText.dataset.livePin) {
                 pinnedBannerText.textContent = `Mensaje fijado: Bienvenidos al chat de Kick #${config.channel}`;
             }
         }
@@ -2968,6 +3054,7 @@
     window.addEventListener('seventv_style_updated', (e) => {
         if (e.detail && e.detail.kickUserId) {
             updateUserSevenTVStyle(e.detail.kickUserId, e.detail.style);
+            window.HolyPinned.handleSevenTVStyleUpdated(e.detail.kickUserId, e.detail.style, config);
         }
     });
 
@@ -3474,22 +3561,44 @@
             setStatus(e.detail?.message || 'Error de conexión', 'error');
         });
 
-        client.addEventListener('message', (e) => {
-            // History loaded on connect appears at once, without the entry animation
-            addMessage(e.detail, { animate: !e.detail.isHistory });
+        client.addEventListener('pinned_message', (e) => {
+            if (!e.detail) return;
+            if (config.widget === 'pinned') {
+                window.HolyPinned.show(e.detail, config, { silent: Boolean(e.detail.isInitialPin) });
+            } else if (pinnedBannerText) {
+                pinnedBannerText.dataset.livePin = '1';
+                const who = e.detail.sender?.username ? `${e.detail.sender.username}: ` : '';
+                pinnedBannerText.textContent = `${who}${e.detail.content || ''}`;
+            }
         });
 
-        client.addEventListener('message_deleted', (e) => {
-            handleMessageDeleted(e.detail.messageId);
+        client.addEventListener('pinned_message_deleted', (e) => {
+            if (config.widget === 'pinned') {
+                window.HolyPinned.onUnpinned(e.detail?.messageId, config);
+            } else if (pinnedBannerText) {
+                delete pinnedBannerText.dataset.livePin;
+                pinnedBannerText.textContent = `Mensaje fijado: Bienvenidos al chat de Kick #${config.channel}`;
+            }
         });
 
-        client.addEventListener('channel_event', (e) => {
-            addChannelEvent(e.detail);
-        });
+        if (config.widget !== 'pinned') {
+            client.addEventListener('message', (e) => {
+                // History loaded on connect appears at once, without the entry animation
+                addMessage(e.detail, { animate: !e.detail.isHistory });
+            });
 
-        client.addEventListener('user_banned', (e) => {
-            handleUserBanned(e.detail);
-        });
+            client.addEventListener('message_deleted', (e) => {
+                handleMessageDeleted(e.detail.messageId);
+            });
+
+            client.addEventListener('channel_event', (e) => {
+                addChannelEvent(e.detail);
+            });
+
+            client.addEventListener('user_banned', (e) => {
+                handleUserBanned(e.detail);
+            });
+        }
 
         client.connect();
     }
@@ -3498,6 +3607,21 @@
     // Execution Entry Point
     // -------------------------------------------------------------------------
     window.HolyOptions.setup();
+    window.HolyPinned.setup({
+        syncSlider,
+        stepValue,
+        setStep,
+        onMenuChange,
+        getConfig: () => config,
+        getClient: () => client,
+        isMenuMode,
+        renderBadgesElement,
+        createBadgeImg,
+        applySevenTVNameStyle,
+        messageHtml,
+        resolveTemplate,
+        buildSampleMessage: buildSamplePinMessage
+    });
     buildPresetGrid();
     populateMenuFromConfig();
     applyStyles();
@@ -3505,10 +3629,12 @@
     if (isOverlayActive) {
         // Run Overlay Feed (OBS Studio)
         setMode('overlay');
+        if (config.widget === 'pinned') root.classList.add('widget-pinned');
         startClient();
     } else {
         // Settings page: the test chat shows example messages, no Kick connection
         setMode('menu');
+        setWidgetTab(activeWidget);
         loadMenuChannelPack();
         loadPresetFonts();
         startTemplateFeed();

@@ -8,9 +8,9 @@
         // Pick the mode before the first paint so OBS never flashes the settings panels
         (function () {
             var q = new URLSearchParams(location.search);
-            if (q.get('overlay') === 'true' && q.get('menu') !== 'true') {
-                document.documentElement.className = 'mode-overlay';
-            }
+            var cls = (q.get('overlay') === 'true' && q.get('menu') !== 'true') ? 'mode-overlay' : 'mode-menu';
+            if (q.get('widget') === 'pinned') cls += ' widget-pinned';
+            document.documentElement.className = cls;
         })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="features/designs-os.css?v=5">
     <link rel="stylesheet" href="features/designs-aero.css?v=4">
     <link rel="stylesheet" href="features/designs-states.css?v=2">
+    <link rel="stylesheet" href="features/pinned.css?v=2">
     <link rel="icon" type="image/png" href="holychat-logo.png">
 </head>
 
@@ -46,19 +47,21 @@
                     </div>
                 </header>
 
-                <details class="hc-group hc-disclosure hc-collapsible" open>
-                    <summary class="hc-group-title">
-                        <span>Presets</span>
-                        <span class="hc-rule" aria-hidden="true"></span>
-                        <span class="hc-val"></span>
-                        <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                    </summary>
-                    <div class="hc-disclosure-body">
-                        <!-- Name of the preset that matches the settings, for the category title -->
-                        <output id="presetCurrent" data-summary hidden></output>
-                        <div class="hc-preset-grid" id="presetGrid"><!-- Buttons come from PRESETS in app.js --></div>
-                    </div>
-                </details>
+                <div class="hc-tabs" role="tablist" aria-label="Overlays disponibles">
+                    <button class="hc-tab" id="tabChat" type="button" role="tab" data-tab="chat" aria-selected="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span>Chat</span>
+                    </button>
+                    <button class="hc-tab" id="tabPinned" type="button" role="tab" data-tab="pinned" aria-selected="false">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 17v5" />
+                            <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
+                        </svg>
+                        <span>Mensaje fijado</span>
+                    </button>
+                </div>
 
                 <section class="hc-channel-hero">
                     <label class="hc-channel-label" for="cfgChannel">Tu canal de Kick</label>
@@ -67,6 +70,21 @@
                             placeholder="tu canal" aria-label="Nombre del canal">
                     </label>
                 </section>
+
+                <div class="hc-panel-group" data-panel="chat">
+                    <details class="hc-group hc-disclosure hc-collapsible" open>
+                        <summary class="hc-group-title">
+                            <span>Presets</span>
+                            <span class="hc-rule" aria-hidden="true"></span>
+                            <span class="hc-val"></span>
+                            <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </summary>
+                        <div class="hc-disclosure-body">
+                            <!-- Name of the preset that matches the settings, for the category title -->
+                            <output id="presetCurrent" data-summary hidden></output>
+                            <div class="hc-preset-grid" id="presetGrid"><!-- Buttons come from PRESETS in app.js --></div>
+                        </div>
+                    </details>
 
                 <details class="hc-group hc-disclosure hc-collapsible" data-summary-empty="Desactivado">
                     <summary class="hc-group-title">
@@ -338,6 +356,97 @@
                         </div>
                     </div>
                 </details>
+                </div>
+
+                <!-- Separate section: Pinned Message Cartelito Overlay -->
+                <div class="hc-panel-group" data-panel="pinned">
+                    <div class="hc-pin-intro">
+                        <strong>Cartelito de mensaje fijado</strong>: es otro overlay independiente para OBS. Cuando alguien fije un mensaje en Kick, aparecerá como cartelito en pantalla y desaparecerá tras los segundos que elijas.
+                    </div>
+
+                    <details class="hc-group hc-disclosure hc-collapsible" open>
+                        <summary class="hc-group-title">
+                            <span>Duración</span>
+                            <span class="hc-rule" aria-hidden="true"></span>
+                            <span class="hc-val"></span>
+                            <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </summary>
+                        <div class="hc-disclosure-body">
+                            <div class="hc-field" id="fieldPinDuration">
+                                <div class="hc-field-head">
+                                    <label for="cfgPinDuration">Segundos en pantalla</label>
+                                    <div class="hc-pin-sec-wrap">
+                                        <input class="hc-num-input" id="cfgPinDurationNum" type="number" min="1" max="600" step="1" value="15" aria-label="Segundos en pantalla">
+                                        <span class="hc-val">s</span>
+                                    </div>
+                                </div>
+                                <input class="hc-slider" id="cfgPinDuration" type="range" min="1" max="120" step="1" value="15" data-unit=" s" data-ticks="5,15,30,60,90,120">
+                                <div class="hc-ticks" data-for="cfgPinDuration"></div>
+                                <small class="hc-hint">Puedes mover la barra o escribir cualquier cantidad (1 a 600 s)</small>
+                            </div>
+                            <label class="hc-switch" for="cfgPinPermanent">
+                                <span>No desaparecer automáticamente<small>Mantiene el cartelito hasta que se desfije en Kick</small></span>
+                                <input id="cfgPinPermanent" data-summary="Hasta desfijar" type="checkbox" role="switch">
+                            </label>
+                        </div>
+                    </details>
+
+                    <details class="hc-group hc-disclosure hc-collapsible" open>
+                        <summary class="hc-group-title">
+                            <span>Apariencia</span>
+                            <span class="hc-rule" aria-hidden="true"></span>
+                            <span class="hc-val"></span>
+                            <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </summary>
+                        <div class="hc-disclosure-body">
+                            <div class="hc-field">
+                                <div class="hc-field-head"><label for="cfgPinStyle">Estilo del cartelito</label></div>
+                                <div class="hc-select">
+                                    <select id="cfgPinStyle" data-summary><!-- Options from PIN_STYLES in features/pinned.js --></select>
+                                </div>
+                            </div>
+                            <div class="hc-field">
+                                <div class="hc-field-head"><label for="cfgPinPosition">Posición</label><output class="hc-val" for="cfgPinPosition" data-summary></output></div>
+                                <input class="hc-slider" id="cfgPinPosition" type="range" min="0" max="2" step="1" value="0" data-steps="pinPosition">
+                                <div class="hc-ticks" data-for="cfgPinPosition"></div>
+                            </div>
+                            <div class="hc-field">
+                                <div class="hc-field-head"><label for="cfgPinAnim">Animación</label></div>
+                                <div class="hc-select">
+                                    <select id="cfgPinAnim" data-summary><!-- Options from PIN_ANIMS in features/pinned.js --></select>
+                                </div>
+                            </div>
+                            <div class="hc-field">
+                                <div class="hc-field-head"><label for="cfgPinSize">Tamaño</label><output class="hc-val" for="cfgPinSize" data-summary></output></div>
+                                <input class="hc-slider" id="cfgPinSize" type="range" min="14" max="40" step="1" value="22" data-ticks="14,18,22,28,34,40">
+                                <div class="hc-ticks" data-for="cfgPinSize"></div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="hc-group hc-disclosure hc-collapsible" data-summary-empty="Solo texto">
+                        <summary class="hc-group-title">
+                            <span>Contenido y extras</span>
+                            <span class="hc-rule" aria-hidden="true"></span>
+                            <span class="hc-val"></span>
+                            <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </summary>
+                        <div class="hc-disclosure-body">
+                            <label class="hc-switch" for="cfgPinAuthor">
+                                <span>Mostrar autor y badges<small>Incluye badges de Kick, 7TV y color del usuario</small></span>
+                                <input id="cfgPinAuthor" data-summary="Autor" type="checkbox" role="switch" checked>
+                            </label>
+                            <label class="hc-switch" for="cfgPinProgress">
+                                <span>Barra de tiempo restante<small>Muestra abajo cuánto falta para que desaparezca</small></span>
+                                <input id="cfgPinProgress" data-summary="Barra" type="checkbox" role="switch" checked>
+                            </label>
+                            <label class="hc-switch" for="cfgPinSound">
+                                <span>Sonido al fijar mensaje<small>Usa el tono y volumen configurados en Sonido</small></span>
+                                <input id="cfgPinSound" data-summary="Sonido" type="checkbox" role="switch">
+                            </label>
+                        </div>
+                    </details>
+                </div>
             </div>
 
             <div class="hc-config-foot">
@@ -366,16 +475,16 @@
         <!-- How to add the overlay to OBS -->
         <dialog class="hc-modal" id="obsHelp" aria-labelledby="obsHelpTitle">
             <div class="hc-modal-head">
-                <h2 id="obsHelpTitle">Agregar el chat a OBS</h2>
+                <h2 id="obsHelpTitle">Agregar el overlay a OBS</h2>
                 <button class="hc-modal-x" id="obsHelpClose" type="button" aria-label="Cerrar">&times;</button>
             </div>
             <ol class="hc-steps">
-                <li>Pulsa <strong>Copiar URL para OBS</strong>.</li>
+                <li>Pulsa <strong>Copiar URL para OBS</strong> (o la del cartelito si estás en esa pestaña).</li>
                 <li>En OBS, en el panel <strong>Fuentes</strong>, pulsa <strong>+</strong> y elige <strong>Navegador</strong>.</li>
-                <li>Ponle un nombre (por ejemplo, «Chat») y pulsa <strong>Aceptar</strong>.</li>
+                <li>Ponle un nombre (por ejemplo, «Chat» o «Mensaje fijado») y pulsa <strong>Aceptar</strong>.</li>
                 <li>Borra lo que haya en el campo <strong>URL</strong> y pega la tuya con Ctrl/Cmd + V.</li>
-                <li>Ajusta <strong>Ancho</strong> y <strong>Alto</strong> (por ejemplo, 400 × 600) y pulsa <strong>Aceptar</strong>.</li>
-                <li>Mueve y redimensiona la fuente en la escena donde quieras ver el chat.</li>
+                <li>Ajusta <strong>Ancho</strong> y <strong>Alto</strong> (por ejemplo, 400 × 600 para chat o 700 × 220 para cartelito) y pulsa <strong>Aceptar</strong>.</li>
+                <li>Mueve y redimensiona la fuente en la escena donde quieras ver el overlay.</li>
             </ol>
             <p class="hc-modal-note">La configuración va dentro de la URL: si cambias algo aquí, vuelve a copiarla y reemplázala en las propiedades de la fuente.</p>
             <div class="hc-modal-foot">
@@ -383,19 +492,22 @@
             </div>
         </dialog>
 
-        <!-- Right panel: test chat (the overlay with example messages) -->
-        <main class="hc-test" aria-label="Chat de prueba">
+        <!-- Right panel: test chat & pinned cartelito preview -->
+        <main class="hc-test" aria-label="Vista previa">
             <div class="hc-test-head">
                 <div class="hc-test-title">
-                    <strong>Chat de prueba</strong>
+                    <strong data-panel="chat">Chat de prueba</strong>
+                    <strong data-panel="pinned">Vista previa del cartelito</strong>
+                    <span class="hc-pin-status-badge" id="pinPreviewCountdown" data-panel="pinned"></span>
                 </div>
                 <!-- Only for the test chat: not saved in the OBS URL -->
-                <div class="hc-field hc-speed">
+                <div class="hc-field hc-speed" data-panel="chat">
                     <label for="cfgTestSpeed">Velocidad</label>
                     <input class="hc-slider" id="cfgTestSpeed" type="range" min="0" max="8" step="1" value="2" data-steps="testSpeed">
                     <output class="hc-val" for="cfgTestSpeed"></output>
                 </div>
                 <div class="hc-head-actions">
+                    <button class="hc-ghost" id="btnTestPin" data-panel="pinned" type="button">Probar cartelito</button>
                     <button class="hc-ghost hidden" id="menuCloseBtn" type="button" title="Guardar y volver al overlay (Esc)">Volver al overlay</button>
                 </div>
             </div>
@@ -417,12 +529,33 @@
                         </div>
                     </div>
 
-                    <!-- Connection Status Indicator -->
-                    <div id="statusIndicator" class="status-indicator hidden">
-                        <span id="statusDot" class="status-dot connecting"></span>
-                        <span id="statusText">Iniciando...</span>
-                    </div>
+                </div>
 
+                <!-- Separate Pinned Cartelito Overlay -->
+                <div class="pinned-overlay pos-top" id="pinnedOverlay">
+                    <article class="pinned-card pin-style-kick pin-anim-slide hidden" id="pinnedCard" aria-live="polite">
+                        <header class="pinned-card-head">
+                            <span class="pinned-card-tag">
+                                <svg class="pinned-card-pin-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <path d="M16 3a1 1 0 0 1 .7.3l4 4a1 1 0 0 1-.16 1.54l-2.46 1.64-1.78 4.44a1 1 0 0 1-1.64.35L11.4 12l-5.7 5.7a1 1 0 0 1-1.42-1.42l5.7-5.7-3.27-3.26a1 1 0 0 1 .35-1.64l4.44-1.78 1.64-2.46A1 1 0 0 1 14 3h2z"/>
+                                </svg>
+                                <span>Mensaje fijado</span>
+                            </span>
+                        </header>
+                        <div class="pinned-card-body">
+                            <span class="pinned-card-author-wrap" id="pinnedCardAuthorWrap"></span>
+                            <span class="pinned-card-text" id="pinnedCardText"></span>
+                        </div>
+                        <div class="pinned-card-progress" id="pinnedCardProgress">
+                            <div class="pinned-card-progress-fill" id="pinnedCardProgressFill"></div>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Connection Status Indicator (shared by both overlays in OBS mode) -->
+                <div id="statusIndicator" class="status-indicator hidden">
+                    <span id="statusDot" class="status-dot connecting"></span>
+                    <span id="statusText">Iniciando...</span>
                 </div>
             </div>
 
@@ -436,12 +569,13 @@
     </div>
 
     <!-- Scripts -->
-    <script src="kick-client.js?v=18"></script>
+    <script src="kick-client.js?v=19"></script>
     <script src="features/catalog.js?v=3"></script>
     <script src="features/options.js?v=1"></script>
     <script src="features/sound.js?v=1"></script>
     <script src="features/events.js?v=2"></script>
-    <script src="app.js?v=38"></script>
+    <script src="features/pinned.js?v=1"></script>
+    <script src="app.js?v=39"></script>
 </body>
 
 </html>

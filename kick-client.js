@@ -1467,6 +1467,19 @@ class KickChatClient extends EventTarget {
                 return;
             }
 
+            if (evt === 'App\\Events\\PinnedMessageCreatedEvent' || evt === 'PinnedMessageCreatedEvent') {
+                this.emitPinnedMessage(parse(packet.data), false);
+                return;
+            }
+
+            if (evt === 'App\\Events\\PinnedMessageDeletedEvent' || evt === 'PinnedMessageDeletedEvent') {
+                const data = parse(packet.data);
+                const messageId = data?.message?.id || data?.id || null;
+                this.lastPinId = null;
+                this.dispatchEvent(new CustomEvent('pinned_message_deleted', { detail: { messageId } }));
+                return;
+            }
+
             // Kicks sent to the streamer and channel point rewards. Not checked against a live
             // stream yet: the field names come from Kick's web client.
             if (evt === 'KicksGifted' || evt === 'App\\Events\\KicksGifted') {
@@ -1635,9 +1648,38 @@ class KickChatClient extends EventTarget {
                 list.slice().reverse().forEach(raw => {
                     if (raw && raw.sender) this.emitMessage(this.normalizeMessage(raw), true);
                 });
+                if (data && data.data && data.data.pinned_message) {
+                    this.emitPinnedMessage(data.data.pinned_message, true);
+                }
                 queued.forEach(msg => this.emitMessage(msg));
             }
         }
+    }
+
+    // Emits a pinned message event (from Pusher PinnedMessageCreatedEvent or initial history API)
+    emitPinnedMessage(pinData, isInitialPin = false) {
+        if (!pinData) return;
+        const raw = pinData.message || pinData;
+        if (!raw || (raw.content === undefined && !raw.sender)) return;
+        if (pinData.finish_at) {
+            const endTs = Date.parse(pinData.finish_at);
+            if (!Number.isNaN(endTs) && endTs <= Date.now()) return;
+        }
+        const normalized = this.normalizeMessage(raw);
+        normalized.pinnedBy = pinData.pinned_by?.username || null;
+        normalized.pinDuration = Number(pinData.duration) || null;
+        normalized.finishAt = pinData.finish_at || null;
+        normalized.isInitialPin = isInitialPin;
+
+        const key = `${normalized.id}|${normalized.finishAt || ''}`;
+        if (isInitialPin && this.lastPinId === key) return;
+        const now = Date.now();
+        if (this._lastPinKey === key && now - (this._lastPinAt || 0) < 2000) return;
+        this._lastPinKey = key;
+        this._lastPinAt = now;
+        this.lastPinId = key;
+
+        this.dispatchEvent(new CustomEvent('pinned_message', { detail: normalized }));
     }
 
     // Donations and rewards can arrive on more than one subscribed channel: the same one within

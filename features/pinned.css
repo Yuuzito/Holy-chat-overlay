@@ -1,0 +1,444 @@
+/* ==========================================================================
+   Holy Chat - Pinned Message Cartelito Overlay & Settings UI
+   ========================================================================== */
+
+/* ---------- Mode Tabs & Visibility ---------- */
+.hc-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    background: var(--hc-raise);
+    border: 1px solid var(--hc-line);
+    border-radius: 11px;
+}
+
+.hc-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--hc-muted);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.hc-tab svg {
+    width: 15px;
+    height: 15px;
+    flex: none;
+}
+
+.hc-tab:hover {
+    color: var(--hc-fg);
+}
+
+.hc-tab[aria-selected="true"] {
+    background: var(--hc-panel);
+    color: var(--hc-fg);
+    border-color: var(--hc-halo);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22), 0 0 0 2px var(--hc-halo-glow);
+}
+
+html:not(.widget-pinned) #pinnedOverlay {
+    display: none !important;
+}
+
+html.widget-pinned #overlayContainer {
+    display: none !important;
+}
+
+html:not(.widget-pinned) [data-panel="pinned"] {
+    display: none !important;
+}
+
+html.widget-pinned [data-panel="chat"] {
+    display: none !important;
+}
+
+.hc-panel-group {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+/* ---------- Settings Controls (Numeric Seconds Input & Preview Meta) ---------- */
+.hc-pin-sec-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.hc-num-input {
+    width: 66px;
+    height: 28px;
+    padding: 0 8px;
+    background: var(--hc-raise);
+    border: 1px solid var(--hc-line);
+    border-radius: 7px;
+    font-family: var(--hc-font-mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--hc-halo);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.hc-num-input:focus {
+    outline: none;
+    border-color: var(--hc-halo);
+    box-shadow: 0 0 0 3px var(--hc-halo-glow);
+}
+
+.hc-pin-status-badge {
+    font-family: var(--hc-font-mono);
+    font-size: 12px;
+    color: var(--hc-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.hc-pin-intro {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--hc-raise);
+    border: 1px solid var(--hc-line);
+    font-size: 12.5px;
+    color: var(--hc-muted);
+    line-height: 1.48;
+}
+
+.hc-pin-intro strong {
+    color: var(--hc-fg);
+}
+
+/* ---------- Pinned Cartelito Overlay Stage ---------- */
+.pinned-overlay {
+    --pin-size: 22px;
+    --pin-font: "Twemoji Country Flags", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    --pin-accent: #53fc18;
+    --pin-duration: 15s;
+    width: 100vw;
+    height: 100vh;
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background: transparent !important;
+    overflow: hidden;
+    font-family: var(--pin-font);
+    pointer-events: none;
+}
+
+html.mode-menu .pinned-overlay {
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+.pinned-overlay.pos-top {
+    align-items: flex-start;
+}
+
+.pinned-overlay.pos-center {
+    align-items: center;
+}
+
+.pinned-overlay.pos-bottom {
+    align-items: flex-end;
+}
+
+/* ---------- The Cartelito Card ---------- */
+.pinned-card {
+    position: relative;
+    width: fit-content;
+    max-width: min(760px, 100%);
+    min-width: min(260px, 100%);
+    padding: 0.62em 0.92em 0.72em;
+    border-radius: 14px;
+    font-size: var(--pin-size);
+    line-height: 1.38;
+    color: #efeff1;
+    overflow: hidden;
+    will-change: transform, opacity;
+}
+
+.pinned-card.hidden {
+    display: none !important;
+}
+
+.pinned-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 0.34em;
+    font-size: 0.56em;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--pin-accent);
+}
+
+.pinned-card-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+}
+
+.pinned-card-pin-svg {
+    width: 1.15em;
+    height: 1.15em;
+    flex: none;
+}
+
+.pinned-card-body {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.pinned-card-author-wrap {
+    display: inline;
+    margin-right: 0.25em;
+}
+
+.pinned-card-author-wrap.hidden {
+    display: none !important;
+}
+
+.pinned-card .chat-badges {
+    margin-right: 0.28em;
+    gap: 0.16em;
+}
+
+.pinned-card .badge-img {
+    width: 1.05em;
+    height: 1.05em;
+    min-width: 1.05em;
+}
+
+.pinned-card .chat-author {
+    font-weight: 800;
+    font-size: 1em;
+}
+
+.pinned-card .colon {
+    margin-left: 1px;
+    margin-right: 0.18em;
+    opacity: 0.85;
+}
+
+.pinned-card-text {
+    display: inline;
+    font-weight: 600;
+}
+
+.pinned-card .chat-emote {
+    height: 1.4em;
+    width: auto;
+    max-height: 2.2em;
+    vertical-align: middle;
+    margin: -0.25em 0.1em;
+}
+
+/* Progress countdown bar */
+.pinned-card-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.09);
+    overflow: hidden;
+}
+
+.pinned-card-progress.hidden {
+    display: none !important;
+}
+
+.pinned-card-progress-fill {
+    width: 100%;
+    height: 100%;
+    background: var(--pin-accent);
+    transform-origin: left center;
+    transform: scaleX(1);
+}
+
+.pinned-card-progress-fill.is-running {
+    animation: pinCountdown var(--pin-duration, 15s) linear forwards;
+}
+
+@keyframes pinCountdown {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+/* ---------- Cartelito Visual Styles ---------- */
+/* 1. Kick Neón */
+.pinned-card.pin-style-kick {
+    background: rgba(15, 17, 22, 0.94);
+    border: 1px solid rgba(83, 252, 24, 0.34);
+    border-left: 4px solid #53fc18;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 22px rgba(83, 252, 24, 0.14);
+}
+
+/* 2. Cartelito Compacto (Pill) */
+.pinned-card.pin-style-pill {
+    border-radius: 24px;
+    padding: 0.55em 1.1em 0.65em;
+    background: rgba(20, 22, 29, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+
+.pinned-card.pin-style-pill .pinned-card-head {
+    display: inline-flex;
+    vertical-align: middle;
+    margin-bottom: 0;
+    margin-right: 0.65em;
+    padding: 0.22em 0.62em;
+    border-radius: 999px;
+    background: rgba(83, 252, 24, 0.14);
+    border: 1px solid rgba(83, 252, 24, 0.35);
+}
+
+.pinned-card.pin-style-pill .pinned-card-body {
+    display: inline;
+}
+
+/* 3. Cristal / Aero */
+.pinned-card.pin-style-glass {
+    --pin-accent: #45d6ff;
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.22) 0%, rgba(18, 30, 52, 0.8) 46%, rgba(12, 19, 34, 0.9) 100%);
+    border: 1px solid rgba(150, 225, 255, 0.42);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 14px 34px rgba(0, 12, 30, 0.58);
+}
+
+/* 4. Flotante (sin fondo) */
+.pinned-card.pin-style-minimal {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0.25em 0.35em 0.45em;
+    text-shadow:
+        -1.5px -1.5px 0 #000,
+        1.5px -1.5px 0 #000,
+        -1.5px 1.5px 0 #000,
+        1.5px 1.5px 0 #000,
+        0 3px 8px rgba(0, 0, 0, 0.85);
+}
+
+.pinned-card.pin-style-minimal .pinned-card-head {
+    display: inline-flex;
+    margin-bottom: 0.3em;
+    padding: 0.2em 0.6em;
+    border-radius: 999px;
+    background: rgba(14, 16, 20, 0.82);
+    border: 1px solid rgba(83, 252, 24, 0.45);
+    text-shadow: none;
+}
+
+.pinned-card.pin-style-minimal .pinned-card-progress {
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 2px;
+}
+
+/* 5. Claro */
+.pinned-card.pin-style-light {
+    --pin-accent: #1f8a00;
+    background: rgba(250, 251, 253, 0.97);
+    color: #111318;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-left: 4px solid #2eb800;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+}
+
+.pinned-card.pin-style-light .pinned-card-progress {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.pinned-card.pin-style-light .pinned-card-text,
+.pinned-card.pin-style-light .colon {
+    color: #111318;
+}
+
+/* ---------- Entry & Exit Animations ---------- */
+.pinned-card.pin-anim-slide {
+    animation: pinSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pinned-overlay.pos-bottom .pinned-card.pin-anim-slide {
+    animation: pinSlideUpIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pinned-card.pin-anim-pop {
+    animation: pinPopIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pinned-card.pin-anim-fade {
+    animation: pinFadeIn 0.24s ease-out;
+}
+
+.pinned-card.is-leaving.pin-anim-slide {
+    animation: pinSlideOut 0.26s ease-in forwards;
+}
+
+.pinned-overlay.pos-bottom .pinned-card.is-leaving.pin-anim-slide {
+    animation: pinSlideUpOut 0.26s ease-in forwards;
+}
+
+.pinned-card.is-leaving.pin-anim-pop {
+    animation: pinPopOut 0.22s ease-in forwards;
+}
+
+.pinned-card.is-leaving.pin-anim-fade {
+    animation: pinFadeOut 0.24s ease-in forwards;
+}
+
+@keyframes pinSlideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pinSlideOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-20px); }
+}
+
+@keyframes pinSlideUpIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pinSlideUpOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(20px); }
+}
+
+@keyframes pinPopIn {
+    from { opacity: 0; transform: scale(0.86); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pinPopOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.88); }
+}
+
+@keyframes pinFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pinFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
