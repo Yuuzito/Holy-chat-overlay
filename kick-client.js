@@ -92,7 +92,11 @@ class KickCache {
     // OBS browser sources stay open for hours, so expired entries must be dropped while running too
     static startAutoPrune(intervalMs = 15 * 60 * 1000) {
         if (this.pruneTimer) return;
-        this.pruneTimer = setInterval(() => this.prune(), intervalMs);
+        this.pruneTimer = setInterval(() => {
+            const run = () => this.prune();
+            if (typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 5000 });
+            else setTimeout(run, 0);
+        }, intervalMs);
     }
 }
 
@@ -109,7 +113,18 @@ class KickApi {
     ];
     static preferred = null;
 
-    static async fetchJson(url) {
+    static async fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+        if (typeof AbortController !== 'function') return fetch(url, options);
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+        try {
+            return await fetch(url, { ...options, signal: ctrl.signal });
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    static async fetchJson(url, attemptTimeoutMs = 3500) {
         if (this.preferred === null) {
             const saved = KickCache.get(this.STRATEGY_KEY);
             this.preferred = Number.isInteger(saved) && saved >= 0 && saved < this.STRATEGIES.length ? saved : 0;
@@ -118,7 +133,7 @@ class KickApi {
 
         for (const i of order) {
             try {
-                const res = await fetch(this.STRATEGIES[i](url));
+                const res = await this.fetchWithTimeout(this.STRATEGIES[i](url), {}, attemptTimeoutMs);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const json = await res.json();
                 if (i !== this.preferred) {
@@ -190,7 +205,14 @@ class SevenTVCosmetics {
     }
 
     static schedulePersist() {
-        if (!this.persistTimer) this.persistTimer = setTimeout(() => this.persist(), 5000);
+        if (!this.persistTimer) {
+            this.persistTimer = setTimeout(() => {
+                this.persistTimer = null;
+                const run = () => this.persist();
+                if (typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 5000 });
+                else run();
+            }, 15000);
+        }
     }
 
     static remember(id, value, ttl) {
@@ -266,11 +288,11 @@ class SevenTVCosmetics {
         const query = `{ ${ids.map((id, i) => `u${i}: userByConnection(platform: KICK, id: "${id}") { ${this.FIELDS} }`).join(' ')} }`;
         let json = null;
         try {
-            const res = await fetch('https://7tv.io/v3/gql', {
+            const res = await KickApi.fetchWithTimeout('https://7tv.io/v3/gql', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ query })
-            });
+            }, 10000);
             if (res.ok) json = await res.json();
         } catch (e) {}
 
@@ -730,7 +752,7 @@ class KickChatClient extends EventTarget {
         if (!force && this.isGlobalPackFresh()) return Promise.resolve(this.getGlobalPack());
 
         const promise = (async () => {
-            const res = await fetch('https://7tv.io/v3/emote-sets/global');
+            const res = await KickApi.fetchWithTimeout('https://7tv.io/v3/emote-sets/global', {}, 10000);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
             const setId = (data && data.id) || 'global';
@@ -804,7 +826,7 @@ class KickChatClient extends EventTarget {
             const userId = kickUserId || ((await this.resolveChannelInfo(slug)) || {}).kickUserId;
             if (!userId) return this.getPack(slug);
 
-            const res = await fetch(`https://7tv.io/v3/users/kick/${encodeURIComponent(userId)}`);
+            const res = await KickApi.fetchWithTimeout(`https://7tv.io/v3/users/kick/${encodeURIComponent(userId)}`, {}, 10000);
             if (res.status === 404) {
                 // The streamer has no 7TV account, so the channel has no 7TV emotes
                 return this.storePack(slug, { setId: null, sevenTvUserId: null, kickConnectionIndex: null }, []);
@@ -1071,8 +1093,23 @@ class KickChatClient extends EventTarget {
         this.initialized = false;
         this.reconnectAttempts = 0;
         this.reconnectTimeout = null;
+        this.connectTimeout = null;
         this.pingInterval = null;
+        this.pongTimeout = null;
+        this.activityTimeoutMs = 30000;
+        this.lastMessageAt = 0;
         this.emoteRefreshInterval = null;
+        this._minClockOffset = null;
+        this._lastLagLogAt = 0;
+        this._onOnline = () => {
+            if (this.shouldReconnect && !this.ws && this.reconnectTimeout) {
+                clearTimeout(this.reconnectTimeout);
+                this.reconnectTimeout = null;
+                this.reconnectAttempts = 0;
+                this.connect();
+            }
+        };
+        if (typeof window !== 'undefined') window.addEventListener('online', this._onOnline);
 
         this.sevenTVEmotes = options.sevenTVEmotes !== false;
 
@@ -1254,6 +1291,10 @@ class KickChatClient extends EventTarget {
         this.openSocket();
     }
 
+    static HEARTBEAT_MS = 20000;
+    static PONG_TIMEOUT_MS = 10000;
+    static CONNECT_TIMEOUT_MS = 10000;
+
     openSocket() {
         this.closeSocket();
         const wsUrl = `wss://ws-${this.pusherCluster}.pusher.com/app/${this.pusherKey}?protocol=7&client=js&version=8.4.0-rc2&flash=false`;
@@ -1261,9 +1302,19 @@ class KickChatClient extends EventTarget {
         try {
             const ws = new WebSocket(wsUrl);
             this.ws = ws;
+            this.connectTimeout = setTimeout(() => {
+                if (this.ws === ws && ws.readyState === WebSocket.CONNECTING) {
+                    this.forceReconnect('connect timeout');
+                }
+            }, KickChatClient.CONNECT_TIMEOUT_MS);
 
             ws.onopen = () => {
+                if (this.connectTimeout) {
+                    clearTimeout(this.connectTimeout);
+                    this.connectTimeout = null;
+                }
                 this.reconnectAttempts = 0;
+                this.lastMessageAt = Date.now();
                 this.startHeartbeat();
             };
             ws.onmessage = (event) => this.handleMessage(event);
@@ -1275,6 +1326,10 @@ class KickChatClient extends EventTarget {
                 if (this.ws === ws) this.ws = null;
                 this.isConnected = false;
                 this.stopHeartbeat();
+                if (this.connectTimeout) {
+                    clearTimeout(this.connectTimeout);
+                    this.connectTimeout = null;
+                }
                 this.dispatchEvent(new CustomEvent('disconnected', { detail: event }));
                 if (this.shouldReconnect) this.scheduleReconnect();
             };
@@ -1285,6 +1340,10 @@ class KickChatClient extends EventTarget {
     }
 
     closeSocket() {
+        if (this.connectTimeout) {
+            clearTimeout(this.connectTimeout);
+            this.connectTimeout = null;
+        }
         if (!this.ws) return;
         const ws = this.ws;
         this.ws = null;
@@ -1296,11 +1355,24 @@ class KickChatClient extends EventTarget {
 
     startHeartbeat() {
         this.stopHeartbeat();
+        const interval = Math.min(KickChatClient.HEARTBEAT_MS, Math.max(10000, Math.floor(this.activityTimeoutMs * 0.5)));
         this.pingInterval = setInterval(() => {
-            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+            try {
                 this.ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
+            } catch (e) {
+                this.forceReconnect('ping send failed');
+                return;
             }
-        }, 30000);
+            if (!this.pongTimeout) {
+                this.pongTimeout = setTimeout(() => {
+                    this.pongTimeout = null;
+                    if (Date.now() - this.lastMessageAt >= KickChatClient.PONG_TIMEOUT_MS) {
+                        this.forceReconnect('pong timeout');
+                    }
+                }, KickChatClient.PONG_TIMEOUT_MS);
+            }
+        }, interval);
     }
 
     stopHeartbeat() {
@@ -1308,6 +1380,19 @@ class KickChatClient extends EventTarget {
             clearInterval(this.pingInterval);
             this.pingInterval = null;
         }
+        if (this.pongTimeout) {
+            clearTimeout(this.pongTimeout);
+            this.pongTimeout = null;
+        }
+    }
+
+    forceReconnect(reason) {
+        console.warn(`[Kick] Forcing reconnect: ${reason}`);
+        this.stopHeartbeat();
+        this.isConnected = false;
+        this.closeSocket();
+        this.dispatchEvent(new CustomEvent('disconnected', { detail: { reason } }));
+        if (this.shouldReconnect) this.scheduleReconnect();
     }
 
     // Never gives up: an OBS source has nobody watching to reload it, so it keeps retrying every minute at most
@@ -1315,7 +1400,7 @@ class KickChatClient extends EventTarget {
         if (!this.shouldReconnect) return;
         if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
         this.reconnectAttempts++;
-        const delay = Math.min(2000 * Math.pow(1.5, this.reconnectAttempts - 1), 60000);
+        const delay = Math.min(1000 * Math.pow(1.5, this.reconnectAttempts - 1), 60000);
         this.reconnectTimeout = setTimeout(() => {
             this.reconnectTimeout = null;
             this.connect();
@@ -1324,12 +1409,41 @@ class KickChatClient extends EventTarget {
 
     handleMessage(event) {
         try {
+            this.lastMessageAt = Date.now();
+            if (this.pongTimeout) {
+                clearTimeout(this.pongTimeout);
+                this.pongTimeout = null;
+            }
             const packet = JSON.parse(event.data);
             const evt = packet.event;
             const parse = (d) => (typeof d === 'string' ? JSON.parse(d) : d);
 
+            if (evt === 'pusher:pong') return;
+
+            if (evt === 'pusher:ping') {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
+                }
+                return;
+            }
+
+            if (evt === 'pusher:error') {
+                const errData = parse(packet.data) || {};
+                const code = Number(errData.code) || 0;
+                console.warn('[Kick] Pusher error:', errData);
+                if (code >= 4200 && code < 4300) {
+                    this.forceReconnect(`pusher:error ${code}`);
+                }
+                return;
+            }
+
             if (evt === 'pusher:connection_established') {
-                this.socketId = parse(packet.data).socket_id;
+                const connData = parse(packet.data) || {};
+                this.socketId = connData.socket_id;
+                if (Number(connData.activity_timeout) > 0) {
+                    this.activityTimeoutMs = connData.activity_timeout * 1000;
+                    this.startHeartbeat();
+                }
                 this.isConnected = true;
                 this.subscribeToChannels();
                 this.dispatchEvent(new CustomEvent('connected', {
@@ -1494,34 +1608,36 @@ class KickChatClient extends EventTarget {
 
     // Kick's API returns the channel's latest messages (25, newest first). Loading them on every
     // connect fills the overlay at start-up and recovers what was missed while reconnecting.
-    static HISTORY_TIMEOUT_MS = 5000;
+    static HISTORY_TIMEOUT_MS = 4000;
+    static RECONNECT_HISTORY_TIMEOUT_MS = 2000;
 
     async loadHistory() {
         if (!this.channelId || this.historyLoading) return;
         this.historyLoading = true;
+        const isReconnect = this.seenMessageIds.size > 0;
+        const timeoutMs = isReconnect ? KickChatClient.RECONNECT_HISTORY_TIMEOUT_MS : KickChatClient.HISTORY_TIMEOUT_MS;
 
         let data = null;
         try {
-            const timeout = new Promise(resolve => setTimeout(resolve, KickChatClient.HISTORY_TIMEOUT_MS, null));
+            const timeout = new Promise(resolve => setTimeout(resolve, timeoutMs, null));
             data = await Promise.race([
-                KickApi.fetchJson(`https://kick.com/api/v2/channels/${this.channelId}/messages`),
+                KickApi.fetchJson(`https://kick.com/api/v2/channels/${this.channelId}/messages`, timeoutMs),
                 timeout
             ]);
         } catch (e) {
             console.warn('[Kick] History request failed:', e);
+        } finally {
+            this.historyLoading = false;
+            const queued = this.pendingLive;
+            this.pendingLive = [];
+            if (this.shouldReconnect) {
+                const list = data && data.data && Array.isArray(data.data.messages) ? data.data.messages : [];
+                list.slice().reverse().forEach(raw => {
+                    if (raw && raw.sender) this.emitMessage(this.normalizeMessage(raw), true);
+                });
+                queued.forEach(msg => this.emitMessage(msg));
+            }
         }
-        if (!this.shouldReconnect) return; // client was closed meanwhile
-
-        const list = data && data.data && Array.isArray(data.data.messages) ? data.data.messages : [];
-        list.slice().reverse().forEach(raw => {
-            if (raw && raw.sender) this.emitMessage(this.normalizeMessage(raw), true);
-        });
-
-        // Live messages that arrived meanwhile go after the history, minus any it already had
-        this.historyLoading = false;
-        const queued = this.pendingLive;
-        this.pendingLive = [];
-        queued.forEach(msg => this.emitMessage(msg));
     }
 
     // Donations and rewards can arrive on more than one subscribed channel: the same one within
@@ -1545,7 +1661,23 @@ class KickChatClient extends EventTarget {
         if (this.seenMessageIds.size > 1000) {
             this.seenMessageIds.delete(this.seenMessageIds.values().next().value);
         }
-        if (isHistory) msg.isHistory = true;
+        if (isHistory) {
+            msg.isHistory = true;
+        } else if (msg.createdAt) {
+            const ts = Date.parse(msg.createdAt);
+            if (!Number.isNaN(ts)) {
+                const now = Date.now();
+                const offset = now - ts;
+                if (this._minClockOffset === null || offset < this._minClockOffset) {
+                    this._minClockOffset = offset;
+                }
+                const extraLag = offset - this._minClockOffset;
+                if (extraLag > 10000 && now - this._lastLagLogAt > 15000) {
+                    this._lastLagLogAt = now;
+                    console.warn(`[Kick] Retraso detectado en mensajes: ~${Math.round(extraLag / 1000)}s (createdAt=${msg.createdAt})`);
+                }
+            }
+        }
         this.dispatchEvent(new CustomEvent('message', { detail: msg }));
     }
 
@@ -1588,10 +1720,15 @@ class KickChatClient extends EventTarget {
         this.stopHeartbeat();
         this.stopEmoteRefresher();
         SevenTVEvents.unwatch(this.channelSlug);
+        if (typeof window !== 'undefined' && this._onOnline) {
+            window.removeEventListener('online', this._onOnline);
+        }
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = null;
         }
+        this.historyLoading = false;
+        this.pendingLive = [];
         this.closeSocket();
         this.isConnected = false;
     }

@@ -2844,7 +2844,9 @@
             // Paint de imagen (ej: el paint de Pascua de noah4eva)
             // Precargar la imagen para asegurar que el texto nunca quede transparente/invisible si tarda o falla
             const img = new Image();
+            img.decoding = 'async';
             img.onload = () => {
+                if (!authorSpan.isConnected) return;
                 authorSpan.style.backgroundImage = `url("${paint.image_url}")`;
                 authorSpan.style.backgroundRepeat = 'repeat';
                 authorSpan.style.backgroundPosition = 'center';
@@ -3192,7 +3194,9 @@
     // Takes a row out for good, with its fade timer, so no timer keeps a detached row alive
     function dropRow(row) {
         clearTimeout(row._fadeTimer);
+        clearTimeout(row._leaveTimer);
         row._fadeTimer = null;
+        row._leaveTimer = null;
         if (tickerSizes) tickerSizes.unobserve(row);
         row.remove();
     }
@@ -3241,7 +3245,7 @@
         row.classList.add('leaving');
         if (config.animation === 'none') return remove();
         row.classList.add(`leave-${config.animation}`);
-        setTimeout(remove, 400);
+        row._leaveTimer = setTimeout(remove, 400);
     }
 
     function rescheduleFades() {
