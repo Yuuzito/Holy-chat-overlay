@@ -7,12 +7,13 @@
     'use strict';
 
     const PIN_STYLES = [
-        { id: 'kick', name: 'Kick Neón' },
-        { id: 'pill', name: 'Compacto (Píldora)' },
-        { id: 'glass', name: 'Cristal (Aero)' },
-        { id: 'minimal', name: 'Flotante (sin caja)' },
+        { id: 'minimal', name: 'Minimalista' },
+        { id: 'inline', name: 'Compacto (1 línea)' },
+        { id: 'kick', name: 'Kick Oscuro' },
+        { id: 'ghost', name: 'Sin fondo (solo texto)' },
         { id: 'light', name: 'Claro' }
     ];
+    const STYLE_ALIASES = { pill: 'inline', glass: 'minimal' };
     const PIN_POSITIONS = ['top', 'center', 'bottom'];
     const PIN_ANIMS = [
         { id: 'slide', name: 'Deslizar' },
@@ -49,16 +50,22 @@
         return list.some(item => item.id === norm) ? norm : fallback;
     }
 
+    function validStyle(id) {
+        const norm = String(id || '').toLowerCase();
+        const mapped = STYLE_ALIASES[norm] || norm;
+        return validId(PIN_STYLES, mapped, 'minimal');
+    }
+
     function parse(params, cached) {
         const pos = String(pick(params, cached, 'pinPosition', 'pinPosition', 'top')).toLowerCase();
         return {
             widget: params.get('widget') === 'pinned' ? 'pinned' : 'chat',
             pinDuration: clampInt(pick(params, cached, 'pinDuration', 'pinDuration', 15), 1, 600, 15),
             pinPermanent: bool(pick(params, cached, 'pinPermanent', 'pinPermanent', false), false),
-            pinStyle: validId(PIN_STYLES, pick(params, cached, 'pinStyle', 'pinStyle', 'kick'), 'kick'),
+            pinStyle: validStyle(pick(params, cached, 'pinStyle', 'pinStyle', 'minimal')),
             pinPosition: PIN_POSITIONS.includes(pos) ? pos : 'top',
             pinAnim: validId(PIN_ANIMS, pick(params, cached, 'pinAnim', 'pinAnim', 'slide'), 'slide'),
-            pinSize: clampInt(pick(params, cached, 'pinSize', 'pinSize', 22), 14, 40, 22),
+            pinSize: clampInt(pick(params, cached, 'pinSize', 'pinSize', 18), 12, 36, 18),
             pinAuthor: bool(pick(params, cached, 'pinAuthor', 'pinAuthor', true), true),
             pinProgress: bool(pick(params, cached, 'pinProgress', 'pinProgress', true), true),
             pinSound: bool(pick(params, cached, 'pinSound', 'pinSound', false), false)
@@ -183,10 +190,10 @@
             config.pinDuration = clampInt(el.cfgPinDuration.value, 1, 600, 15);
         }
         if (el.cfgPinPermanent) config.pinPermanent = el.cfgPinPermanent.checked;
-        if (el.cfgPinStyle) config.pinStyle = validId(PIN_STYLES, el.cfgPinStyle.value, 'kick');
+        if (el.cfgPinStyle) config.pinStyle = validStyle(el.cfgPinStyle.value);
         if (el.cfgPinPosition && deps.stepValue) config.pinPosition = deps.stepValue(el.cfgPinPosition);
         if (el.cfgPinAnim) config.pinAnim = validId(PIN_ANIMS, el.cfgPinAnim.value, 'slide');
-        if (el.cfgPinSize) config.pinSize = clampInt(el.cfgPinSize.value, 14, 40, 22);
+        if (el.cfgPinSize) config.pinSize = clampInt(el.cfgPinSize.value, 12, 36, 18);
         if (el.cfgPinAuthor) config.pinAuthor = el.cfgPinAuthor.checked;
         if (el.cfgPinProgress) config.pinProgress = el.cfgPinProgress.checked;
         if (el.cfgPinSound) config.pinSound = el.cfgPinSound.checked;
@@ -397,7 +404,7 @@
     function showSample(config, customText = '') {
         if (!deps) return;
         const text = (customText || '').trim() ||
-            `¡Bienvenidos al stream de #${config.channel}! Recuerden seguir el canal y pasarlo bien {emote} 🇨🇱 🇦🇷`;
+            `¡Bienvenidos al stream! Sigan el canal {emote} 🇨🇱 🇦🇷`;
         const msg = deps.buildSampleMessage ? deps.buildSampleMessage(text) : {
             id: `pin-test-${Date.now()}`,
             content: text,

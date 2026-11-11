@@ -104,31 +104,17 @@ html.widget-pinned [data-panel="chat"] {
     font-variant-numeric: tabular-nums;
 }
 
-.hc-pin-intro {
-    padding: 12px 14px;
-    border-radius: 10px;
-    background: var(--hc-raise);
-    border: 1px solid var(--hc-line);
-    font-size: 12.5px;
-    color: var(--hc-muted);
-    line-height: 1.48;
-}
-
-.hc-pin-intro strong {
-    color: var(--hc-fg);
-}
-
-/* ---------- Pinned Cartelito Overlay Stage ---------- */
+/* ---------- Pinned Cartelito Overlay Stage (flush left) ---------- */
 .pinned-overlay {
-    --pin-size: 22px;
+    --pin-size: 18px;
     --pin-font: "Twemoji Country Flags", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     --pin-accent: #53fc18;
     --pin-duration: 15s;
     width: 100vw;
     height: 100vh;
-    padding: 24px;
+    padding: 0;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: flex-start;
     background: transparent !important;
     overflow: hidden;
@@ -155,16 +141,15 @@ html.mode-menu .pinned-overlay {
     align-items: flex-end;
 }
 
-/* ---------- The Cartelito Card ---------- */
+/* ---------- Minimalist Cartelito Card ---------- */
 .pinned-card {
     position: relative;
     width: fit-content;
-    max-width: min(760px, 100%);
-    min-width: min(260px, 100%);
-    padding: 0.62em 0.92em 0.72em;
-    border-radius: 14px;
+    max-width: min(680px, 100%);
+    padding: 0.44em 0.78em 0.52em;
+    border-radius: 10px;
     font-size: var(--pin-size);
-    line-height: 1.38;
+    line-height: 1.35;
     color: #efeff1;
     overflow: hidden;
     will-change: transform, opacity;
@@ -177,26 +162,26 @@ html.mode-menu .pinned-overlay {
 .pinned-card-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 0.34em;
-    font-size: 0.56em;
-    font-weight: 800;
-    letter-spacing: 0.1em;
+    gap: 5px;
+    margin-bottom: 0.18em;
+    font-size: 0.55em;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--pin-accent);
+    color: rgba(255, 255, 255, 0.58);
 }
 
 .pinned-card-tag {
     display: inline-flex;
     align-items: center;
-    gap: 0.45em;
+    gap: 0.38em;
 }
 
 .pinned-card-pin-svg {
-    width: 1.15em;
-    height: 1.15em;
+    width: 1.05em;
+    height: 1.05em;
     flex: none;
+    color: var(--pin-accent);
 }
 
 .pinned-card-body {
@@ -206,7 +191,7 @@ html.mode-menu .pinned-overlay {
 
 .pinned-card-author-wrap {
     display: inline;
-    margin-right: 0.25em;
+    margin-right: 0.2em;
 }
 
 .pinned-card-author-wrap.hidden {
@@ -214,48 +199,48 @@ html.mode-menu .pinned-overlay {
 }
 
 .pinned-card .chat-badges {
-    margin-right: 0.28em;
-    gap: 0.16em;
+    margin-right: 0.24em;
+    gap: 0.15em;
 }
 
 .pinned-card .badge-img {
-    width: 1.05em;
-    height: 1.05em;
-    min-width: 1.05em;
+    width: 1em;
+    height: 1em;
+    min-width: 1em;
 }
 
 .pinned-card .chat-author {
-    font-weight: 800;
+    font-weight: 700;
     font-size: 1em;
 }
 
 .pinned-card .colon {
     margin-left: 1px;
-    margin-right: 0.18em;
-    opacity: 0.85;
+    margin-right: 0.2em;
+    opacity: 0.72;
 }
 
 .pinned-card-text {
     display: inline;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .pinned-card .chat-emote {
-    height: 1.4em;
+    height: 1.32em;
     width: auto;
-    max-height: 2.2em;
+    max-height: 2em;
     vertical-align: middle;
-    margin: -0.25em 0.1em;
+    margin: -0.22em 0.08em;
 }
 
-/* Progress countdown bar */
+/* Minimalist 2px countdown progress line */
 .pinned-card-progress {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.09);
+    height: 2px;
+    background: rgba(255, 255, 255, 0.06);
     overflow: hidden;
 }
 
@@ -267,6 +252,7 @@ html.mode-menu .pinned-overlay {
     width: 100%;
     height: 100%;
     background: var(--pin-accent);
+    opacity: 0.75;
     transform-origin: left center;
     transform: scaleX(1);
 }
@@ -280,157 +266,126 @@ html.mode-menu .pinned-overlay {
     to { transform: scaleX(0); }
 }
 
-/* ---------- Cartelito Visual Styles ---------- */
-/* 1. Kick Neón */
-.pinned-card.pin-style-kick {
-    background: rgba(15, 17, 22, 0.94);
-    border: 1px solid rgba(83, 252, 24, 0.34);
-    border-left: 4px solid #53fc18;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 0 22px rgba(83, 252, 24, 0.14);
+/* ---------- Minimalist Visual Styles ---------- */
+/* 1. Minimalista (Default): clean matte dark card, hairline border, subtle pin label */
+.pinned-card.pin-style-minimal {
+    background: rgba(15, 16, 20, 0.84);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* 2. Cartelito Compacto (Pill) */
-.pinned-card.pin-style-pill {
-    border-radius: 24px;
-    padding: 0.55em 1.1em 0.65em;
-    background: rgba(20, 22, 29, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+/* 2. Compacto (1 línea): ultra-compact inline pill */
+.pinned-card.pin-style-inline {
+    border-radius: 8px;
+    padding: 0.36em 0.72em 0.44em;
+    background: rgba(15, 16, 20, 0.86);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.pinned-card.pin-style-pill .pinned-card-head {
+.pinned-card.pin-style-inline .pinned-card-head {
     display: inline-flex;
     vertical-align: middle;
     margin-bottom: 0;
-    margin-right: 0.65em;
-    padding: 0.22em 0.62em;
-    border-radius: 999px;
-    background: rgba(83, 252, 24, 0.14);
-    border: 1px solid rgba(83, 252, 24, 0.35);
+    margin-right: 0.45em;
+    font-size: 0.72em;
 }
 
-.pinned-card.pin-style-pill .pinned-card-body {
+.pinned-card.pin-style-inline .pinned-card-tag > span {
+    display: none;
+}
+
+.pinned-card.pin-style-inline .pinned-card-body {
     display: inline;
 }
 
-/* 3. Cristal / Aero */
-.pinned-card.pin-style-glass {
-    --pin-accent: #45d6ff;
-    background: linear-gradient(165deg, rgba(255, 255, 255, 0.22) 0%, rgba(18, 30, 52, 0.8) 46%, rgba(12, 19, 34, 0.9) 100%);
-    border: 1px solid rgba(150, 225, 255, 0.42);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 14px 34px rgba(0, 12, 30, 0.58);
+/* 3. Kick Oscuro: clean dark card with crisp 2px Kick green left line */
+.pinned-card.pin-style-kick {
+    background: rgba(15, 16, 20, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 2.5px solid #53fc18;
+    border-radius: 8px;
 }
 
-/* 4. Flotante (sin fondo) */
-.pinned-card.pin-style-minimal {
+/* 4. Sin fondo (Ghost): pure floating text with crisp subtle shadow */
+.pinned-card.pin-style-ghost {
     background: transparent;
     border: 0;
     border-radius: 0;
-    box-shadow: none;
-    padding: 0.25em 0.35em 0.45em;
-    text-shadow:
-        -1.5px -1.5px 0 #000,
-        1.5px -1.5px 0 #000,
-        -1.5px 1.5px 0 #000,
-        1.5px 1.5px 0 #000,
-        0 3px 8px rgba(0, 0, 0, 0.85);
+    padding: 0.2em 0.25em 0.36em;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 1px rgba(0, 0, 0, 0.9);
 }
 
-.pinned-card.pin-style-minimal .pinned-card-head {
-    display: inline-flex;
-    margin-bottom: 0.3em;
-    padding: 0.2em 0.6em;
-    border-radius: 999px;
-    background: rgba(14, 16, 20, 0.82);
-    border: 1px solid rgba(83, 252, 24, 0.45);
-    text-shadow: none;
+.pinned-card.pin-style-ghost .pinned-card-head {
+    color: rgba(255, 255, 255, 0.82);
 }
 
-.pinned-card.pin-style-minimal .pinned-card-progress {
-    background: rgba(0, 0, 0, 0.45);
-    border-radius: 2px;
+.pinned-card.pin-style-ghost .pinned-card-progress {
+    background: rgba(255, 255, 255, 0.15);
 }
 
-/* 5. Claro */
+/* 5. Claro Minimal: crisp light card */
 .pinned-card.pin-style-light {
-    --pin-accent: #1f8a00;
-    background: rgba(250, 251, 253, 0.97);
-    color: #111318;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-left: 4px solid #2eb800;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+    --pin-accent: #229900;
+    background: rgba(252, 252, 253, 0.94);
+    color: #14161a;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.pinned-card.pin-style-light .pinned-card-head {
+    color: rgba(20, 22, 26, 0.56);
 }
 
 .pinned-card.pin-style-light .pinned-card-progress {
-    background: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.07);
 }
 
 .pinned-card.pin-style-light .pinned-card-text,
 .pinned-card.pin-style-light .colon {
-    color: #111318;
+    color: #14161a;
 }
 
-/* ---------- Entry & Exit Animations ---------- */
+/* ---------- Subtle Entry & Exit Animations ---------- */
 .pinned-card.pin-anim-slide {
-    animation: pinSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.pinned-overlay.pos-bottom .pinned-card.pin-anim-slide {
-    animation: pinSlideUpIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: pinSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .pinned-card.pin-anim-pop {
-    animation: pinPopIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: pinPopIn 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .pinned-card.pin-anim-fade {
-    animation: pinFadeIn 0.24s ease-out;
+    animation: pinFadeIn 0.22s ease-out;
 }
 
 .pinned-card.is-leaving.pin-anim-slide {
-    animation: pinSlideOut 0.26s ease-in forwards;
-}
-
-.pinned-overlay.pos-bottom .pinned-card.is-leaving.pin-anim-slide {
-    animation: pinSlideUpOut 0.26s ease-in forwards;
+    animation: pinSlideOut 0.22s ease-in forwards;
 }
 
 .pinned-card.is-leaving.pin-anim-pop {
-    animation: pinPopOut 0.22s ease-in forwards;
+    animation: pinPopOut 0.2s ease-in forwards;
 }
 
 .pinned-card.is-leaving.pin-anim-fade {
-    animation: pinFadeOut 0.24s ease-in forwards;
+    animation: pinFadeOut 0.22s ease-in forwards;
 }
 
 @keyframes pinSlideIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateX(-14px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes pinSlideOut {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(-20px); }
-}
-
-@keyframes pinSlideUpIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pinSlideUpOut {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(20px); }
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(-14px); }
 }
 
 @keyframes pinPopIn {
-    from { opacity: 0; transform: scale(0.86); }
+    from { opacity: 0; transform: scale(0.92); }
     to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes pinPopOut {
     from { opacity: 1; transform: scale(1); }
-    to { opacity: 0; transform: scale(0.88); }
+    to { opacity: 0; transform: scale(0.94); }
 }
 
 @keyframes pinFadeIn {

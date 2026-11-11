@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="features/designs-os.css?v=5">
     <link rel="stylesheet" href="features/designs-aero.css?v=4">
     <link rel="stylesheet" href="features/designs-states.css?v=2">
-    <link rel="stylesheet" href="features/pinned.css?v=2">
+    <link rel="stylesheet" href="features/pinned.css?v=3">
     <link rel="icon" type="image/png" href="holychat-logo.png">
 </head>
 
@@ -360,10 +360,6 @@
 
                 <!-- Separate section: Pinned Message Cartelito Overlay -->
                 <div class="hc-panel-group" data-panel="pinned">
-                    <div class="hc-pin-intro">
-                        <strong>Cartelito de mensaje fijado</strong>: es otro overlay independiente para OBS. Cuando alguien fije un mensaje en Kick, aparecerá como cartelito en pantalla y desaparecerá tras los segundos que elijas.
-                    </div>
-
                     <details class="hc-group hc-disclosure hc-collapsible" open>
                         <summary class="hc-group-title">
                             <span>Duración</span>
@@ -418,7 +414,7 @@
                             </div>
                             <div class="hc-field">
                                 <div class="hc-field-head"><label for="cfgPinSize">Tamaño</label><output class="hc-val" for="cfgPinSize" data-summary></output></div>
-                                <input class="hc-slider" id="cfgPinSize" type="range" min="14" max="40" step="1" value="22" data-ticks="14,18,22,28,34,40">
+                                <input class="hc-slider" id="cfgPinSize" type="range" min="12" max="36" step="1" value="18" data-ticks="12,16,18,24,30,36">
                                 <div class="hc-ticks" data-for="cfgPinSize"></div>
                             </div>
                         </div>
@@ -533,13 +529,13 @@
 
                 <!-- Separate Pinned Cartelito Overlay -->
                 <div class="pinned-overlay pos-top" id="pinnedOverlay">
-                    <article class="pinned-card pin-style-kick pin-anim-slide hidden" id="pinnedCard" aria-live="polite">
+                    <article class="pinned-card pin-style-minimal pin-anim-slide hidden" id="pinnedCard" aria-live="polite">
                         <header class="pinned-card-head">
                             <span class="pinned-card-tag">
                                 <svg class="pinned-card-pin-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                     <path d="M16 3a1 1 0 0 1 .7.3l4 4a1 1 0 0 1-.16 1.54l-2.46 1.64-1.78 4.44a1 1 0 0 1-1.64.35L11.4 12l-5.7 5.7a1 1 0 0 1-1.42-1.42l5.7-5.7-3.27-3.26a1 1 0 0 1 .35-1.64l4.44-1.78 1.64-2.46A1 1 0 0 1 14 3h2z"/>
                                 </svg>
-                                <span>Mensaje fijado</span>
+                                <span>Fijado</span>
                             </span>
                         </header>
                         <div class="pinned-card-body">
@@ -574,7 +570,7 @@
     <script src="features/options.js?v=1"></script>
     <script src="features/sound.js?v=1"></script>
     <script src="features/events.js?v=2"></script>
-    <script src="features/pinned.js?v=1"></script>
+    <script src="features/pinned.js?v=2"></script>
     <script src="app.js?v=39"></script>
 </body>
 
