@@ -653,7 +653,7 @@ html.mode-overlay body:has(.theme-light) {
 .msg-shadow-1 .colon,
 .msg-shadow-1 .chat-time,
 .msg-shadow-1 .chat-event-action {
-    text-shadow: 0 1.5px 2px #000, 0 1px 1px #000 !important;
+    text-shadow: 0 2px 4px #000, 0 1px 2px #000, 0 0 2px #000 !important;
 }
 
 .msg-shadow-2 .chat-text,
@@ -661,7 +661,7 @@ html.mode-overlay body:has(.theme-light) {
 .msg-shadow-2 .colon,
 .msg-shadow-2 .chat-time,
 .msg-shadow-2 .chat-event-action {
-    text-shadow: 0 2px 4px #000, 0 1px 2px #000, 0 0 2px #000 !important;
+    text-shadow: 0 3px 6px #000, 0 2px 3px #000, 0 0 3px #000 !important;
 }
 
 .msg-shadow-3 .chat-text,
@@ -669,7 +669,7 @@ html.mode-overlay body:has(.theme-light) {
 .msg-shadow-3 .colon,
 .msg-shadow-3 .chat-time,
 .msg-shadow-3 .chat-event-action {
-    text-shadow: 0 3px 6px #000, 0 2px 3px #000, 0 0 3px #000 !important;
+    text-shadow: 0 4px 8px #000, 0 3px 5px #000, 0 1px 2px #000 !important;
 }
 
 .msg-shadow-4 .chat-text,
@@ -677,7 +677,7 @@ html.mode-overlay body:has(.theme-light) {
 .msg-shadow-4 .colon,
 .msg-shadow-4 .chat-time,
 .msg-shadow-4 .chat-event-action {
-    text-shadow: 0 4px 8px #000, 0 3px 5px #000, 0 1px 2px #000 !important;
+    text-shadow: 0 5px 10px #000, 0 3px 6px #000, 0 1px 3px #000, 0 0 4px #000 !important;
 }
 
 .msg-shadow-5 .chat-text,
@@ -685,7 +685,7 @@ html.mode-overlay body:has(.theme-light) {
 .msg-shadow-5 .colon,
 .msg-shadow-5 .chat-time,
 .msg-shadow-5 .chat-event-action {
-    text-shadow: 0 5px 10px #000, 0 3px 6px #000, 0 1px 3px #000, 0 0 4px #000 !important;
+    text-shadow: 0 6px 14px #000, 0 4px 8px #000, 0 2px 4px #000, 0 0 6px #000 !important;
 }
 
 /* La fila completa queda libre de drop-shadow para evitar lag en emotes */

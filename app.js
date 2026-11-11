@@ -166,6 +166,8 @@
     }
 
     function msgShadowLevel(value) {
+        const s = String(value || '').toLowerCase();
+        if (s === 'no' || s === 'none' || s === 'nada') return 0;
         const n = parseInt(value, 10);
         return n >= 0 && n <= 5 ? n : 0;
     }
@@ -342,7 +344,7 @@
         theme: { values: ['dark', 'transparent', 'light'], labels: ['Oscuro', 'Transparente', 'Claro'] },
         layout: { values: LAYOUTS, labels: ['Vertical', 'Horizontal', 'Aleatorio'] },
         shadow: { values: [0, 1, 2, 3, 4, 5, 6], labels: ['Nada', '1', '2', '3', '4', '5', '6'] },
-        msgShadow: { values: [0, 1, 2, 3, 4, 5], labels: ['Nada', '1', '2', '3', '4', '5'] },
+        msgShadow: { values: [0, 1, 2, 3, 4, 5], labels: ['No', '1', '2', '3', '4', '5'] },
         textBgWidth: { values: ['min', 'max'], labels: ['Mínimo', 'Máximo'] },
         deletedMessages: { values: DELETED_MODES, labels: ['Ocultar', 'Tachar', 'Aviso'] },
         fadeTime: { values: FADE_TIMES, labels: ['1 s', '3 s', '5 s', '10 s', '15 s', '20 s', '30 s', '1 min', '2 min', '5 min', '∞'] },
@@ -457,7 +459,7 @@
     const PRESETS = [
         {
             id: 'rageylo', name: 'Rageylo', desc: 'El diseño por defecto, los mensajes duran 20 segundos',
-            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 0, msgShadow: 2, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 20, deletedMessages: 'hide' }
+            settings: { design: 'chatterino', layout: 'vertical', theme: 'transparent', font: 'inter', fontWeight: 700, fontSize: 40, emoteSize: 60, badgeSize: 40, shadow: 0, msgShadow: 1, animation: 'none', textBg: false, textBgWidth: 'min', fadeTime: 20, deletedMessages: 'hide' }
         },
         {
             id: 'game', name: 'Juego', desc: 'Sobre el juego: transparente, sombra moderada, cada mensaje dura 1 minuto',
