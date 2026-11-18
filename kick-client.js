@@ -1540,6 +1540,39 @@ class KickChatClient extends EventTarget {
     /*  Message normalization                                              */
     /* ------------------------------------------------------------------ */
 
+    // Emoji graphemes that can act as the base of a zero-width emote, just like a 7TV emote
+    static EMOJI_GRAPHEME_RE = /(?:\p{Extended_Pictographic}|\p{Regional_Indicator}|\u20E3)/u;
+    static emojiSegmenter = null;
+
+    /**
+     * Splits a plain-text run into text and emoji graphemes. Grapheme segmentation keeps
+     * composite emoji whole (flags, keycaps, ZWJ families, skin tones). Without
+     * Intl.Segmenter the run is returned as-is, which keeps the previous behaviour.
+     */
+    static splitEmojiGraphemes(text) {
+        if (typeof Intl === 'undefined' || !Intl.Segmenter) return [{ text, emoji: false }];
+        // Fast path: most words have no emoji at all
+        if (!KickChatClient.EMOJI_GRAPHEME_RE.test(text)) return [{ text, emoji: false }];
+        if (!KickChatClient.emojiSegmenter) {
+            KickChatClient.emojiSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+        }
+        const parts = [];
+        let buffer = '';
+        for (const { segment } of KickChatClient.emojiSegmenter.segment(text)) {
+            if (KickChatClient.EMOJI_GRAPHEME_RE.test(segment)) {
+                if (buffer) {
+                    parts.push({ text: buffer, emoji: false });
+                    buffer = '';
+                }
+                parts.push({ text: segment, emoji: true });
+            } else {
+                buffer += segment;
+            }
+        }
+        if (buffer) parts.push({ text: buffer, emoji: false });
+        return parts;
+    }
+
     /**
      * options.emotes: the channel's emote Map; when omitted, the pack of options.channel is used.
      * 7TV emotes match the exact name, case included ("LUL" is not "lul").
@@ -1600,7 +1633,15 @@ class KickChatClient extends EventTarget {
                     const name = escapeHtml(part);
                     pushEmote(`<img class="chat-emote" decoding="async" src="${em.url}" alt="${name}" title="${name}">`, em.zeroWidth);
                 } else {
-                    out.push({ html: escapeHtml(part), isEmote: false });
+                    // Emoji graphemes are emote-like tokens, so a following zero-width emote
+                    // stacks on them instead of being placed beside them.
+                    for (const seg of KickChatClient.splitEmojiGraphemes(part)) {
+                        if (seg.emoji) {
+                            out.push({ html: `<span class="chat-emoji">${escapeHtml(seg.text)}</span>`, isEmote: true });
+                        } else {
+                            out.push({ html: escapeHtml(seg.text), isEmote: false });
+                        }
+                    }
                 }
             }
         });

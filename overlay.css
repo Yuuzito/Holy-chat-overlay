@@ -486,13 +486,32 @@ body {
 /* 7TV zero-width emote stacking */
 .emote-stack {
     display: inline-grid;
+    place-items: center;
     vertical-align: middle;
 }
 
-.emote-stack>.chat-emote {
+/* Base emote, zero-width overlay, emoji base and nested stacks share one grid cell */
+.emote-stack>.chat-emote,
+.emote-stack>.chat-emoji,
+.emote-stack>.emote-stack {
     grid-area: 1 / 1;
+}
+
+.emote-stack>.chat-emote {
     margin: 0 1px;
     vertical-align: baseline;
+}
+
+/* An emoji used as the base takes the same box as an emote, so the overlay lands on it */
+.emote-stack>.chat-emoji {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--emote-size, 28px);
+    height: var(--emote-size, 28px);
+    margin: 0 1px;
+    font-size: calc(var(--emote-size, 28px) * 0.95);
+    line-height: 1;
 }
 
 .chat-emote.zero-width {

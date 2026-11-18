@@ -233,6 +233,14 @@ html.mode-menu .pinned-overlay {
     margin: -0.22em 0.08em;
 }
 
+/* Emoji base of a stacked 0-width emote, sized like the card's emotes */
+.pinned-card .emote-stack>.chat-emoji {
+    width: 1em;
+    height: 1em;
+    font-size: 1.32em;
+    margin: 0;
+}
+
 /* Minimalist 2px countdown progress line */
 .pinned-card-progress {
     position: absolute;
