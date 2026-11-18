@@ -1,5 +1,5 @@
 /**
- * Holy Chat - Kick Chat Overlay Controller
+ * Holy Overlay - Kick Chat Overlay Controller
  * - Settings page: sliders on the left, the live overlay as a test chat on the right
  * - Chatterino 2 Style Chat Overlay (OBS mode, ?overlay=true)
  * - 7TV Cosmetics & Emotes integration
@@ -177,6 +177,14 @@
         return Math.min(60, Math.max(10, px));
     }
 
+    // Which overlay the URL/settings page is working with
+    const WIDGETS = ['chat', 'pinned', 'prediction'];
+
+    function widgetMode(value) {
+        const id = String(value || '').toLowerCase();
+        return WIDGETS.includes(id) ? id : 'chat';
+    }
+
     const config = {
         // Matin Aniss 10 Options:
         channel: (params.get('channel') || params.get('kick') || (cachedConfig && cachedConfig.channel) || 'rageylo').toLowerCase().trim(),
@@ -219,7 +227,13 @@
         ...window.HolyOptions.parse(params, cachedConfig),
 
         // Pinned message cartelito overlay (features/pinned.js)
-        ...window.HolyPinned.parse(params, cachedConfig)
+        ...window.HolyPinned.parse(params, cachedConfig),
+
+        // Prediction overlay (features/prediction.js)
+        ...window.HolyPrediction.parse(params, cachedConfig),
+
+        // Active widget: chat, pinned message or prediction
+        widget: widgetMode(params.get('widget'))
     };
 
     // Emote height in px (the settings slider's range)
@@ -280,6 +294,7 @@
     const obsHelp = document.getElementById('obsHelp');
     const tabChat = document.getElementById('tabChat');
     const tabPinned = document.getElementById('tabPinned');
+    const tabPrediction = document.getElementById('tabPrediction');
 
     // Test chat panel
     const testComposer = document.getElementById('testComposer');
@@ -298,7 +313,7 @@
     let client = null;
     let messageCounter = 0;
     let hideStatusTimer = null;
-    let activeWidget = config.widget === 'pinned' ? 'pinned' : 'chat';
+    let activeWidget = WIDGETS.includes(config.widget) ? config.widget : 'chat';
     let pinPreviewShownOnce = false;
 
     function isMenuMode() {
@@ -311,27 +326,37 @@
     }
 
     function copyButtonLabel() {
-        return activeWidget === 'pinned' ? 'Copiar URL del cartelito para OBS' : 'Copiar URL para OBS';
+        if (activeWidget === 'pinned') return 'Copiar URL del cartelito para OBS';
+        if (activeWidget === 'prediction') return 'Copiar URL de la predicción para OBS';
+        return 'Copiar URL para OBS';
     }
 
     function setWidgetTab(tab) {
-        activeWidget = tab === 'pinned' ? 'pinned' : 'chat';
+        activeWidget = WIDGETS.includes(tab) ? tab : 'chat';
         const isPinned = activeWidget === 'pinned';
+        const isPrediction = activeWidget === 'prediction';
         root.classList.toggle('widget-pinned', isPinned);
-        if (tabChat) tabChat.setAttribute('aria-selected', String(!isPinned));
+        root.classList.toggle('widget-prediction', isPrediction);
+        if (tabChat) tabChat.setAttribute('aria-selected', String(activeWidget === 'chat'));
         if (tabPinned) tabPinned.setAttribute('aria-selected', String(isPinned));
+        if (tabPrediction) tabPrediction.setAttribute('aria-selected', String(isPrediction));
         if (btnCopyLabel) btnCopyLabel.textContent = copyButtonLabel();
-        if (btnTestSend) btnTestSend.textContent = isPinned ? 'Fijar prueba' : 'Enviar';
+        if (btnTestSend) btnTestSend.textContent = isPrediction ? 'Probar' : isPinned ? 'Fijar prueba' : 'Enviar';
         if (cfgPreviewInput) {
-            cfgPreviewInput.placeholder = isPinned
-                ? 'Escribe un mensaje fijado de prueba...'
-                : 'Escribe un mensaje de prueba...';
+            cfgPreviewInput.placeholder = isPrediction
+                ? 'La predicción se prueba con el botón «Probar predicción»'
+                : isPinned
+                    ? 'Escribe un mensaje fijado de prueba...'
+                    : 'Escribe un mensaje de prueba...';
         }
         if (urlFallback) urlFallback.classList.add('hidden');
         if (copyError) copyError.classList.add('hidden');
         if (isPinned && isMenuMode() && !pinPreviewShownOnce) {
             pinPreviewShownOnce = true;
             window.HolyPinned.showSample(config);
+        }
+        if (window.HolyPrediction) {
+            window.HolyPrediction.setActive(isPrediction && isMenuMode(), config);
         }
     }
 
@@ -352,11 +377,12 @@
         testSpeed: { values: [0, 0.5, 1, 2, 5, 10, 25, 50, 100], labels: ['Pausa', 'x0.5', 'x1', 'x2', 'x5', 'x10', 'x25', 'x50', 'x100'] },
         fontWeight: { values: FONT_WEIGHTS, labels: ['Normal', 'Media', 'Semi', 'Negrita', 'Extra'] }
     };
-    Object.assign(STEPS, window.HolyOptions.STEPS, window.HolyPinned.STEPS);
+    Object.assign(STEPS, window.HolyOptions.STEPS, window.HolyPinned.STEPS, window.HolyPrediction.STEPS);
     const SIZE_TICKS = [10, 14, 20, 30, 45, 60];
     const sliders = [cfgLayout, cfgTheme, cfgFontWeight, cfgTextSize, cfgEmoteSize, cfgBadgeSize, cfgTextShadow, cfgMsgShadow, cfgTextBgWidth, cfgDeletedMessages, cfgTestSpeed, cfgFadeTime,
         document.getElementById('cfgDirection'), document.getElementById('cfgBgAlpha'), document.getElementById('cfgSoundVolume'),
-        document.getElementById('cfgPinDuration'), document.getElementById('cfgPinPosition'), document.getElementById('cfgPinSize')].filter(Boolean);
+        document.getElementById('cfgPinDuration'), document.getElementById('cfgPinPosition'), document.getElementById('cfgPinSize'),
+        document.getElementById('cfgPredPos')].filter(Boolean);
 
     if (cfgAnimation) {
         window.HolyCatalog.ANIMATIONS.forEach(a => cfgAnimation.add(new Option(a.name, a.id)));
@@ -629,6 +655,7 @@
         if (cfgFadeTime) setStep(cfgFadeTime, config.fadeTime);
         window.HolyOptions.populate(config);
         window.HolyPinned.populate(config);
+        window.HolyPrediction.populate(config);
         sliders.forEach(syncSlider);
         if (fieldTextBgWidth) fieldTextBgWidth.classList.toggle('is-off', !config.textBg);
         if (fieldBots) fieldBots.classList.toggle('is-off', !config.hideBots);
@@ -669,11 +696,15 @@
         config.fadeTime = cfgFadeTime ? stepValue(cfgFadeTime) : 0;
         window.HolyOptions.read(config);
         window.HolyPinned.read(config);
+        window.HolyPrediction.read(config);
     }
 
     function buildGeneratedUrl(forObs = true) {
         if (activeWidget === 'pinned') {
             return window.HolyPinned.buildUrl(config, forObs);
+        }
+        if (activeWidget === 'prediction') {
+            return window.HolyPrediction.buildUrl(config, forObs);
         }
         const q = new URLSearchParams();
         q.set('channel', config.channel);
@@ -741,6 +772,7 @@
             loadMenuChannelPackDebounced();
             rerenderMessages();
             window.HolyPinned.rerender(config);
+            predictionChannelDebounced();
         }
         if (prev.emotes !== config.sevenTVEmotes || prev.cosmetics !== config.sevenTVCosmetics) {
             if (config.sevenTVEmotes) loadMenuChannelPack();
@@ -787,12 +819,18 @@
                 deletedMessages: config.deletedMessages,
                 fadeTime: config.fadeTime,
                 ...window.HolyOptions.toCache(config),
-                ...window.HolyPinned.toCache(config)
+                ...window.HolyPinned.toCache(config),
+                ...window.HolyPrediction.toCache(config)
             }, 30 * 24 * 60 * 60 * 1000);
         }
     }
 
     const saveSettingsDebounced = debounce(saveSettings, 300);
+
+    // Typing a channel fires on every keystroke: wait until the name settles before querying Kick
+    const predictionChannelDebounced = debounce(() => {
+        if (window.HolyPrediction) window.HolyPrediction.onChannelChange(config);
+    }, 700);
 
     // Loads the 7TV pack of the channel typed in the menu and 7TV global emotes
     function loadMenuChannelPack() {
@@ -812,9 +850,17 @@
         applyStyles();
         stopTemplateFeed();
         chatMessagesEl.textContent = '';
+        if (window.HolyPrediction) window.HolyPrediction.stop();
         if (activeWidget === 'pinned') window.HolyPinned.hide(true, config);
         setMode('overlay');
-        startClient();
+        root.classList.toggle('widget-pinned', activeWidget === 'pinned');
+        root.classList.toggle('widget-prediction', activeWidget === 'prediction');
+        // The prediction widget only polls Kick; it doesn't need the chat WebSocket
+        if (activeWidget === 'prediction') {
+            window.HolyPrediction.start(config);
+        } else {
+            startClient();
+        }
 
         try {
             // Keep regular browser clean so refresh always reopens the menu
@@ -832,6 +878,7 @@
             client.disconnect();
             client = null;
         }
+        if (window.HolyPrediction) window.HolyPrediction.stop();
         chatMessagesEl.textContent = '';
         setMode('menu');
         setWidgetTab(activeWidget);
@@ -2720,6 +2767,7 @@
     // Settings listeners
     if (tabChat) tabChat.addEventListener('click', () => setWidgetTab('chat'));
     if (tabPinned) tabPinned.addEventListener('click', () => setWidgetTab('pinned'));
+    if (tabPrediction) tabPrediction.addEventListener('click', () => setWidgetTab('prediction'));
     if (initialMenu) {
         initialMenu.addEventListener('input', onMenuChange);
         initialMenu.addEventListener('change', onMenuChange);
@@ -2847,6 +2895,7 @@
         // Style, direction and background color
         window.HolyOptions.apply(config, overlayContainer, chatArea);
         window.HolyPinned.applyStyles(config, fontFamily);
+        window.HolyPrediction.applyStyles(config);
 
         // Pinned Banner
         if (pinnedBanner) {
@@ -3624,6 +3673,14 @@
         resolveTemplate,
         buildSampleMessage: buildSamplePinMessage
     });
+    window.HolyPrediction.setup({
+        syncSlider,
+        stepValue,
+        setStep,
+        onMenuChange,
+        getConfig: () => config,
+        isMenuMode
+    });
     buildPresetGrid();
     populateMenuFromConfig();
     applyStyles();
@@ -3631,8 +3688,13 @@
     if (isOverlayActive) {
         // Run Overlay Feed (OBS Studio)
         setMode('overlay');
-        if (config.widget === 'pinned') root.classList.add('widget-pinned');
-        startClient();
+        if (config.widget !== 'chat') root.classList.add(`widget-${config.widget}`);
+        // The prediction widget has its own polling and doesn't use the chat WebSocket
+        if (config.widget === 'prediction') {
+            window.HolyPrediction.start(config);
+        } else {
+            startClient();
+        }
     } else {
         // Settings page: the test chat shows example messages, no Kick connection
         setMode('menu');

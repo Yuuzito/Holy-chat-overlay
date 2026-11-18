@@ -38,7 +38,7 @@ def main():
     with http.server.ThreadingHTTPServer(("", PORT), handler) as httpd:
         url = f"http://localhost:{PORT}/index.html"
         print("=" * 60)
-        print(f" Holy Chat (overlay de Kick) en ejecución:")
+        print(f" Holy Overlay (overlays de Kick) en ejecución:")
         print(f" URL: {url}")
         print(" Para OBS Studio: Agrega una fuente de 'Navegador' con esa URL.")
         print(" Presiona Ctrl+C para detener el servidor.")

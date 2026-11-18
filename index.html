@@ -9,7 +9,8 @@
         (function () {
             var q = new URLSearchParams(location.search);
             var cls = (q.get('overlay') === 'true' && q.get('menu') !== 'true') ? 'mode-overlay' : 'mode-menu';
-            if (q.get('widget') === 'pinned') cls += ' widget-pinned';
+            var widget = (q.get('widget') || '').toLowerCase();
+            if (widget === 'pinned' || widget === 'prediction') cls += ' widget-' + widget;
             document.documentElement.className = cls;
         })();
     </script>
@@ -17,9 +18,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" href="assets/fonts/TwemojiCountryFlags.woff2" as="font" type="font/woff2" crossorigin>
     <!-- Loaded without blocking the first paint; the system font shows until the web fonts arrive -->
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Manrope:wght@400;500;600;700&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&family=Manrope:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap"
         rel="stylesheet" media="print" onload="this.media='all'">
-    <title>Holy Chat</title>
+    <title>Holy Overlay</title>
     <link rel="stylesheet" href="overlay.css?v=41">
     <link rel="stylesheet" href="features/designs-base.css?v=5">
     <link rel="stylesheet" href="features/designs-extra.css?v=3">
@@ -28,7 +29,8 @@
     <link rel="stylesheet" href="features/designs-aero.css?v=4">
     <link rel="stylesheet" href="features/designs-states.css?v=2">
     <link rel="stylesheet" href="features/pinned.css?v=4">
-    <link rel="icon" type="image/png" href="holychat-logo.png">
+    <link rel="stylesheet" href="features/prediction.css?v=1">
+    <link rel="icon" type="image/png" href="holyoverlay-logo.png">
 </head>
 
 <body>
@@ -38,10 +40,10 @@
         <aside class="hc-config" id="initialMenu" aria-label="Configuración">
             <div class="hc-config-scroll">
                 <header class="hc-brand">
-                    <img class="hc-brand-logo" src="holychat-logo.png" alt="" width="150" height="150">
+                    <img class="hc-brand-logo" src="holyoverlay-logo.png" alt="" width="150" height="150">
                     <div>
-                        <h1>Holy Chat</h1>
-                        <p>Overlay de chat de Kick para OBS · Hecho con
+                        <h1>Holy Overlay</h1>
+                        <p>Chat, fijado y predicción para Kick en OBS · Hecho con
                             <img src="badges/rlove.webp" alt="Rlove" title="Rlove" class="hc-brand-emote"> por Yuuzito ·
                             No afiliado con Kick</p>
                     </div>
@@ -59,7 +61,14 @@
                             <path d="M12 17v5" />
                             <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
                         </svg>
-                        <span>Mensaje fijado</span>
+                        <span>Fijado</span>
+                    </button>
+                    <button class="hc-tab" id="tabPrediction" type="button" role="tab" data-tab="prediction" aria-selected="false">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M3 3v18h18" />
+                            <path d="M7 15l4-4 3 3 5-6" />
+                        </svg>
+                        <span>Predicción</span>
                     </button>
                 </div>
 
@@ -443,6 +452,67 @@
                         </div>
                     </details>
                 </div>
+
+                <!-- Separate section: Kick Prediction Overlay -->
+                <div class="hc-panel-group" data-panel="prediction">
+                    <details class="hc-group hc-disclosure hc-collapsible" open>
+                        <summary class="hc-group-title">
+                            <span>Diseño</span>
+                            <span class="hc-rule" aria-hidden="true"></span>
+                            <span class="hc-val"></span>
+                            <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </summary>
+                        <div class="hc-disclosure-body">
+                            <div class="hc-field">
+                                <div class="hc-field-head"><label for="cfgPredLayout">Tamaño</label></div>
+                                <div class="hc-select">
+                                    <select id="cfgPredLayout" data-summary><!-- Options come from PRED_LAYOUTS in features/prediction.js --></select>
+                                </div>
+                            </div>
+                            <div class="hc-field">
+                                <div class="hc-field-head"><label for="cfgPredPos">Posición</label><output class="hc-val" for="cfgPredPos" data-summary></output></div>
+                                <input class="hc-slider" id="cfgPredPos" type="range" min="0" max="2" step="1" value="1" data-steps="predPos">
+                                <div class="hc-ticks" data-for="cfgPredPos"></div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="hc-group hc-disclosure hc-collapsible" data-summary-empty="Siempre visible">
+                        <summary class="hc-group-title">
+                            <span>Visibilidad</span>
+                            <span class="hc-rule" aria-hidden="true"></span>
+                            <span class="hc-val"></span>
+                            <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </summary>
+                        <div class="hc-disclosure-body">
+                            <label class="hc-switch" for="cfgPredAutohide">
+                                <span>Auto-ocultar sin predicción<small>El widget desaparece si el canal no tiene una predicción activa</small></span>
+                                <input id="cfgPredAutohide" data-summary="Auto-ocultar" type="checkbox" role="switch" checked>
+                            </label>
+                        </div>
+                    </details>
+
+                    <details class="hc-group hc-disclosure hc-collapsible">
+                        <summary class="hc-group-title">
+                            <span>Prueba sin directo</span>
+                            <span class="hc-rule" aria-hidden="true"></span>
+                            <span class="hc-val"></span>
+                            <svg class="hc-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                        </summary>
+                        <div class="hc-disclosure-body">
+                            <div class="hc-sim-grid">
+                                <button class="hc-ghost" id="predDemoStart" type="button">▶ Nueva demo</button>
+                                <button class="hc-ghost" id="predDemoVotes" type="button">⚡ Simular votos</button>
+                                <button class="hc-ghost" id="predDemoLock" type="button">🔒 Bloquear</button>
+                                <button class="hc-ghost" id="predDemoWin1" type="button">🏆 Gana A</button>
+                                <button class="hc-ghost" id="predDemoWin2" type="button">🏆 Gana B</button>
+                                <button class="hc-ghost hc-sim-danger" id="predDemoCancel" type="button">🚫 Cancelar</button>
+                                <button class="hc-ghost hc-sim-danger" id="predDemoInactive" type="button">👻 Inactivo</button>
+                                <button class="hc-ghost" id="predDemoReset" type="button">🔄 Canal real</button>
+                            </div>
+                        </div>
+                    </details>
+                </div>
             </div>
 
             <div class="hc-config-foot">
@@ -494,7 +564,9 @@
                 <div class="hc-test-title">
                     <strong data-panel="chat">Chat de prueba</strong>
                     <strong data-panel="pinned">Vista previa del cartelito</strong>
+                    <strong data-panel="prediction">Vista previa de la predicción</strong>
                     <span class="hc-pin-status-badge" id="pinPreviewCountdown" data-panel="pinned"></span>
+                    <span class="hc-pin-status-badge" id="predPreviewStatus" data-panel="prediction"></span>
                 </div>
                 <!-- Only for the test chat: not saved in the OBS URL -->
                 <div class="hc-field hc-speed" data-panel="chat">
@@ -504,6 +576,7 @@
                 </div>
                 <div class="hc-head-actions">
                     <button class="hc-ghost" id="btnTestPin" data-panel="pinned" type="button">Probar cartelito</button>
+                    <button class="hc-ghost" id="btnTestPrediction" data-panel="prediction" type="button">▶ Probar predicción</button>
                     <button class="hc-ghost hidden" id="menuCloseBtn" type="button" title="Guardar y volver al overlay (Esc)">Volver al overlay</button>
                 </div>
             </div>
@@ -548,6 +621,114 @@
                     </article>
                 </div>
 
+                <!-- Separate Kick Prediction Overlay -->
+                <div class="prediction-overlay pred-layout-standard pred-pos-center" id="predictionOverlay">
+                    <canvas id="predConfettiCanvas" aria-hidden="true"></canvas>
+
+                    <div class="overlay-viewport">
+                        <article id="prediction-card" class="prediction-widget" aria-live="polite">
+
+                            <!-- Title / question -->
+                            <header class="prediction-title-container">
+                                <h1 id="prediction-title" class="prediction-title">¿Qué equipo gana?</h1>
+                            </header>
+
+                            <!-- Options A and B with the timer in the middle -->
+                            <section class="outcomes-arena">
+
+                                <div id="outcome-card-1" class="outcome-card option-1">
+                                    <div class="outcome-name-row">
+                                        <h2 id="outcome-1-title" class="outcome-title">Azul</h2>
+                                        <div class="winner-badge">
+                                            <span>👑</span>
+                                            <span>GANADOR</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="outcome-pill">
+                                        <span id="outcome-1-multiplier" class="multiplier-pill">2.82x</span>
+                                        <div class="points-badge-group">
+                                            <svg class="points-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="9"></circle>
+                                                <polyline points="12 7 12 12 15 15"></polyline>
+                                            </svg>
+                                            <span id="outcome-1-points" class="outcome-points">9,217</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="timer-center-wrapper">
+                                    <div id="status-pill" class="status-pill status-active">
+                                        <span id="center-icon" class="center-icon" style="display: none;" title="Total apostado">
+                                            <svg class="points-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="9"></circle>
+                                                <polyline points="12 7 12 12 15 15"></polyline>
+                                            </svg>
+                                        </span>
+                                        <span id="timer-text" class="timer-text">02:30</span>
+                                        <span id="status-text" style="display: none;">Votación abierta</span>
+                                    </div>
+                                </div>
+
+                                <div id="outcome-card-2" class="outcome-card option-2">
+                                    <div class="outcome-name-row align-right">
+                                        <div class="winner-badge">
+                                            <span>👑</span>
+                                            <span>GANADOR</span>
+                                        </div>
+                                        <h2 id="outcome-2-title" class="outcome-title">Rosa</h2>
+                                    </div>
+
+                                    <div class="outcome-pill">
+                                        <div class="points-badge-group">
+                                            <svg class="points-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="9"></circle>
+                                                <polyline points="12 7 12 12 15 15"></polyline>
+                                            </svg>
+                                            <span id="outcome-2-points" class="outcome-points">16.8K</span>
+                                        </div>
+                                        <span id="outcome-2-multiplier" class="multiplier-pill">1.55x</span>
+                                    </div>
+                                </div>
+
+                            </section>
+
+                            <!-- Split progress bar with the percentages inside -->
+                            <div class="progress-bar-container" aria-label="Porcentaje de votos">
+                                <div id="progress-bar-1" class="progress-segment-1" style="width: 35%;">
+                                    <div class="segment-inner segment-left">
+                                        <span id="outcome-1-percent" class="percentage-value">35</span><span class="percentage-symbol">%</span>
+                                    </div>
+                                </div>
+                                <div id="progress-divider" class="progress-divider" style="display: none;"></div>
+                                <div id="progress-bar-2" class="progress-segment-2" style="width: 65%;">
+                                    <div class="segment-inner segment-right">
+                                        <span id="outcome-2-percent" class="percentage-value">65</span><span class="percentage-symbol">%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden metadata kept in sync for the preview footer -->
+                            <div class="pool-stats-row" style="display: none;">
+                                <span id="total-points-display" class="points-value">0 pts</span>
+                                <span id="total-voters-display">0 votantes</span>
+                                <span id="outcome-1-voters">0 votos</span>
+                                <span id="outcome-2-voters">0 votos</span>
+                            </div>
+
+                            <!-- Official winner banner -->
+                            <section id="winner-banner" class="winner-alert-banner">
+                                <span class="winner-trophy-icon">🏆</span>
+                                <div class="winner-text-content">
+                                    <span class="winner-label">¡Resultado oficial!</span>
+                                    <span id="winner-name-display" class="winner-outcome-name">Opción ganadora</span>
+                                </div>
+                            </section>
+
+                        </article>
+                    </div>
+                </div>
+
                 <!-- Connection Status Indicator (shared by both overlays in OBS mode) -->
                 <div id="statusIndicator" class="status-indicator hidden">
                     <span id="statusDot" class="status-dot connecting"></span>
@@ -570,8 +751,9 @@
     <script src="features/options.js?v=1"></script>
     <script src="features/sound.js?v=1"></script>
     <script src="features/events.js?v=2"></script>
-    <script src="features/pinned.js?v=2"></script>
-    <script src="app.js?v=40"></script>
+    <script src="features/pinned.js?v=3"></script>
+    <script src="features/prediction.js?v=1"></script>
+    <script src="app.js?v=41"></script>
 </body>
 
 </html>

@@ -1,5 +1,5 @@
 /**
- * Holy Chat - the Botrix-style options that app.js doesn't own: message style (design),
+ * Holy Overlay - the Botrix-style options that app.js doesn't own: message style (design),
  * direction, background color, ignored users, sound, donations, rewards, Kick icon and time.
  * Reads them from the URL / saved settings, writes them back, and keeps their controls on the
  * settings page in step. Loaded after features/catalog.js and before app.js.

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Holy Chat - how each style shows a mention (Resaltar menciones) and a donation /
+   Holy Overlay - how each style shows a mention (Resaltar menciones) and a donation /
    reward row. The card keeps its own background, border and text color: an inset
    shadow paints a tint between the background and the text, plus a ring. The parts
    that sit outside the card (tags, tabs, tails) get the same color by hand.

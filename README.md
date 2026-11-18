@@ -1,6 +1,6 @@
-# Holy Chat · Overlay de chat para Kick & OBS Studio 💬🟢
+# Holy Overlay · Chat, fijado y predicción para Kick & OBS Studio 💬📌📊
 
-Un overlay de chat para **OBS Studio** y streamers de Kick, con soporte en tiempo real de insignias nativas, emotes y cosméticos de **7TV**, temas personalizables (Oscuro, Transparente, Claro), sombras de texto y una página de configuración con chat de prueba.
+Holy Overlay es un overlay para **OBS Studio** y streamers de Kick, con soporte en tiempo real de insignias nativas, emotes y cosméticos de **7TV**, temas personalizables (Oscuro, Transparente, Claro), sombras de texto y una página de configuración con chat de prueba. La misma página incluye tres widgets independientes para OBS: **Chat**, **Mensaje fijado** y **Predicción**.
 
 Hecho con el emote de 7TV `Rlove` por **Yuuzito**.
 
@@ -50,6 +50,22 @@ Si prefieres ejecutarlo localmente en tu PC:
 
 ---
 
+## 🔮 Tercer widget: Predicciones de Kick
+
+La pestaña **Predicción** añade el antiguo *Kick Prediction Overlay* dentro de la misma página y con su propia URL de OBS (`widget=prediction`), igual que el cartelito de mensaje fijado:
+
+- 📊 **Predicción en vivo**: título, opciones A/B, porcentajes, puntos apostados, multiplicadores y temporizador. Se consulta la API de Kick cada pocos segundos (más rápido con la votación abierta).
+- 🏆 **Ganador**: corona en la opción ganadora, banner oficial y lluvia de confeti.
+- ⏱️ **Estados**: votación abierta, bloqueada, finalizada, cancelada y «sin predicción activa».
+- 🎛️ **Diseño**: Estándar (640 px), Horizontal (840 px), Compacto (520 px) y Minimal (410 px), con posición Arriba, Centro o Abajo.
+- 🫥 **Auto-ocultar**: el widget desaparece en OBS si el canal no tiene una predicción activa (se puede desactivar).
+- 🧪 **Prueba sin directo**: botones para crear una demo, simular votos, bloquear, declarar ganador A/B, cancelar e inactivo. En la página de configuración, si el canal no tiene predicción, se muestra una predicción de ejemplo para previsualizar el diseño.
+- 🌐 **Sin problemas de CORS**: usa el mismo cliente con proxy de respaldo que el chat, por lo que funciona también en GitHub Pages.
+
+**Tamaños recomendados en OBS:** Estándar `700 × 360`, Horizontal `900 × 280`, Compacto `580 × 320`, Minimal `470 × 260`.
+
+---
+
 ## ⚙️ Opciones por URL
 
 Puedes configurar el overlay directamente mediante parámetros en la URL:
@@ -57,6 +73,10 @@ Puedes configurar el overlay directamente mediante parámetros en la URL:
 | Parámetro | Valores | Por defecto | Descripción |
 | :--- | :--- | :--- | :--- |
 | `channel` | texto | `rageylo` | Canal de Kick |
+| `widget` | `chat`, `pinned`, `prediction` | `chat` | Widget que se muestra: chat, cartelito de mensaje fijado o predicción |
+| `predLayout` | `standard`, `horizontal`, `compact`, `minimal` | `standard` | Tamaño del widget de predicción |
+| `predPos` | `top`, `center`, `bottom` | `center` | Posición vertical del widget de predicción |
+| `predAutohide` | `true` / `false` | `true` | Oculta la predicción en OBS cuando no hay una activa |
 | `overlay` | `true` / `false` | `false` | Modo OBS directo (sin menú inicial) |
 | `theme` | `dark`, `transparent`, `light` | `dark` | Estilo visual de fondo |
 | `layout` | `vertical`, `horizontal`, `scatter` | `vertical` | Disposición: columna, una línea abajo o mensajes en lugares aleatorios |

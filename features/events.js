@@ -1,5 +1,5 @@
 /**
- * Holy Chat - donation (Kicks) and channel point reward rows. The live client sends them as
+ * Holy Overlay - donation (Kicks) and channel point reward rows. The live client sends them as
  * `channel_event`; the test chat makes examples with the same shape, so both go through fill().
  */
 (function () {

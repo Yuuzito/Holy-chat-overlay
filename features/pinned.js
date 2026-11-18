@@ -1,5 +1,5 @@
 /**
- * Holy Chat - Pinned Message Cartelito Overlay
+ * Holy Overlay - Pinned Message Cartelito Overlay
  * Separate OBS overlay widget (?widget=pinned&overlay=true) that displays Kick pinned messages
  * as a customizable card/sign for a chosen number of seconds before disappearing.
  */
@@ -59,7 +59,6 @@
     function parse(params, cached) {
         const pos = String(pick(params, cached, 'pinPosition', 'pinPosition', 'top')).toLowerCase();
         return {
-            widget: params.get('widget') === 'pinned' ? 'pinned' : 'chat',
             pinDuration: clampInt(pick(params, cached, 'pinDuration', 'pinDuration', 15), 1, 600, 15),
             pinPermanent: bool(pick(params, cached, 'pinPermanent', 'pinPermanent', false), false),
             pinStyle: validStyle(pick(params, cached, 'pinStyle', 'pinStyle', 'minimal')),

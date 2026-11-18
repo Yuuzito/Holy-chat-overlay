@@ -1,5 +1,5 @@
 /**
- * Holy Chat - catalogs for the Botrix-style options: message designs, entry animations,
+ * Holy Overlay - catalogs for the Botrix-style options: message designs, entry animations,
  * extra fonts and message sounds. Loaded before app.js, which reads window.HolyCatalog.
  */
 (function () {

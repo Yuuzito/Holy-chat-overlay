@@ -894,7 +894,7 @@ html.mode-overlay body:has(.theme-light) {
     width: 100%;
 }
 /* ==========================================================================
-   Holy Chat - settings page (html.mode-menu)
+   Holy Overlay - settings page (html.mode-menu)
    Layout: two panes, settings rail on the left and the live overlay as a
    test chat on the right; stacks on narrow screens.
    ========================================================================== */
@@ -913,7 +913,7 @@ html.mode-overlay body:has(.theme-light) {
     --hc-track: #363a40;
     --hc-warn: #eab308;
     --hc-error: #ef4444;
-    /* Comic Sans for the "Holy Chat" title. It comes with Windows and macOS, not with Google Fonts,
+    /* Comic Sans for the "Holy Overlay" title. It comes with Windows and macOS, not with Google Fonts,
        so Comic Neue (its look-alike, loaded in index.html) covers phones and Linux */
     --hc-font-display: "Comic Sans MS", "Comic Sans", "Comic Neue", cursive;
     --hc-font-body: "Twemoji Country Flags", "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;

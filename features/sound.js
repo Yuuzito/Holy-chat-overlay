@@ -1,5 +1,5 @@
 /**
- * Holy Chat - new message sound. Every sound is made with the Web Audio API, so there are no
+ * Holy Overlay - new message sound. Every sound is made with the Web Audio API, so there are no
  * audio files to load or license. window.HolySound.play(type, volume) with volume 1–100.
  */
 (function () {
